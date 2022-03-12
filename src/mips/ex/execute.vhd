@@ -5,48 +5,36 @@ use ieee.numeric_std.all;
 entity execute is
 
 port(
+	-- INPUTS
 	clock : in std_logic;
 	reset : in std_logic;
 
 	instruction: in std_logic_vector (31 downto 0);
 	rs_data_in: in std_logic_vector (31 downto 0);
 	rt_data_in: in std_logic_vector (31 downto 0);
-	rt_data_out: out std_logic_vector (31 downto 0);
 	next_pc: in std_logic_vector (31 downto 0); -- pc + 4
 
-	-- ALU OUTPUTS
+	-- control signals (passed from decode stage to wb stage)
+	destination_register_in: in std_logic_vector (4 downto 0); 	-- the destination register where to write the instr. result
+	branch_in: in std_logic; 					-- indicates if its is a branch operation (beq, bne)
+	jump_in: in std_logic; 						-- indicates if it is a jump instruction (j, jr, jal)
+	mem_read_in: in std_logic; 					-- indicates if a value must be read from memory at calculated address
+	mem_write_in: in std_logic; 					-- indicates if value in rt_data_in must be written in memory at calculated address
+	reg_write_in: in std_logic; 					-- indicates if value calculated in ALU must be written to destination register
+	mem_to_reg_in: in std_logic; 					-- indicates if value loaded from memory must be writte to destination register
+
+	-- OUTPUTS
 	alu_result: out std_logic_vector (31 downto 0);
 	updated_pc: out std_logic_vector (31 downto 0);
+	rt_data_out: out std_logic_vector (31 downto 0);
 
-	-- CONTROL SIGNALS (from decode stage to wb stage)
-
-	-- the destination register where to write the alu result
-	destination_register_in: in std_logic_vector (4 downto 0); -- destination registers passed from ID/EX to MEM/WB
-	destination_register_out: out std_logic_vector (4 downto 0); -- destination registers passed from ID/EX to MEM/WB
-
-	-- indicates if its is a branch operation (beq, bne)
-	branch_in: in std_logic;
+	-- control signals
+	destination_register_out: out std_logic_vector (4 downto 0);
 	branch_out: out std_logic;
-
-	-- indicates if it is a jump instruction (j, jr, jal)
-	-- for jal: both jump and reg_write are required (since we write to link register)
-	jump_in: in std_logic;
 	jump_out: out std_logic;
-
-	-- indicates if a value must be read from memory at calculated address
-	mem_read_in: in std_logic; 
 	mem_read_out: out std_logic;
-
-	-- indicates if value in rt_data_in must be written in memory at calculated address
-	mem_write_in: in std_logic;
 	mem_write_out: out std_logic;
-
-	-- indicates if value calculated in ALU must be written to destination register
-	reg_write_in: in std_logic;
 	reg_write_out: out std_logic;
-
-	-- indicates if value loaded from memory must be writte to destination register
-	mem_to_reg_in: in std_logic;
 	mem_to_reg_out: out std_logic
 );
 end execute;
@@ -100,12 +88,13 @@ begin
 	begin
 		-- asynchronous reset active high
 		if reset'event and reset = '1' then
+			alu_result <= (others=>'0');
+			updated_pc <= (others=>'0');
 			rt_data_out <= (others=>'0');
 			high_register <= (others=>'0');
 			low_register <= (others=>'0');
-
+			
 			destination_register_out <= (others=>'0');
-
 			mem_read_out <= '0';
 			mem_write_out <= '0';
 			branch_out <= '0';
@@ -116,10 +105,8 @@ begin
 		-- synchronous clock active high
 		elsif clock'event and clock = '1' then
 
-			-- pipeline control signals
-			-- those signals must be initialized in decode stage
+			-- pass control signals to next stage
 			destination_register_out <= destination_register_in;
-
 			mem_read_out <= mem_read_in;
 			mem_write_out <= mem_write_in;
 			branch_out <= branch_in;
