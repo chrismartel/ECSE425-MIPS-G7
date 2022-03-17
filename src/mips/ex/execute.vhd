@@ -27,6 +27,7 @@ port(
 	alu_result: out std_logic_vector (31 downto 0); 		-- ** connect to prev_alu_result for forwarding puproses
 	updated_pc: out std_logic_vector (31 downto 0);
 	rt_data_out: out std_logic_vector (31 downto 0);
+	stall_out: out std_logic;					-- indicates stall instruction
 
 	-- control signals
 	rd_out: out std_logic_vector (4 downto 0); -- ** connect to ex_rd input of forwarding unit
@@ -175,136 +176,148 @@ begin
 			reg_write_out <= '0';
 			mem_to_reg_out <= '0';
 			jump_out <= '0';
+
+			stall_out <= '0';
 			
 		-- synchronous clock active high
 		elsif clk'event and clk = '1' then
 
-			-- pass control signals to next stage
-			rd_out <= rd_in;
-			mem_read_out <= mem_read_in;
-			mem_write_out <= mem_write_in;
-			branch_out <= branch_in;
-			reg_write_out <= reg_write_in;
-			mem_to_reg_out <= mem_to_reg_in;
+			-- check for stall instruction
 
-			-- ALU results
-			if instruction(31 downto 26) = "000000" then
-                		case instruction(5 downto 0) is -- check functional bits for R type instructions
-                    		-- arithmetic
-                    		when ADD_FUNCT =>
-                        		alu_result <= std_logic_vector(signed(forward_rs_data) + signed(forward_rt_data));
+			-- stall when given instruction 'add R0 R0 R0'
+			if instruction(31 downto 11) = "000000000000000000000" and instruction(5 downto 0) = ADD_FUNCT then
+				stall_out <= '1';
+
+			-- no stall - execute
+			else
+				stall_out <= '0';
+				-- pass control signals to next stage
+				rd_out <= rd_in;
+				mem_read_out <= mem_read_in;
+				mem_write_out <= mem_write_in;
+				branch_out <= branch_in;
+				reg_write_out <= reg_write_in;
+				mem_to_reg_out <= mem_to_reg_in;
+
+				-- ALU results
+				if instruction(31 downto 26) = "000000" then
+                			case instruction(5 downto 0) is -- check functional bits for R type instructions
+                  	  		-- arithmetic
+                    			when ADD_FUNCT =>
+                        			alu_result <= std_logic_vector(signed(forward_rs_data) + signed(forward_rt_data));
                         
-                    		when SUB_FUNCT =>
-                        		alu_result <= std_logic_vector(signed(forward_rs_data) - signed(forward_rt_data));
+                    			when SUB_FUNCT =>
+                        			alu_result <= std_logic_vector(signed(forward_rs_data) - signed(forward_rt_data));
 
-                    		when MULT_FUNCT =>
-                        		low_register <= std_logic_vector(resize(signed(forward_rs_data) * signed(forward_rt_data),64)(31 downto 0));
-                        		high_register <= std_logic_vector(resize(signed(forward_rs_data) * signed(forward_rt_data),64)(63 downto 32));
+                    			when MULT_FUNCT =>
+                        			low_register <= std_logic_vector(resize(signed(forward_rs_data) * signed(forward_rt_data),64)(31 downto 0));
+                        			high_register <= std_logic_vector(resize(signed(forward_rs_data) * signed(forward_rt_data),64)(63 downto 32));
 
-                    		when DIV_FUNCT =>
-                        		low_register <= std_logic_vector(signed(forward_rs_data) / signed(forward_rt_data));
-                        		high_register <= std_logic_vector(signed(forward_rs_data) mod signed(forward_rt_data));
+                  	  		when DIV_FUNCT =>
+          		              		low_register <= std_logic_vector(signed(forward_rs_data) / signed(forward_rt_data));
+          		              		high_register <= std_logic_vector(signed(forward_rs_data) mod signed(forward_rt_data));
                         
-                    		when SLT_FUNCT =>
-                        		if signed(forward_rs_data) < signed(forward_rt_data) then
-                            			alu_result <= std_logic_vector(to_signed(1,32));
-                        		else
-                            			alu_result <= std_logic_vector(to_signed(0,32));
-                        		end if;
+          	          		when SLT_FUNCT =>
+  		                      		if signed(forward_rs_data) < signed(forward_rt_data) then
+  	                          			alu_result <= std_logic_vector(to_signed(1,32));
+        	                		else
+  	                          			alu_result <= std_logic_vector(to_signed(0,32));
+        	                		end if;
 
-                    		-- logical
-                    		when AND_FUNCT =>
-                        		alu_result <= forward_rs_data and forward_rt_data;
-				when OR_FUNCT =>
-                        		alu_result <= forward_rs_data or forward_rt_data;
+  	                  		-- logical
+        	            		when AND_FUNCT =>
+  		                      		alu_result <= forward_rs_data and forward_rt_data;
+					when OR_FUNCT =>
+          		              		alu_result <= forward_rs_data or forward_rt_data;
                         
-                    		when NOR_FUNCT =>
-                        		alu_result <= forward_rs_data nor forward_rt_data;
+          	          		when NOR_FUNCT =>
+  		                      		alu_result <= forward_rs_data nor forward_rt_data;
 
-                    		when XOR_FUNCT =>
-                        		alu_result <= forward_rs_data xor forward_rt_data;
+  	                  		when XOR_FUNCT =>
+        	                		alu_result <= forward_rs_data xor forward_rt_data;
+	
+        	            		-- transfer
+  	                  		when MFHI_FUNCT =>
+        	                		alu_result <= high_register;
 
-                    		-- transfer
-                    		when MFHI_FUNCT =>
-                        		alu_result <= high_register;
+  	                  		when MFLO_FUNCT =>
+        	                		alu_result <= low_register;
 
-                    		when MFLO_FUNCT =>
-                        		alu_result <= low_register;
+  	                  		-- shift
+        	            		when SLL_FUNCT =>
+  		                      		alu_result <= std_logic_vector(shift_left(unsigned(forward_rt_data), to_integer(unsigned(instruction(10 downto 6)))));
 
-                    		-- shift
-                    		when SLL_FUNCT =>
-                        		alu_result <= std_logic_vector(shift_left(unsigned(forward_rt_data), to_integer(unsigned(instruction(10 downto 6)))));
+  	                  		when SRL_FUNCT =>
+        	                		alu_result <= std_logic_vector(shift_right(unsigned(forward_rt_data), to_integer(unsigned(instruction(10 downto 6)))));
 
-                    		when SRL_FUNCT =>
-                        		alu_result <= std_logic_vector(shift_right(unsigned(forward_rt_data), to_integer(unsigned(instruction(10 downto 6)))));
-
-                    		when SRA_FUNCT =>
-                        		alu_result <= std_logic_vector(shift_right(signed(forward_rt_data), to_integer(unsigned(instruction(10 downto 6)))));
+  	                  		when SRA_FUNCT =>
+        	                		alu_result <= std_logic_vector(shift_right(signed(forward_rt_data), to_integer(unsigned(instruction(10 downto 6)))));
                     
-                    		-- control-flow
-                    		when JR_FUNCT=>
-                        		updated_pc <= forward_rs_data;
+  	                  		-- control-flow
+        	            		when JR_FUNCT=>
+  		                      		updated_pc <= forward_rs_data;
 
-                    		when others =>
-                		end case;
-            		else
-                		case instruction(31 downto 26) is
-                    		-- arithmetic
-                    		when ADDI_OPCODE =>
-                        		-- SignExtImm
-                        		alu_result <= std_logic_vector(signed(forward_rs_data) + resize(signed(instruction(15 downto 0)),32));
+  	                  		when others =>
+        	        		end case;
+  	          		else
+        	        		case instruction(31 downto 26) is
+  	                  		-- arithmetic
+        	            		when ADDI_OPCODE =>
+  		                      		-- SignExtImm
+  		                      		alu_result <= std_logic_vector(signed(forward_rs_data) + resize(signed(instruction(15 downto 0)),32));
                         
-                    		when SLTI_OPCODE =>
-                        		-- SignExtImm
-                        		if signed(forward_rs_data) < signed(instruction(15 downto 0)) then
-                            		alu_result <= std_logic_vector(to_signed(1,32));
-                        		else
-                            		alu_result <= std_logic_vector(to_signed(0,32));
-                        		end if;
+  	                  		when SLTI_OPCODE =>
+        	                		-- SignExtImm
+  		                      		if signed(forward_rs_data) < signed(instruction(15 downto 0)) then
+  		                          		alu_result <= std_logic_vector(to_signed(1,32));
+  		                      		else
+  		                          		alu_result <= std_logic_vector(to_signed(0,32));
+  		                      		end if;
 
-                    		-- logical
-                    		when ANDI_OPCODE =>
-                        		-- ZeroExtImm
-                        		alu_result <= forward_rs_data and std_logic_vector(resize(unsigned(instruction(15 downto 0)),32));
+  	                  		-- logical
+        	            		when ANDI_OPCODE =>
+  		                      		-- ZeroExtImm
+  		                      		alu_result <= forward_rs_data and std_logic_vector(resize(unsigned(instruction(15 downto 0)),32));
 
-                    		when ORI_OPCODE =>
-                        		-- ZeroExtImm
-                        		alu_result <= forward_rs_data or std_logic_vector(resize(unsigned(instruction(15 downto 0)),32));
+  	                  		when ORI_OPCODE =>
+        	                		-- ZeroExtImm
+  		                      		alu_result <= forward_rs_data or std_logic_vector(resize(unsigned(instruction(15 downto 0)),32));
 
-                    		when XORI_OPCODE =>
-                        		-- ZeroExtImm
-                        		alu_result <= forward_rs_data xor std_logic_vector(resize(unsigned(instruction(15 downto 0)),32));
+  	                  		when XORI_OPCODE =>
+        	                		-- ZeroExtImm
+  		                      		alu_result <= forward_rs_data xor std_logic_vector(resize(unsigned(instruction(15 downto 0)),32));
 
-                    		-- transfer
-                    		when LUI_OPCODE =>
-                        		-- load immediate value into 16 upper bits of rt register
-                        		alu_result <= instruction(15 downto 0) & std_logic_vector(to_unsigned(0,16));
+  	                  		-- transfer
+        	            		when LUI_OPCODE =>
+  		                      		-- load immediate value into 16 upper bits of rt register
+  		                      		alu_result <= instruction(15 downto 0) & std_logic_vector(to_unsigned(0,16));
 
-                    		-- memory
-                    		when LW_OPCODE | SW_OPCODE=>
-                        		alu_result <= std_logic_vector(to_signed(to_integer(signed(forward_rs_data)) + to_integer(signed(instruction(15 downto 0))),32));
+  	                  		-- memory
+        	            		when LW_OPCODE | SW_OPCODE=>
+  		                      		alu_result <= std_logic_vector(to_signed(to_integer(signed(forward_rs_data)) + to_integer(signed(instruction(15 downto 0))),32));
                     
-                    		-- control-flow
-                    		when BEQ_OPCODE=>
-                        		if forward_rs_data = forward_rt_data then
-                            			updated_pc <= std_logic_vector(signed(next_pc) + resize(signed(instruction(15 downto 0) & "00"),32));
-                        		--else
-                            			--updated_pc <= pc;
-                        		end if;
-                    		when BNE_OPCODE=>
-                        		if forward_rs_data /= forward_rt_data then
-                            			updated_pc <= std_logic_vector(signed(next_pc) + resize(signed(instruction(15 downto 0) & "00"),32));
-                        		--else
-                            			--updated_pc <= pc;
-                        		end if;
-                    		when J_OPCODE=>
-                        		updated_pc <= next_pc(31 downto 28) & instruction(25 downto 0) & "00";
-
-                    		when JAL_OPCODE=>
-                        		alu_result <= std_logic_vector(signed(next_pc) + shift_left(to_signed(4,32),2));
-                        		updated_pc <= next_pc(31 downto 28) & instruction(25 downto 0) & "00";
-                    		when others =>
-                		end case;
+  	                  		-- control-flow
+        	            		when BEQ_OPCODE=>
+  		                      		if forward_rs_data = forward_rt_data then
+  	                          			updated_pc <= std_logic_vector(signed(next_pc) + resize(signed(instruction(15 downto 0) & "00"),32));
+        	                		--else
+  	                          			--updated_pc <= pc;
+        	                		end if;
+  	                  		when BNE_OPCODE=>
+        	                		if forward_rs_data /= forward_rt_data then
+  	                          			updated_pc <= std_logic_vector(signed(next_pc) + resize(signed(instruction(15 downto 0) & "00"),32));
+        	                		--else
+  	                          			--updated_pc <= pc;
+        	                		end if;
+  	                  		when J_OPCODE=>
+        	                		updated_pc <= next_pc(31 downto 28) & instruction(25 downto 0) & "00";
+	
+        	            		when JAL_OPCODE=>
+  		                      		alu_result <= std_logic_vector(signed(next_pc) + shift_left(to_signed(4,32),2));
+  		                      		updated_pc <= next_pc(31 downto 28) & instruction(25 downto 0) & "00";
+  	                  		when others =>
+        	        		end case;
+				end if;
 			end if;
 		end if;
 	end process;
