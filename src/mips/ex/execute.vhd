@@ -121,32 +121,42 @@ begin
 -- make circuits here
 	
 	-- fowarding operands data asynchronously
-	forward_process: process(reset)
+	forward_process: process(forward_rs, forward_rt, reset)
 	begin
 		if reset'event and reset = '1' then
-			-- rs input
-			case forward_rs is
-			when "00" =>
-				forward_rs_data <= rs_data_in;
-			when "01" =>
-				forward_rs_data <= ex_data;
-			when "10" =>
-				forward_rs_data <= mem_data;
-			when others =>
-			end case;
+			forward_rs_data <= (others=>'0');
+			forward_rt_data <= (others=>'0');
 
+		else
+			-- rs operand forwarding
+			if forward_rs'event then
+				case forward_rs is
+				when "00" =>
+					forward_rs_data <= rs_data_in;
+				when "01" =>
+					forward_rs_data <= ex_data;
+				when "10" =>
+					forward_rs_data <= mem_data;
+				when others =>
+				end case;
+			end if;
+			
+			-- rt operand forwarding
+			if forward_rt'event then
 			-- rt input
 			case forward_rt is
-			when "00" =>
-				forward_rt_data <= rt_data_in;
-			when "01" =>
-				forward_rt_data <= ex_data;
-			when "10" =>
-				forward_rt_data <= mem_data;
-			when others =>
-			end case;
+				when "00" =>
+					forward_rt_data <= rt_data_in;
+				when "01" =>
+					forward_rt_data <= ex_data;
+				when "10" =>
+					forward_rt_data <= mem_data;
+				when others =>
+				end case;
+			end if;
 		end if;
 	end process;
+
 	-- execution stage process
 	execute_process: process(clk, reset)
 	begin
