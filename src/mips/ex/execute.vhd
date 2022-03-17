@@ -6,7 +6,7 @@ entity execute is
 
 port(
 	-- INPUTS
-	clock : in std_logic;
+	clk : in std_logic;
 	reset : in std_logic;
 
 	instruction: in std_logic_vector (31 downto 0);
@@ -106,7 +106,7 @@ begin
 -- make circuits here
 	
 	-- execution stage process
-	execute_process: process(clock, reset)
+	execute_process: process(clk, reset)
 	begin
 		-- asynchronous reset active high
 		if reset'event and reset = '1' then
@@ -125,7 +125,7 @@ begin
 			jump_out <= '0';
 			
 		-- synchronous clock active high
-		elsif clock'event and clock = '1' then
+		elsif clk'event and clk = '1' then
 
 			-- pass control signals to next stage
 			destination_register_out <= destination_register_in;
