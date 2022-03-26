@@ -95,6 +95,7 @@ port(
 	alu_result: out std_logic_vector (31 downto 0);
 	updated_pc: out std_logic_vector (31 downto 0);
 	rt_data_out: out std_logic_vector (31 downto 0);
+	stall_out: out std_logic;
 
 	-- control signals
 	destination_register_out: out std_logic_vector (4 downto 0);
@@ -103,21 +104,28 @@ port(
 	mem_read_out: out std_logic;
 	mem_write_out: out std_logic;
 	reg_write_out: out std_logic;
-	mem_to_reg_out: out std_logic
+	mem_to_reg_out: out std_logic;
+
+	-- forwarding
+	ex_data: in std_logic_vector (31 downto 0);
+	mem_data: in std_logic_vector (31 downto 0);
+
+	forward_rs: in std_logic_vector (1 downto 0);
+	forward_rt: in std_logic_vector (1 downto 0)
 );
 end component;
 
--- test signals 
-
--- inputs
+-- Synchronoucity Inputs
 signal reset : std_logic := '0';
 signal clk : std_logic := '0';
 
+-- Execute Inputs
 signal instruction: std_logic_vector (31 downto 0);
 signal rs_data_in: std_logic_vector (31 downto 0);
 signal rt_data_in: std_logic_vector (31 downto 0);
 signal next_pc: std_logic_vector (31 downto 0); 
 
+-- Control Signals Inputs
 signal destination_register_in: std_logic_vector (4 downto 0); 	
 signal branch_in: std_logic; 					
 signal jump_in: std_logic; 						
@@ -126,11 +134,12 @@ signal mem_write_in: std_logic;
 signal reg_write_in: std_logic; 					
 signal mem_to_reg_in: std_logic; 					
 
--- outputs
+-- Execute Outputs
 signal alu_result: std_logic_vector (31 downto 0);
 signal updated_pc: std_logic_vector (31 downto 0);
 signal rt_data_out: std_logic_vector (31 downto 0);
 
+-- Control Signals Outputs
 signal destination_register_out: std_logic_vector (4 downto 0);
 signal branch_out: std_logic;
 signal jump_out: std_logic;
@@ -138,8 +147,65 @@ signal mem_read_out: std_logic;
 signal mem_write_out: std_logic;
 signal reg_write_out: std_logic;
 signal mem_to_reg_out: std_logic;
+signal stall_out: std_logic;
 
+-- Forwarding Signals
+signal ex_data: std_logic_vector (31 downto 0);
+signal mem_data: std_logic_vector (31 downto 0);
 
+signal forward_rs: std_logic_vector (1 downto 0);
+signal forward_rt: std_logic_vector (1 downto 0);
+
+-- Input data
+constant RD: std_logic_vector(4 downto 0) := "00011"; -- R3
+constant RS: std_logic_vector(4 downto 0) := "00001"; -- R1
+constant RT: std_logic_vector(4 downto 0) := "00010"; -- R2
+constant SHAMT: std_logic_vector(4 downto 0) := "00010"; -- 2
+constant IMM: std_logic_vector(15 downto 0) := x"0004"; -- 4
+constant ADDRESS: std_logic_vector(25 downto 0) := "00000000000000000000000100"; 
+
+constant DATA_8: std_logic_vector(31 downto 0) := x"00000008";
+constant DATA_4: std_logic_vector(31 downto 0) := x"00000004";
+constant DATA_MINUS_4: std_logic_vector(31 downto 0) := x"FFFFFFFC"; 
+constant NEXT_PC_VALUE: std_logic_vector(31 downto 0) := x"00000004";
+
+-- Results Data
+
+-- R
+constant ADD_RESULT: std_logic_vector(31 downto 0) := x"0000000C";
+constant SUB_RESULT: std_logic_vector(31 downto 0) := x"00000004";
+constant MUL_RESULT: std_logic_vector(31 downto 0) := x"0000000000000018";
+constant MFHI_RESULT: std_logic_vector(31 downto 0) := x"00000000";
+constant MFLO_RESULT: std_logic_vector(31 downto 0) := x"00000018";
+constant DIV_RESULT: std_logic_vector(31 downto 0) := x"00000002";
+constant SLT_TRUE_RESULT: std_logic_vector(31 downto 0) := x"00000001";
+constant SLT_FALSE_RESULT: std_logic_vector(31 downto 0) := x"00000000";
+constant AND_RESULT: std_logic_vector(31 downto 0) := "00000000000000000000000000000000";
+constant OR_RESULT: std_logic_vector(31 downto 0) := "00000000000000000000000000001100";
+constant NOR_RESULT: std_logic_vector(31 downto 0) := "11111111111111111111111111110011";
+constant XOR_RESULT: std_logic_vector(31 downto 0) := "00000000000000000000000000001100";
+constant SLL_RESULT: std_logic_vector(31 downto 0) := x"00000008";
+constant SRL_RESULT: std_logic_vector(31 downto 0) := x"3FFFFFFF"; 
+constant SRA_RESULT: std_logic_vector(31 downto 0) := x"FFFFFFFF";
+constant JR_PC_RESULT: std_logic_vector(31 downto 0) := x"00000008";
+
+-- I
+constant ADDI_RESULT: std_logic_vector(31 downto 0) := x"0000000C";
+constant SLTI_RESULT: std_logic_vector(31 downto 0) := x"00000000";
+constant ORI_RESULT: std_logic_vector(31 downto 0) := x"0000000C";
+constant XORI_RESULT: std_logic_vector(31 downto 0) := x"0000000C";
+constant LUI_RESULT: std_logic_vector(31 downto 0) := x"00040000";
+constant LW_RESULT: std_logic_vector(31 downto 0) := x"0000000C";
+constant SW_RESULT: std_logic_vector(31 downto 0) := x"0000000C";
+constant BEQ_TAKEN_PC_RESULT: std_logic_vector(31 downto 0) := x"00000010";
+constant BEQ_NOT_TAKEN_PC_RESULT: std_logic_vector(31 downto 0) := x"00000004";
+constant BNE_TAKEN_PC_RESULT: std_logic_vector(31 downto 0) := x"00000010";
+constant BNE_NOT_TAKEN_PC_RESULT: std_logic_vector(31 downto 0) := x"00000004";
+
+-- J
+constant J_PC_RESULT: std_logic_vector(31 downto 0) := x"00000004";
+constant JAL_PC_RESULT: std_logic_vector(31 downto 0) := x"00000004";
+constant JAL_REG_RESULT: std_logic_vector(31 downto 0) := x"00000008";
 begin
 
 -- Connect the components which we instantiated above to their
@@ -155,19 +221,28 @@ port map(
 	rt_data_in => rt_data_in,
 	next_pc => next_pc,
 
+	-- control signals
 	destination_register_in => destination_register_in,
 	branch_in => branch_in,
 	jump_in => jump_in,
 	mem_read_in => mem_read_in,		
 	mem_write_in => mem_write_in, 					
 	reg_write_in => reg_write_in,				
-	mem_to_reg_in => mem_to_reg_in,				
+	mem_to_reg_in => mem_to_reg_in,	
+
+	-- forwarding
+	ex_data => ex_data,
+	mem_data => mem_data,
+	forward_rs => forward_rs,
+	forward_rt => forward_rt,	
 
 	-- OUTPUTS
 	alu_result => alu_result,
 	updated_pc => updated_pc,
 	rt_data_out => rt_data_out,
+	stall_out => stall_out,
 
+	-- control signals
 	destination_register_out => destination_register_out,
 	branch_out => branch_out,
 	jump_out => jump_out,
@@ -178,7 +253,6 @@ port map(
 );
 
 				
-
 clk_process : process
 begin
   clk <= '0';
@@ -195,430 +269,810 @@ begin
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  wait for clk_period;
-  reset <= '1';
-  wait for clk_period;
-  reset <= '0';
-  wait for clk_period;
+  	wait for clk_period;
+  	reset <= '1';
+  	wait for clk_period;
+  	reset <= '0';
+  	wait for clk_period;
   ----------------------------------------------------------------------------------
   
-  report "----- Starting tests -----";
+  	report "----- Starting tests -----";
 
   ----------------------------------------------------------------------------------
   -- TEST 1: ADD
   ----------------------------------------------------------------------------------
-  report "----- Test 1: ADD Instruction -----";
+  	report "----- Test 1: ADD Instruction -----";
 
-  assert alu_result =  report "Test 1: Unsuccessful" severity error;
-  
+	instruction <= R_OPCODE & RS & RT & RD & SHAMT & ADD_FUNCT;
+	rs_data_in <= DATA_8;
+	rt_data_in <= DATA_4;
+	next_pc <= NEXT_PC_VALUE;
+
+	-- control signals
+	destination_register_in <= RD;
+	branch_in <= '0';
+	jump_in <= '0';
+	mem_read_in <= '0';		
+	mem_write_in <= '0'; 					
+	reg_write_in <= '1';				
+	mem_to_reg_in <= '0';	
+
+	-- forwarding
+	ex_data <= (others=>'0');
+	mem_data <= (others=>'0');
+	forward_rs <= "00";
+	forward_rt <= "00";
+	
+  	wait for CLK_PERIOD;
+  	assert alu_result = ADD_RESULT report "Test 1: Unsuccessful" severity error;
+
 ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  wait for CLK_PERIOD;
-  reset <= '1';
-  wait for CLK_PERIOD;
-  reset <= '0';
-  wait for CLK_PERIOD;
+  	wait for CLK_PERIOD;
+  	reset <= '1';
+  	wait for CLK_PERIOD;
+  	reset <= '0';
+  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 2: SUB
   ----------------------------------------------------------------------------------
-  report "----- Test 2: SUB Instruction -----";
+  	report "----- Test 2: SUB Instruction -----";
 
-  assert alu_result =  report "Test 2: Unsuccessful" severity error;
+	instruction <= R_OPCODE & RS & RT & RD & SHAMT & SUB_FUNCT;
+	rs_data_in <= DATA_8;
+	rt_data_in <= DATA_4;
+	next_pc <= NEXT_PC_VALUE;
+
+	-- control signals
+	destination_register_in <= RD;
+	branch_in <= '0';
+	jump_in <= '0';
+	mem_read_in <= '0';		
+	mem_write_in <= '0'; 					
+	reg_write_in <= '1';				
+	mem_to_reg_in <= '0';	
+
+	-- forwarding
+	ex_data <= (others=>'0');
+	mem_data <= (others=>'0');
+	forward_rs <= "00";
+	forward_rt <= "00";	
+
+  	wait for CLK_PERIOD;
+  	assert alu_result =  SUB_RESULT report "Test 2: Unsuccessful" severity error;
   
 ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  wait for CLK_PERIOD;
-  reset <= '1';
-  wait for CLK_PERIOD;
-  reset <= '0';
-  wait for CLK_PERIOD;
+  	wait for CLK_PERIOD;
+  	reset <= '1';
+  	wait for CLK_PERIOD;
+  	reset <= '0';
+  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
-  -- TEST 3: MULT
+  -- TEST 3: MUL, MFHI, MFLO
   ----------------------------------------------------------------------------------
-  report "----- Test 3: MULT Instruction -----";
+  	report "----- Test 3: MULT Instruction -----";
 
-  assert alu_result =  report "Test 3: Unsuccessful" severity error;
+	instruction <= R_OPCODE & RS & RT & RD & SHAMT & MUL_FUNCT;
+	rs_data_in <= DATA_8;
+	rt_data_in <= DATA_4;
+	next_pc <= NEXT_PC_VALUE;
+
+	-- control signals
+	destination_register_in <= RD;
+	branch_in <= '0';
+	jump_in <= '0';
+	mem_read_in <= '0';		
+	mem_write_in <= '0'; 					
+	reg_write_in <= '0';				
+	mem_to_reg_in <= '0';	
+
+	-- forwarding
+	ex_data <= (others=>'0');
+	mem_data <= (others=>'0');
+	forward_rs <= "00";
+	forward_rt <= "00";
+
+	------------ MFLO ------------ 
+  	wait for CLK_PERIOD;
+
+	instruction <= R_OPCODE & RS & RT & RD & SHAMT & MFLO_FUNCT;
+	next_pc <= NEXT_PC_VALUE;
+
+	-- control signals
+	destination_register_in <= RD;
+	branch_in <= '0';
+	jump_in <= '0';
+	mem_read_in <= '0';		
+	mem_write_in <= '0'; 					
+	reg_write_in <= '1';				
+	mem_to_reg_in <= '0';	
+
+	-- forwarding
+	ex_data <= (others=>'0');
+	mem_data <= (others=>'0');
+	forward_rs <= "00";
+	forward_rt <= "00";
+
+  	wait for CLK_PERIOD;
+  	assert alu_result = MFLO_RESULT report "Test 3: Unsuccessful - Invalid Low Value" severity error;
+
+	------------ MFHI ------------
+	instruction <= R_OPCODE & RS & RT & RD & SHAMT & MFHI_FUNCT;
+	next_pc <= NEXT_PC_VALUE;
+
+	-- control signals
+	destination_register_in <= RD;
+	branch_in <= '0';
+	jump_in <= '0';
+	mem_read_in <= '0';		
+	mem_write_in <= '0'; 					
+	reg_write_in <= '1';				
+	mem_to_reg_in <= '0';	
+
+	-- forwarding
+	ex_data <= (others=>'0');
+	mem_data <= (others=>'0');
+	forward_rs <= "00";
+	forward_rt <= "00";
+
+  	wait for CLK_PERIOD;
+  	assert alu_result = MFHI_RESULT report "Test 3: Unsuccessful - Invalid High Value" severity error;
   
-----------------------------------------------------------------------------------
+  ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  wait for CLK_PERIOD;
-  reset <= '1';
-  wait for CLK_PERIOD;
-  reset <= '0';
-  wait for CLK_PERIOD;
+  	wait for CLK_PERIOD;
+  	reset <= '1';
+  	wait for CLK_PERIOD;
+  	reset <= '0';
+  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 4: DIV
   ----------------------------------------------------------------------------------
-  report "----- Test 4: DIV Instruction -----";
+  	report "----- Test 4: DIV Instruction -----";
+  	instruction <= R_OPCODE & RS & RT & RD & SHAMT & DIV_FUNCT;
 
-  assert alu_result =  report "Test 4: Unsuccessful" severity error;
+	rs_data_in <= DATA_8;
+	rt_data_in <= DATA_4;
+	next_pc <= NEXT_PC_VALUE;
+
+	-- control signals
+	destination_register_in <= RD;
+	branch_in <= '0';
+	jump_in <= '0';
+	mem_read_in <= '0';		
+	mem_write_in <= '0'; 					
+	reg_write_in <= '1';				
+	mem_to_reg_in <= '0';	
+
+	-- forwarding
+	ex_data <= (others=>'0');
+	mem_data <= (others=>'0');
+	forward_rs <= "00";
+	forward_rt <= "00";
+
+  	wait for CLK_PERIOD;
+  	assert alu_result = DIV_RESULT report "Test 4: Unsuccessful" severity error;
   
-----------------------------------------------------------------------------------
+  ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  wait for CLK_PERIOD;
-  reset <= '1';
-  wait for CLK_PERIOD;
-  reset <= '0';
-  wait for CLK_PERIOD;
+  	wait for CLK_PERIOD;
+  	reset <= '1';
+  	wait for CLK_PERIOD;
+  	reset <= '0';
+  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 5: SLT
   ----------------------------------------------------------------------------------
   report "----- Test 5: SLT Instruction -----";
+  	instruction <= R_OPCODE & RS & RT & RD & SHAMT & SLT_FUNCT;
 
-  assert alu_result =  report "Test 5: Unsuccessful" severity error;
+	rs_data_in <= DATA_8;
+	rt_data_in <= DATA_4;
+	next_pc <= NEXT_PC_VALUE;
+
+	-- control signals
+	destination_register_in <= RD;
+	branch_in <= '0';
+	jump_in <= '0';
+	mem_read_in <= '0';		
+	mem_write_in <= '0'; 					
+	reg_write_in <= '1';				
+	mem_to_reg_in <= '0';	
+
+	-- forwarding
+	ex_data <= (others=>'0');
+	mem_data <= (others=>'0');
+	forward_rs <= "00";
+	forward_rt <= "00";
+
+  	wait for CLK_PERIOD;
+  	assert alu_result = SLT_FALSE_RESULT report "Test 5: Unsuccessful" severity error;
+
+
+  	instruction <= R_OPCODE & RS & RT & RD & SHAMT & SLT_FUNCT;
+
+	rs_data_in <= DATA_4;
+	rt_data_in <= DATA_8;
+	next_pc <= NEXT_PC_VALUE;
+
+	-- control signals
+	destination_register_in <= RD;
+	branch_in <= '0';
+	jump_in <= '0';
+	mem_read_in <= '0';		
+	mem_write_in <= '0'; 					
+	reg_write_in <= '1';				
+	mem_to_reg_in <= '0';	
+
+	-- forwarding
+	ex_data <= (others=>'0');
+	mem_data <= (others=>'0');
+	forward_rs <= "00";
+	forward_rt <= "00";
+
+  	wait for CLK_PERIOD;
+  	assert alu_result = SLT_TRUE_RESULT report "Test 5: Unsuccessful" severity error;
   
-----------------------------------------------------------------------------------
+  ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  wait for CLK_PERIOD;
-  reset <= '1';
-  wait for CLK_PERIOD;
-  reset <= '0';
-  wait for CLK_PERIOD;
+  	wait for CLK_PERIOD;
+  	reset <= '1';
+  	wait for CLK_PERIOD;
+  	reset <= '0';
+  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 6: AND
   ----------------------------------------------------------------------------------
-  report "----- Test 6: AND Instruction -----";
+  	report "----- Test 6: AND Instruction -----";
+  	instruction <= R_OPCODE & RS & RT & RD & SHAMT & AND_FUNCT;
 
-  assert alu_result =  report "Test 6: Unsuccessful" severity error;
+
+	rs_data_in <= DATA_4;
+	rt_data_in <= DATA_8;
+	next_pc <= NEXT_PC_VALUE;
+
+	-- control signals
+	destination_register_in <= RD;
+	branch_in <= '0';
+	jump_in <= '0';
+	mem_read_in <= '0';		
+	mem_write_in <= '0'; 					
+	reg_write_in <= '1';				
+	mem_to_reg_in <= '0';	
+
+	-- forwarding
+	ex_data <= (others=>'0');
+	mem_data <= (others=>'0');
+	forward_rs <= "00";
+	forward_rt <= "00";
+
+  	wait for CLK_PERIOD;
+  	assert alu_result = AND_RESULT report "Test 6: Unsuccessful" severity error;
   
-----------------------------------------------------------------------------------
+  ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  wait for CLK_PERIOD;
-  reset <= '1';
-  wait for CLK_PERIOD;
-  reset <= '0';
-  wait for CLK_PERIOD;
+  	wait for CLK_PERIOD;
+  	reset <= '1';
+  	wait for CLK_PERIOD;
+  	reset <= '0';
+  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 7: OR
   ----------------------------------------------------------------------------------
-  report "----- Test 7: OR Instruction -----";
+  	report "----- Test 7: OR Instruction -----";
+  	instruction <= R_OPCODE & RS & RT & RD & SHAMT & OR_FUNCT;
 
-  assert alu_result =  report "Test 7: Unsuccessful" severity error;
+	rs_data_in <= DATA_4;
+	rt_data_in <= DATA_8;
+	next_pc <= NEXT_PC_VALUE;
+
+	-- control signals
+	destination_register_in <= RD;
+	branch_in <= '0';
+	jump_in <= '0';
+	mem_read_in <= '0';		
+	mem_write_in <= '0'; 					
+	reg_write_in <= '1';				
+	mem_to_reg_in <= '0';	
+
+	-- forwarding
+	ex_data <= (others=>'0');
+	mem_data <= (others=>'0');
+	forward_rs <= "00";
+	forward_rt <= "00";
+
+  	wait for CLK_PERIOD;
+  	assert alu_result = OR_RESULT report "Test 7: Unsuccessful" severity error;
   
-----------------------------------------------------------------------------------
+  ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  wait for CLK_PERIOD;
-  reset <= '1';
-  wait for CLK_PERIOD;
-  reset <= '0';
-  wait for CLK_PERIOD;
-
+  	wait for CLK_PERIOD;
+  	reset <= '1';
+  	wait for CLK_PERIOD;
+  	reset <= '0';
+  	wait for CLK_PERIOD;
   ----------------------------------------------------------------------------------
   -- TEST 8: NOR
   ----------------------------------------------------------------------------------
-  report "----- Test 8: NOR Instruction -----";
+  	report "----- Test 8: NOR Instruction -----";
+  	instruction <= R_OPCODE & RS & RT & RD & SHAMT & NOR_FUNCT;
+	
+	rs_data_in <= DATA_4;
+	rt_data_in <= DATA_8;
+	next_pc <= NEXT_PC_VALUE;
 
-  assert alu_result =  report "Test 8: Unsuccessful" severity error;
+	-- control signals
+	destination_register_in <= RD;
+	branch_in <= '0';
+	jump_in <= '0';
+	mem_read_in <= '0';		
+	mem_write_in <= '0'; 					
+	reg_write_in <= '1';				
+	mem_to_reg_in <= '0';	
+
+	-- forwarding
+	ex_data <= (others=>'0');
+	mem_data <= (others=>'0');
+	forward_rs <= "00";
+	forward_rt <= "00";
+
+  	wait for CLK_PERIOD;
+  	assert alu_result = NOR_RESULT report "Test 8: Unsuccessful" severity error;
   
-----------------------------------------------------------------------------------
+  ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  wait for CLK_PERIOD;
-  reset <= '1';
-  wait for CLK_PERIOD;
-  reset <= '0';
-  wait for CLK_PERIOD;
+  	wait for CLK_PERIOD;
+  	reset <= '1';
+  	wait for CLK_PERIOD;
+  	reset <= '0';
+  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 9: XOR
   ----------------------------------------------------------------------------------
-  report "----- Test 9: XOR Instruction -----";
+  	report "----- Test 9: XOR Instruction -----";
+  	instruction <= R_OPCODE & RS & RT & RD & SHAMT & XOR_FUNCT;
+	
+	rs_data_in <= DATA_4;
+	rt_data_in <= DATA_8;
+	next_pc <= NEXT_PC_VALUE;
 
-  assert alu_result =  report "Test 9: Unsuccessful" severity error;
+	-- control signals
+	destination_register_in <= RD;
+	branch_in <= '0';
+	jump_in <= '0';
+	mem_read_in <= '0';		
+	mem_write_in <= '0'; 					
+	reg_write_in <= '1';				
+	mem_to_reg_in <= '0';	
+
+	-- forwarding
+	ex_data <= (others=>'0');
+	mem_data <= (others=>'0');
+	forward_rs <= "00";
+	forward_rt <= "00";
+
+  	wait for CLK_PERIOD;
+  	assert alu_result = XOR_RESULT report "Test 9: Unsuccessful" severity error;
   
-----------------------------------------------------------------------------------
+  ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  wait for CLK_PERIOD;
-  reset <= '1';
-  wait for CLK_PERIOD;
-  reset <= '0';
-  wait for CLK_PERIOD;
+  	wait for CLK_PERIOD;
+  	reset <= '1';
+  	wait for CLK_PERIOD;
+  	reset <= '0';
+  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
-  -- TEST 10: MFHI
+  -- TEST 10: SLL
   ----------------------------------------------------------------------------------
-  report "----- Test 10: MFHI Instruction -----";
+  	report "----- Test 12: SLL Instruction -----";
+  	instruction <= R_OPCODE & RS & RT & RD & SHAMT & SLL_FUNCT;
 
-  assert alu_result =  report "Test 10: Unsuccessful" severity error;
+	rt_data_in <= DATA_8;
+	next_pc <= NEXT_PC_VALUE;
+
+	-- control signals
+	destination_register_in <= RD;
+	branch_in <= '0';
+	jump_in <= '0';
+	mem_read_in <= '0';		
+	mem_write_in <= '0'; 					
+	reg_write_in <= '1';				
+	mem_to_reg_in <= '0';	
+
+	-- forwarding
+	ex_data <= (others=>'0');
+	mem_data <= (others=>'0');
+	forward_rs <= "00";
+	forward_rt <= "00";
+
+  	wait for CLK_PERIOD;
+  	assert alu_result = SLL_RESULT report "Test 12: Unsuccessful" severity error;
   
-----------------------------------------------------------------------------------
+  ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  wait for CLK_PERIOD;
-  reset <= '1';
-  wait for CLK_PERIOD;
-  reset <= '0';
-  wait for CLK_PERIOD;
-
-  ----------------------------------------------------------------------------------
-  -- TEST 11: MFLO
-  ----------------------------------------------------------------------------------
-  report "----- Test 11: MFLO Instruction -----";
-
-  assert alu_result =  report "Test 11: Unsuccessful" severity error;
-  
-----------------------------------------------------------------------------------
-  -- RESET
-  ----------------------------------------------------------------------------------
-  wait for CLK_PERIOD;
-  reset <= '1';
-  wait for CLK_PERIOD;
-  reset <= '0';
-  wait for CLK_PERIOD;
-
-  ----------------------------------------------------------------------------------
-  -- TEST 12: SLL
-  ----------------------------------------------------------------------------------
-  report "----- Test 12: SLL Instruction -----";
-
-  assert alu_result =  report "Test 12: Unsuccessful" severity error;
-  
-----------------------------------------------------------------------------------
-  -- RESET
-  ----------------------------------------------------------------------------------
-  wait for CLK_PERIOD;
-  reset <= '1';
-  wait for CLK_PERIOD;
-  reset <= '0';
-  wait for CLK_PERIOD;
+  	wait for CLK_PERIOD;
+  	reset <= '1';
+  	wait for CLK_PERIOD;
+  	reset <= '0';
+  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 13: SRL
   ----------------------------------------------------------------------------------
-  report "----- Test 13: SRL Instruction -----";
+  	report "----- Test 13: SRL Instruction -----";
+  	instruction <= R_OPCODE & RS & RT & RD & SHAMT & SRL_FUNCT;
 
-  assert alu_result =  report "Test 13: Unsuccessful" severity error;
+	rt_data_in <= DATA_8;
+	next_pc <= NEXT_PC_VALUE;
+
+	-- control signals
+	destination_register_in <= RD;
+	branch_in <= '0';
+	jump_in <= '0';
+	mem_read_in <= '0';		
+	mem_write_in <= '0'; 					
+	reg_write_in <= '1';				
+	mem_to_reg_in <= '0';	
+
+	-- forwarding
+	ex_data <= (others=>'0');
+	mem_data <= (others=>'0');
+	forward_rs <= "00";
+	forward_rt <= "00";
+
+  	wait for CLK_PERIOD;
+  	assert alu_result = SRL_RESULT report "Test 13: Unsuccessful" severity error;
   
-----------------------------------------------------------------------------------
+  ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  wait for CLK_PERIOD;
-  reset <= '1';
-  wait for CLK_PERIOD;
-  reset <= '0';
-  wait for CLK_PERIOD;
+  	wait for CLK_PERIOD;
+  	reset <= '1';
+  	wait for CLK_PERIOD;
+  	reset <= '0';
+  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 14: SRA
   ----------------------------------------------------------------------------------
-  report "----- Test 14: SRA Instruction -----";
+  	report "----- Test 14: SRA Instruction -----";
+  	instruction <= R_OPCODE & RS & RT & RD & SHAMT & SRA_FUNCT;
 
-  assert alu_result =  report "Test 14: Unsuccessful" severity error;
+	rt_data_in <= DATA_8;
+	next_pc <= NEXT_PC_VALUE;
+
+	-- control signals
+	destination_register_in <= RD;
+	branch_in <= '0';
+	jump_in <= '0';
+	mem_read_in <= '0';		
+	mem_write_in <= '0'; 					
+	reg_write_in <= '1';				
+	mem_to_reg_in <= '0';	
+
+	-- forwarding
+	ex_data <= (others=>'0');
+	mem_data <= (others=>'0');
+	forward_rs <= "00";
+	forward_rt <= "00";
+
+  	wait for CLK_PERIOD;
+  	assert alu_result = SRA_RESULT report "Test 14: Unsuccessful" severity error;
   
-----------------------------------------------------------------------------------
+  ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  wait for CLK_PERIOD;
-  reset <= '1';
-  wait for CLK_PERIOD;
-  reset <= '0';
-  wait for CLK_PERIOD;
+  	wait for CLK_PERIOD;
+  	reset <= '1';
+  	wait for CLK_PERIOD;
+  	reset <= '0';
+  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 15: JR
   ----------------------------------------------------------------------------------
-  report "----- Test 15: JR Instruction -----";
+  	report "----- Test 15: JR Instruction -----";
+  	instruction <= R_OPCODE & RS & RT & RD & SHAMT & JR_FUNCT;
 
-  assert alu_result =  report "Test 15: Unsuccessful" severity error;
+	rs_data_in <= DATA_8;
+	next_pc <= NEXT_PC_VALUE;
+
+	-- control signals
+	destination_register_in <= RD;
+	branch_in <= '0';
+	jump_in <= '1';
+	mem_read_in <= '0';		
+	mem_write_in <= '0'; 					
+	reg_write_in <= '0';				
+	mem_to_reg_in <= '0';	
+
+	-- forwarding
+	ex_data <= (others=>'0');
+	mem_data <= (others=>'0');
+	forward_rs <= "00";
+	forward_rt <= "00";
+
+  	wait for CLK_PERIOD;
+  	assert updated_pc = JR_PC_RESULT report "Test 15: Unsuccessful" severity error;
   
-----------------------------------------------------------------------------------
+  ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  wait for CLK_PERIOD;
-  reset <= '1';
-  wait for CLK_PERIOD;
-  reset <= '0';
-  wait for CLK_PERIOD;
+  	wait for CLK_PERIOD;
+  	reset <= '1';
+  	wait for CLK_PERIOD;
+  	reset <= '0';
+  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 16: ADDI
   ----------------------------------------------------------------------------------
   report "----- Test 16: ADDI Instruction -----";
-
+  instruction <= ADDI_OPCODE & RS & RT & IMM;
   assert alu_result =  report "Test 16: Unsuccessful" severity error;
   
-----------------------------------------------------------------------------------
+  ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  wait for CLK_PERIOD;
-  reset <= '1';
-  wait for CLK_PERIOD;
-  reset <= '0';
-  wait for CLK_PERIOD;
+  	wait for CLK_PERIOD;
+  	reset <= '1';
+  	wait for CLK_PERIOD;
+  	reset <= '0';
+  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 17: SLTI
   ----------------------------------------------------------------------------------
   report "----- Test 17: SLTI Instruction -----";
-
+  instruction <= SLTI_OPCODE & RS & RT & IMM;
   assert alu_result =  report "Test 17: Unsuccessful" severity error;
   
-----------------------------------------------------------------------------------
+  ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  wait for CLK_PERIOD;
-  reset <= '1';
-  wait for CLK_PERIOD;
-  reset <= '0';
-  wait for CLK_PERIOD;
+  	wait for CLK_PERIOD;
+  	reset <= '1';
+  	wait for CLK_PERIOD;
+  	reset <= '0';
+  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 18: ORI
   ----------------------------------------------------------------------------------
   report "----- Test 18: ORI Instruction -----";
-
+  instruction <= ORI_OPCODE & RS & RT & IMM;
   assert alu_result =  report "Test 18: Unsuccessful" severity error;
   
-----------------------------------------------------------------------------------
+  ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  wait for CLK_PERIOD;
-  reset <= '1';
-  wait for CLK_PERIOD;
-  reset <= '0';
-  wait for CLK_PERIOD;
+  	wait for CLK_PERIOD;
+  	reset <= '1';
+  	wait for CLK_PERIOD;
+  	reset <= '0';
+  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 19: XORI
   ----------------------------------------------------------------------------------
   report "----- Test 19: XORI Instruction -----";
-
+  instruction <= XORI_OPCODE & RS & RT & IMM;
   assert alu_result =  report "Test 19: Unsuccessful" severity error;
-  
-----------------------------------------------------------------------------------
+   
+  ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  wait for CLK_PERIOD;
-  reset <= '1';
-  wait for CLK_PERIOD;
-  reset <= '0';
-  wait for CLK_PERIOD;
-
+  	wait for CLK_PERIOD;
+  	reset <= '1';
+  	wait for CLK_PERIOD;
+  	reset <= '0';
+  	wait for CLK_PERIOD;
   ----------------------------------------------------------------------------------
   -- TEST 20: LUI
   ----------------------------------------------------------------------------------
   report "----- Test 20: LUI Instruction -----";
-
+  instruction <= LUI_OPCODE & RS & RT & IMM;
   assert alu_result =  report "Test 20: Unsuccessful" severity error;
   
-----------------------------------------------------------------------------------
+  ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  wait for CLK_PERIOD;
-  reset <= '1';
-  wait for CLK_PERIOD;
-  reset <= '0';
-  wait for CLK_PERIOD;
+  	wait for CLK_PERIOD;
+  	reset <= '1';
+  	wait for CLK_PERIOD;
+  	reset <= '0';
+  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 21: LW
   ----------------------------------------------------------------------------------
   report "----- Test 21: LW Instruction -----";
-
+  instruction <= LW_OPCODE & RS & RT & IMM;
   assert alu_result =  report "Test 21: Unsuccessful" severity error;
   
-----------------------------------------------------------------------------------
+  ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  wait for CLK_PERIOD;
-  reset <= '1';
-  wait for CLK_PERIOD;
-  reset <= '0';
-  wait for CLK_PERIOD;
-
+  	wait for CLK_PERIOD;
+  	reset <= '1';
+  	wait for CLK_PERIOD;
+  	reset <= '0';
+  	wait for CLK_PERIOD;
   ----------------------------------------------------------------------------------
   -- TEST 22: SW
   ----------------------------------------------------------------------------------
   report "----- Test 22: SW Instruction -----";
-
+  instruction <= SW_OPCODE & RS & RT & IMM;
   assert alu_result =  report "Test 22: Unsuccessful" severity error;
   
-----------------------------------------------------------------------------------
+
+  ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  wait for CLK_PERIOD;
-  reset <= '1';
-  wait for CLK_PERIOD;
-  reset <= '0';
-  wait for CLK_PERIOD;
+  	wait for CLK_PERIOD;
+  	reset <= '1';
+  	wait for CLK_PERIOD;
+  	reset <= '0';
+  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 23: BEQ
   ----------------------------------------------------------------------------------
   report "----- Test 23: BEQ Instruction -----";
-
+  instruction <= BEQ_OPCODE & RS & RT & IMM;
   assert alu_result =  report "Test 23: Unsuccessful" severity error;
   
-----------------------------------------------------------------------------------
+  ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  wait for CLK_PERIOD;
-  reset <= '1';
-  wait for CLK_PERIOD;
-  reset <= '0';
-  wait for CLK_PERIOD;
+  	wait for CLK_PERIOD;
+  	reset <= '1';
+  	wait for CLK_PERIOD;
+  	reset <= '0';
+  	wait for CLK_PERIOD;
+
+  report "----- Test 24: BNE Instruction -----";
+  instruction <= BNE_OPCODE & RS & RT & IMM;
+  assert alu_result =  report "Test 24: Unsuccessful" severity error;
+
+  ----------------------------------------------------------------------------------
+  -- RESET
+  ----------------------------------------------------------------------------------
+  	wait for CLK_PERIOD;
+  	reset <= '1';
+  	wait for CLK_PERIOD;
+  	reset <= '0';
+  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 24: BNE
   ----------------------------------------------------------------------------------
   report "----- Test 24: BNE Instruction -----";
-
+  instruction <= BNE_OPCODE & RS & RT & IMM;
   assert alu_result =  report "Test 24: Unsuccessful" severity error;
   
-----------------------------------------------------------------------------------
+  ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  wait for CLK_PERIOD;
-  reset <= '1';
-  wait for CLK_PERIOD;
-  reset <= '0';
-  wait for CLK_PERIOD;
+  	wait for CLK_PERIOD;
+  	reset <= '1';
+  	wait for CLK_PERIOD;
+  	reset <= '0';
+  	wait for CLK_PERIOD;
+
+  report "----- Test 24: BNE Instruction -----";
+  instruction <= BNE_OPCODE & RS & RT & IMM;
+  assert alu_result =  report "Test 24: Unsuccessful" severity error;
+
+  ----------------------------------------------------------------------------------
+  -- RESET
+  ----------------------------------------------------------------------------------
+  	wait for CLK_PERIOD;
+  	reset <= '1';
+  	wait for CLK_PERIOD;
+  	reset <= '0';
+  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 25: J
   ----------------------------------------------------------------------------------
   report "----- Test 25: J Instruction -----";
-
+  instruction <= J_OPCODE & ADDRESS;
   assert alu_result =  report "Test 25: Unsuccessful" severity error;
 
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  wait for CLK_PERIOD;
-  reset <= '1';
-  wait for CLK_PERIOD;
-  reset <= '0';
-  wait for CLK_PERIOD;
+  	wait for CLK_PERIOD;
+  	reset <= '1';
+  	wait for CLK_PERIOD;
+  	reset <= '0';
+  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 26: JAL
   ----------------------------------------------------------------------------------
   report "----- Test 26: JAL Instruction -----";
-
+  instruction <= J_OPCODE & ADDRESS;
   assert alu_result =  report "Test 26: Unsuccessful" severity error;
 
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  wait for CLK_PERIOD;
-  reset <= '1';
-  wait for CLK_PERIOD;
-  reset <= '0';
-  wait for CLK_PERIOD;
+  	wait for CLK_PERIOD;
+  	reset <= '1';
+  	wait for CLK_PERIOD;
+  	reset <= '0';
+  	wait for CLK_PERIOD;
+
+  ----------------------------------------------------------------------------------
+  -- TEST 27: Forwarding from EX
+  ----------------------------------------------------------------------------------
+  report "----- Test 27: Forwarding from EX -----";
+
+  instruction <= R_OPCODE & RS & RT & RD & SHAMT & ADD_FUNCT;
+  assert alu_result =  report "Test 27: Unsuccessful" severity error;
+
+  ----------------------------------------------------------------------------------
+  -- RESET
+  ----------------------------------------------------------------------------------
+  	wait for CLK_PERIOD;
+  	reset <= '1';
+  	wait for CLK_PERIOD;
+  	reset <= '0';
+  	wait for CLK_PERIOD;
+
+
+  ----------------------------------------------------------------------------------
+  -- TEST 28: Forwarding from MEM
+  ----------------------------------------------------------------------------------
+  report "----- Test 28: Forwarding from MEM -----";
+  instruction <= R_OPCODE & RS & RT & RD & SHAMT & ADD_FUNCT;
+  assert alu_result =  report "Test 28: Unsuccessful" severity error;
+
+  ----------------------------------------------------------------------------------
+  -- RESET
+  ----------------------------------------------------------------------------------
+  	wait for CLK_PERIOD;
+  	reset <= '1';
+  	wait for CLK_PERIOD;
+  	reset <= '0';
+  	wait for CLK_PERIOD;
+
+  ----------------------------------------------------------------------------------
+  -- TEST 29: Data Hazard
+  ----------------------------------------------------------------------------------
+  report "----- Test 29: Data Hazard -----";
+  assert alu_result =  report "Test 29: Unsuccessful" severity error;
+
+  ----------------------------------------------------------------------------------
+  -- RESET
+  ----------------------------------------------------------------------------------
+  	wait for CLK_PERIOD;
+  	reset <= '1';
+  	wait for CLK_PERIOD;
+  	reset <= '0';
+  	wait for CLK_PERIOD;
+
 
   report "----- Confirming all tests have ran -----";
   wait;

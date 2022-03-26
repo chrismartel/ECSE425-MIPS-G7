@@ -5,16 +5,19 @@ use ieee.numeric_std.all;
 entity execute is
 
 port(
-	-- INPUTS (from ID stage)
+	-- INPUTS
+
+	-- Synchronoucity Inputs
 	clk : in std_logic;
 	reset : in std_logic;
 
+	-- Execute Inputs
 	instruction: in std_logic_vector (31 downto 0);
 	rs_data_in: in std_logic_vector (31 downto 0);
 	rt_data_in: in std_logic_vector (31 downto 0);
 	next_pc: in std_logic_vector (31 downto 0); -- pc + 4
 
-	-- control signals (passed from decode stage to wb stage)
+	-- Control Signals Inputs
 	rd_in: in std_logic_vector (4 downto 0); 			-- the destination register where to write the instr. result
 	branch_in: in std_logic; 					-- indicates if its is a branch operation (beq, bne)
 	jump_in: in std_logic; 						-- indicates if it is a jump instruction (j, jr, jal)
@@ -22,23 +25,8 @@ port(
 	mem_write_in: in std_logic; 					-- indicates if value in rt_data_in must be written in memory at calculated address
 	reg_write_in: in std_logic; 					-- indicates if value calculated in ALU must be written to destination register
 	mem_to_reg_in: in std_logic; 					-- indicates if value loaded from memory must be writte to destination register
-
-	-- OUTPUTS (To MEM stage)
-	alu_result: out std_logic_vector (31 downto 0); 		-- ** connect to prev_alu_result for forwarding puproses
-	updated_pc: out std_logic_vector (31 downto 0);
-	rt_data_out: out std_logic_vector (31 downto 0);
-	stall_out: out std_logic;					-- indicates stall instruction
-
-	-- control signals
-	rd_out: out std_logic_vector (4 downto 0); -- ** connect to ex_rd input of forwarding unit
-	branch_out: out std_logic;
-	jump_out: out std_logic;
-	mem_read_out: out std_logic;
-	mem_write_out: out std_logic;
-	reg_write_out: out std_logic; 				-- ** connect to ex_reg_write input of forwarding unit
-	mem_to_reg_out: out std_logic;
-
-	-- FORWARDING (from forwarding unit)
+	
+	-- Forwarding Unit Inputs
 	ex_data: in std_logic_vector(31 downto 0); 	-- current output data of ex stage
 	mem_data: in std_logic_vector(31 downto 0); 		-- current output data of mem stage
 	
@@ -47,7 +35,23 @@ port(
 	-- "01": take input from EX stage
 	-- "10": take input from MEM stage
 	forward_rs: in std_logic_vector(1 downto 0);		-- forwarding control bits of rs register
-	forward_rt: in std_logic_vector(1 downto 0)		-- forwarding control bits of rt register
+	forward_rt: in std_logic_vector(1 downto 0);		-- forwarding control bits of rt register
+
+	-- OUTPUTS
+	-- Execute Outputs
+	alu_result: out std_logic_vector (31 downto 0); 		-- ** connect to prev_alu_result for forwarding puproses
+	updated_pc: out std_logic_vector (31 downto 0);
+	rt_data_out: out std_logic_vector (31 downto 0);
+	stall_out: out std_logic;					-- indicates stall instruction
+
+	-- Control Signals Outputs
+	rd_out: out std_logic_vector (4 downto 0); -- ** connect to ex_rd input of forwarding unit
+	branch_out: out std_logic;
+	jump_out: out std_logic;
+	mem_read_out: out std_logic;
+	mem_write_out: out std_logic;
+	reg_write_out: out std_logic; 				-- ** connect to ex_reg_write input of forwarding unit
+	mem_to_reg_out: out std_logic
 );
 end execute;
 
