@@ -68,7 +68,7 @@ architecture behavior of execute_tb is
 	constant JAL_OPCODE : std_logic_vector (5 downto 0) := "000011"; -- jump and link
     
 -- CLOCK
-	constant CLK_PERIOD : time := 1 ns;
+	constant CLK_PERIOD : time := 10 ns;
 
 component execute is
 
@@ -93,7 +93,7 @@ port(
 
 	-- OUTPUTS
 	alu_result: out std_logic_vector (31 downto 0);
-	updated_pc: out std_logic_vector (31 downto 0);
+	updated_next_pc: out std_logic_vector (31 downto 0);
 	rt_data_out: out std_logic_vector (31 downto 0);
 	stall_out: out std_logic;
 
@@ -136,7 +136,7 @@ signal mem_to_reg_in: std_logic;
 
 -- Execute Outputs
 signal alu_result: std_logic_vector (31 downto 0);
-signal updated_pc: std_logic_vector (31 downto 0);
+signal updated_next_pc: std_logic_vector (31 downto 0);
 signal rt_data_out: std_logic_vector (31 downto 0);
 
 -- Control Signals Outputs
@@ -177,25 +177,26 @@ constant NEXT_PC_VALUE: std_logic_vector(31 downto 0) := x"00000004";
 -- R
 constant ADD_RESULT: std_logic_vector(31 downto 0) := x"0000000C";
 constant SUB_RESULT: std_logic_vector(31 downto 0) := x"00000004";
-constant MUL_RESULT: std_logic_vector(63 downto 0) := x"0000000000000018";
-constant MFHI_RESULT: std_logic_vector(31 downto 0) := x"00000000";
-constant MFLO_RESULT: std_logic_vector(31 downto 0) := x"00000018";
-constant DIV_RESULT: std_logic_vector(31 downto 0) := x"00000002";
+constant MULT_LOW_RESULT: std_logic_vector(31 downto 0) := x"00000020";
+constant MULT_HIGH_RESULT: std_logic_vector(31 downto 0) := x"00000000";
+constant DIV_LOW_RESULT: std_logic_vector(31 downto 0) := x"00000002";
+constant DIV_HIGH_RESULT: std_logic_vector(31 downto 0) := x"00000000";
 constant SLT_TRUE_RESULT: std_logic_vector(31 downto 0) := x"00000001";
 constant SLT_FALSE_RESULT: std_logic_vector(31 downto 0) := x"00000000";
 constant AND_RESULT: std_logic_vector(31 downto 0) := "00000000000000000000000000000000";
 constant OR_RESULT: std_logic_vector(31 downto 0) := "00000000000000000000000000001100";
 constant NOR_RESULT: std_logic_vector(31 downto 0) := "11111111111111111111111111110011";
 constant XOR_RESULT: std_logic_vector(31 downto 0) := "00000000000000000000000000001100";
-constant SLL_RESULT: std_logic_vector(31 downto 0) := x"00000008";
-constant SRL_RESULT: std_logic_vector(31 downto 0) := x"3FFFFFFF"; 
-constant SRA_RESULT: std_logic_vector(31 downto 0) := x"FFFFFFFF";
+constant SLL_RESULT: std_logic_vector(31 downto 0) := x"00000020";
+constant SRL_RESULT: std_logic_vector(31 downto 0) := x"00000002"; 
+constant SRA_RESULT: std_logic_vector(31 downto 0) := x"00000002";
+constant SRA_NEGATIVE_RESULT: std_logic_vector(31 downto 0) := x"FFFFFFFF";
 constant JR_PC_RESULT: std_logic_vector(31 downto 0) := x"00000008";
 
 -- I
-constant ADDI_RESULT: std_logic_vector(31 downto 0) := x"00000010";
+constant ADDI_RESULT: std_logic_vector(31 downto 0) := x"0000000C";
 constant SLTI_TRUE_RESULT: std_logic_vector(31 downto 0) := x"00000001";
-constant SLTI_FALSE_RESULT: std_logic_vector(31 downto 0) := x"00000001";
+constant SLTI_FALSE_RESULT: std_logic_vector(31 downto 0) := x"00000000";
 constant ORI_RESULT: std_logic_vector(31 downto 0) := x"0000000C";
 constant XORI_RESULT: std_logic_vector(31 downto 0) := x"0000000C";
 constant LUI_RESULT: std_logic_vector(31 downto 0) := x"00040000";
@@ -203,12 +204,12 @@ constant LW_RESULT: std_logic_vector(31 downto 0) := x"0000000C";
 constant SW_RESULT: std_logic_vector(31 downto 0) := x"0000000C";
 constant BEQ_TAKEN_PC_RESULT: std_logic_vector(31 downto 0) := x"00000014";
 constant BEQ_NOT_TAKEN_PC_RESULT: std_logic_vector(31 downto 0) := x"00000004";
-constant BNE_TAKEN_PC_RESULT: std_logic_vector(31 downto 0) := x"00000010";
+constant BNE_TAKEN_PC_RESULT: std_logic_vector(31 downto 0) := x"00000014";
 constant BNE_NOT_TAKEN_PC_RESULT: std_logic_vector(31 downto 0) := x"00000004";
 
 -- J
-constant J_PC_RESULT: std_logic_vector(31 downto 0) := x"00000004";
-constant JAL_PC_RESULT: std_logic_vector(31 downto 0) := x"00000004";
+constant J_PC_RESULT: std_logic_vector(31 downto 0) := x"00000010";
+constant JAL_PC_RESULT: std_logic_vector(31 downto 0) := x"00000010";
 constant JAL_RESULT: std_logic_vector(31 downto 0) := x"00000008";
 begin
 
@@ -242,7 +243,7 @@ port map(
 
 	-- OUTPUTS
 	alu_result => alu_result,
-	updated_pc => updated_pc,
+	updated_next_pc => updated_next_pc,
 	rt_data_out => rt_data_out,
 	stall_out => stall_out,
 
@@ -403,7 +404,7 @@ begin
 	forward_rt <= "00";
 
   	wait for CLK_PERIOD;
-  	assert alu_result = MFLO_RESULT report "Test 3: Unsuccessful - Invalid Low Value" severity error;
+  	assert alu_result = MULT_LOW_RESULT report "Test 3: Unsuccessful - Invalid Low Value" severity error;
 
 	------------ MFHI ------------
 	instruction <= R_OPCODE & RS & RT & RD & SHAMT & MFHI_FUNCT;
@@ -425,7 +426,7 @@ begin
 	forward_rt <= "00";
 
   	wait for CLK_PERIOD;
-  	assert alu_result = MFHI_RESULT report "Test 3: Unsuccessful - Invalid High Value" severity error;
+  	assert alu_result = MULT_HIGH_RESULT report "Test 3: Unsuccessful - Invalid High Value" severity error;
   
   ----------------------------------------------------------------------------------
   -- RESET
@@ -452,6 +453,29 @@ begin
 	jump_in <= '0';
 	mem_read_in <= '0';		
 	mem_write_in <= '0'; 					
+	reg_write_in <= '0';				
+	mem_to_reg_in <= '0';	
+
+	-- forwarding
+	ex_data <= (others=>'0');
+	mem_data <= (others=>'0');
+	forward_rs <= "00";
+	forward_rt <= "00";
+
+  	wait for CLK_PERIOD;
+
+	------------ MFLO ------------ 
+  	wait for CLK_PERIOD;
+
+	instruction <= R_OPCODE & RS & RT & RD & SHAMT & MFLO_FUNCT;
+	next_pc <= NEXT_PC_VALUE;
+
+	-- control signals
+	destination_register_in <= RD;
+	branch_in <= '0';
+	jump_in <= '0';
+	mem_read_in <= '0';		
+	mem_write_in <= '0'; 					
 	reg_write_in <= '1';				
 	mem_to_reg_in <= '0';	
 
@@ -462,8 +486,38 @@ begin
 	forward_rt <= "00";
 
   	wait for CLK_PERIOD;
-  	assert alu_result = DIV_RESULT report "Test 4: Unsuccessful" severity error;
+  	assert alu_result = DIV_LOW_RESULT report "Test 3: Unsuccessful - Invalid Low Value" severity error;
+
+	------------ MFHI ------------
+	instruction <= R_OPCODE & RS & RT & RD & SHAMT & MFHI_FUNCT;
+	next_pc <= NEXT_PC_VALUE;
+
+	-- control signals
+	destination_register_in <= RD;
+	branch_in <= '0';
+	jump_in <= '0';
+	mem_read_in <= '0';		
+	mem_write_in <= '0'; 					
+	reg_write_in <= '1';				
+	mem_to_reg_in <= '0';	
+
+	-- forwarding
+	ex_data <= (others=>'0');
+	mem_data <= (others=>'0');
+	forward_rs <= "00";
+	forward_rt <= "00";
+
+  	wait for CLK_PERIOD;
+  	assert alu_result = DIV_HIGH_RESULT report "Test 3: Unsuccessful - Invalid High Value" severity error;
   
+  ----------------------------------------------------------------------------------
+  -- RESET
+  ----------------------------------------------------------------------------------
+  	wait for CLK_PERIOD;
+  	reset <= '1';
+  	wait for CLK_PERIOD;
+  	reset <= '0';
+  	wait for CLK_PERIOD;
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
@@ -781,6 +835,29 @@ begin
 
   	wait for CLK_PERIOD;
   	assert alu_result = SRA_RESULT report "Test 14: Unsuccessful" severity error;
+
+  	instruction <= R_OPCODE & RS & RT & RD & SHAMT & SRA_FUNCT;
+
+	rt_data_in <= DATA_MINUS_4;
+	next_pc <= NEXT_PC_VALUE;
+
+	-- control signals
+	destination_register_in <= RD;
+	branch_in <= '0';
+	jump_in <= '0';
+	mem_read_in <= '0';		
+	mem_write_in <= '0'; 					
+	reg_write_in <= '1';				
+	mem_to_reg_in <= '0';	
+
+	-- forwarding
+	ex_data <= (others=>'0');
+	mem_data <= (others=>'0');
+	forward_rs <= "00";
+	forward_rt <= "00";
+
+  	wait for CLK_PERIOD;
+  	assert alu_result = SRA_NEGATIVE_RESULT report "Test 14: Unsuccessful" severity error;
   
   ----------------------------------------------------------------------------------
   -- RESET
@@ -816,7 +893,7 @@ begin
 	forward_rt <= "00";
 
   	wait for CLK_PERIOD;
-  	assert updated_pc = JR_PC_RESULT report "Test 15: Unsuccessful" severity error;
+  	assert updated_next_pc = JR_PC_RESULT report "Test 15: Unsuccessful" severity error;
   
   ----------------------------------------------------------------------------------
   -- RESET
@@ -890,6 +967,16 @@ begin
   	wait for CLK_PERIOD;
   	assert alu_result = SLTI_FALSE_RESULT report "Test 17: Unsuccessful" severity error;
 
+  ----------------------------------------------------------------------------------
+  -- RESET
+  ----------------------------------------------------------------------------------
+  	wait for CLK_PERIOD;
+  	reset <= '1';
+  	wait for CLK_PERIOD;
+  	reset <= '0';
+  	wait for CLK_PERIOD;
+
+  	instruction <= SLTI_OPCODE & RS & RT & IMM_8;
 	rs_data_in <= DATA_4;
 	next_pc <= NEXT_PC_VALUE;
 
@@ -1125,7 +1212,7 @@ begin
 	forward_rt <= "00";
 
   	wait for CLK_PERIOD;
-  	assert updated_pc = BEQ_TAKEN_PC_RESULT report "Test 23: Unsuccessful" severity error;
+  	assert updated_next_pc = BEQ_TAKEN_PC_RESULT report "Test 23.a: Unsuccessful" severity error;
 
   ----------------------------------------------------------------------------------
   -- RESET
@@ -1160,7 +1247,7 @@ begin
 	forward_rt <= "00";
 
   	wait for CLK_PERIOD;
-  	assert updated_pc = BEQ_NOT_TAKEN_PC_RESULT report "Test 23: Unsuccessful" severity error;
+  	assert updated_next_pc = BEQ_NOT_TAKEN_PC_RESULT report "Test 23.b: Unsuccessful" severity error;
   
   ----------------------------------------------------------------------------------
   -- RESET
@@ -1198,7 +1285,7 @@ begin
 	forward_rt <= "00";
 
   	wait for CLK_PERIOD;
-  	assert updated_pc = BNE_TAKEN_PC_RESULT report "Test 24: Unsuccessful" severity error;
+  	assert updated_next_pc = BNE_TAKEN_PC_RESULT report "Test 24.a: Unsuccessful" severity error;
 
   ----------------------------------------------------------------------------------
   -- RESET
@@ -1233,7 +1320,7 @@ begin
 	forward_rt <= "00";
 
   	wait for CLK_PERIOD;
-  	assert updated_pc = BNE_NOT_TAKEN_PC_RESULT report "Test 24: Unsuccessful" severity error;
+  	assert updated_next_pc = BNE_NOT_TAKEN_PC_RESULT report "Test 24.b: Unsuccessful" severity error;
 
   ----------------------------------------------------------------------------------
   -- RESET
@@ -1268,7 +1355,7 @@ begin
 	forward_rt <= "00";
 
   	wait for CLK_PERIOD;
-  	assert updated_pc = J_PC_RESULT report "Test 25: Unsuccessful" severity error;
+  	assert updated_next_pc = J_PC_RESULT report "Test 25: Unsuccessful" severity error;
 
   ----------------------------------------------------------------------------------
   -- RESET
@@ -1283,7 +1370,7 @@ begin
   -- TEST 26: JAL
   ----------------------------------------------------------------------------------
   	report "----- Test 26: JAL Instruction -----";
-  	instruction <= J_OPCODE & ADDRESS;
+  	instruction <= JAL_OPCODE & ADDRESS;
 
 	next_pc <= NEXT_PC_VALUE;
 
@@ -1303,8 +1390,8 @@ begin
 	forward_rt <= "00";
 
   	wait for CLK_PERIOD;
-  	assert alu_result = JAL_RESULT report "Test 26: Unsuccessful" severity error;
-	assert updated_pc = JAL_PC_RESULT report "Test 26: Unsuccessful" severity error;
+  	assert alu_result = JAL_RESULT report "Test 26.a: Unsuccessful" severity error;
+	assert updated_next_pc = JAL_PC_RESULT report "Test 26.b: Unsuccessful" severity error;
 
   ----------------------------------------------------------------------------------
   -- RESET
