@@ -9,9 +9,9 @@ Port ( I_clk : in  STD_LOGIC;
        I_dataD : in  STD_LOGIC_VECTOR (31 downto 0);
        O_dataA : out  STD_LOGIC_VECTOR (31 downto 0);
        O_dataB : out  STD_LOGIC_VECTOR (31 downto 0);
-       I_selA : in  STD_LOGIC_VECTOR (2 downto 0);
-       I_selB : in  STD_LOGIC_VECTOR (2 downto 0);
-       I_selD : in  STD_LOGIC_VECTOR (2 downto 0);
+       I_selA : in  STD_LOGIC_VECTOR (4 downto 0);
+       I_selB : in  STD_LOGIC_VECTOR (4 downto 0);
+       I_selD : in  STD_LOGIC_VECTOR (4 downto 0);
        I_we : in  STD_LOGIC);
 		 
 end regs;
