@@ -13,12 +13,12 @@ port(
 	I_reset : in std_logic;
 
 	-- Execute Inputs
-        I_imm_SE : in  STD_LOGIC_VECTOR (31 downto 0);
-	I_imm_ZE : in STD_LOGIC_VECTOR (31 downto 0);
-        I_opcode : in  STD_LOGIC_VECTOR (5 downto 0);
-	I_shamt: in STD_LOGIC_VECTOR (5 downto 0);
-	I_funct: in STD_LOGIC_VECTOR (5 downto 0);
-	I_addr: in STD_LOGIC_VECTOR (25 downto 0);
+        I_imm_SE : in  std_logic_vector (31 downto 0);
+	I_imm_ZE : in std_logic_vector (31 downto 0);
+        I_opcode : in  std_logic_vector (5 downto 0);
+	I_shamt: in std_logic_vector (4 downto 0);
+	I_funct: in std_logic_vector (5 downto 0);
+	I_addr: in std_logic_vector (25 downto 0);
 	
 	I_rs: in std_logic_vector (4 downto 0);
 	I_rt: in std_logic_vector (4 downto 0);

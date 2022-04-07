@@ -1,34 +1,41 @@
 ;# add waves to the Wave window
 
 proc AddWaves {} {
-    add wave -position end  sim:/execute_tb/reset
-    add wave -position end  sim:/execute_tb/clk
-    add wave -position end  sim:/execute_tb/instruction
-    add wave -position end  sim:/execute_tb/rs_data_in
-    add wave -position end  sim:/execute_tb/rt_data_in
-    add wave -position end  sim:/execute_tb/next_pc
-    add wave -position end  sim:/execute_tb/destination_register_in
-    add wave -position end  sim:/execute_tb/branch_in
-    add wave -position end  sim:/execute_tb/jump_in
-    add wave -position end  sim:/execute_tb/mem_read_in
-    add wave -position end  sim:/execute_tb/mem_write_in
-    add wave -position end  sim:/execute_tb/reg_write_in
-    add wave -position end  sim:/execute_tb/mem_to_reg_in
-    add wave -position end  sim:/execute_tb/alu_result
-    add wave -position end  sim:/execute_tb/updated_next_pc
-    add wave -position end  sim:/execute_tb/rt_data_out
-    add wave -position end  sim:/execute_tb/destination_register_out
-    add wave -position end  sim:/execute_tb/branch_out
-    add wave -position end  sim:/execute_tb/jump_out
-    add wave -position end  sim:/execute_tb/mem_read_out
-    add wave -position end  sim:/execute_tb/mem_write_out
-    add wave -position end  sim:/execute_tb/reg_write_out
-    add wave -position end  sim:/execute_tb/mem_to_reg_out
-    add wave -position end  sim:/execute_tb/stall_out
-    add wave -position end  sim:/execute_tb/ex_data
-    add wave -position end  sim:/execute_tb/mem_data
-    add wave -position end  sim:/execute_tb/forward_rs
-    add wave -position end  sim:/execute_tb/forward_rt
+    add wave -position end  sim:/execute_tb/I_reset
+    add wave -position end  sim:/execute_tb/I_clk
+    add wave -position end  sim:/execute_tb/I_rs
+    add wave -position end  sim:/execute_tb/I_rt
+    add wave -position end  sim:/execute_tb/I_imm_SE
+    add wave -position end  sim:/execute_tb/I_imm_ZE
+    add wave -position end  sim:/execute_tb/I_opcode
+    add wave -position end  sim:/execute_tb/I_shamt
+    add wave -position end  sim:/execute_tb/I_funct
+    add wave -position end  sim:/execute_tb/I_addr
+    add wave -position end  sim:/execute_tb/I_rs_data
+    add wave -position end  sim:/execute_tb/I_rt_data
+    add wave -position end  sim:/execute_tb/I_next_pc
+    add wave -position end  sim:/execute_tb/I_rd
+    add wave -position end  sim:/execute_tb/I_branch
+    add wave -position end  sim:/execute_tb/I_jump
+    add wave -position end  sim:/execute_tb/I_mem_read
+    add wave -position end  sim:/execute_tb/I_mem_write
+    add wave -position end  sim:/execute_tb/I_reg_write
+    add wave -position end  sim:/execute_tb/I_mem_to_reg
+    add wave -position end  sim:/execute_tb/O_alu_result
+    add wave -position end  sim:/execute_tb/O_updated_next_pc
+    add wave -position end  sim:/execute_tb/O_rt_data
+    add wave -position end  sim:/execute_tb/O_rd
+    add wave -position end  sim:/execute_tb/O_branch
+    add wave -position end  sim:/execute_tb/O_jump
+    add wave -position end  sim:/execute_tb/O_mem_read
+    add wave -position end  sim:/execute_tb/O_mem_write
+    add wave -position end  sim:/execute_tb/O_reg_write
+    add wave -position end  sim:/execute_tb/O_mem_to_reg
+    add wave -position end  sim:/execute_tb/O_stall
+    add wave -position end  sim:/execute_tb/I_ex_data
+    add wave -position end  sim:/execute_tb/I_mem_data
+    add wave -position end  sim:/execute_tb/I_forward_rs
+    add wave -position end  sim:/execute_tb/I_forward_rt
 }
 
 vlib work
