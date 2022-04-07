@@ -39,7 +39,7 @@ begin
 
   --dut => Device Under Test
   dut: instruction_memory GENERIC MAP(
-          ram_size => 32
+          ram_size => 40
               )
               PORT MAP(
                   clk,
@@ -60,13 +60,15 @@ begin
       wait for clk_period/2;
   end process;
 
-  load_from_txt: process is
+  test_process: process is
+    -- Variables used to load memory from text file
     variable line_v : line;
     file read_file : text;
     file write_file : text;
     variable instruction : std_logic_vector(31 downto 0);
     variable count : INTEGER Range 0 to 31 := 0;
   begin
+    -- Load from text file
     file_open(read_file, "C:\Users\Bruno\IdeaProjects\ECSE425-MIPS-G7\src\mips\memory\source.txt", read_mode);
     file_open(write_file, "C:\Users\Bruno\IdeaProjects\ECSE425-MIPS-G7\src\mips\memory\target.txt", write_mode);
     while not endfile(read_file) loop
@@ -82,14 +84,31 @@ begin
       wait until rising_edge(waitrequest);
       memwrite <= '0';
       count := count + 4;
+      wait for clk_period;
     end loop;
     file_close(read_file);
     file_close(write_file);
+
+    -- TEST CASES:
+    report "Starting Tests" ;
+    -- TEST 1: read data
+    -- addess is still at LSB of last loaded instruction
+    memread <= '1';
+    wait until rising_edge(waitrequest);
+    assert readdata = instruction report "write unsuccessful" severity error;
+    -- TEST 2 : write then read
+    memread <= '0';
+    wait for clk_period;
+    address <= 0;
+    writedata <= X"ffffffff";
+    memwrite <= '1';
+    wait until rising_edge(waitrequest);
+    memwrite <= '0';
+    wait for clk_period;
+    memread <= '1';
+    wait until rising_edge(waitrequest);
+    assert readdata = x"ffffffff" report "write unsuccessful" severity error;
     wait;
-
-
-
   end process;
-
 
 end architecture;
