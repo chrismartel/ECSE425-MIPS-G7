@@ -68,93 +68,111 @@ architecture behavior of execute_tb is
 	constant JAL_OPCODE : std_logic_vector (5 downto 0) := "000011"; -- jump and link
     
 -- CLOCK
-	constant CLK_PERIOD : time := 10 ns;
+	constant clk_PERIOD : time := 10 ns;
 
 component execute is
 
 port(
 	-- INPUTS
-	clk : in std_logic;
-	reset : in std_logic;
+	I_clk : in std_logic;
+	I_reset : in std_logic;
 
-	instruction: in std_logic_vector (31 downto 0);
-	rs_data_in: in std_logic_vector (31 downto 0);
-	rt_data_in: in std_logic_vector (31 downto 0);
-	next_pc: in std_logic_vector (31 downto 0); -- pc + 4
+	-- instruction signals
+	I_rs: in std_logic_vector (4 downto 0);
+	I_rt: in std_logic_vector (4 downto 0);
+ 	I_imm_SE : in  STD_LOGIC_VECTOR (31 downto 0);
+	I_imm_ZE : in STD_LOGIC_VECTOR (31 downto 0);
+        I_opcode : in  STD_LOGIC_VECTOR (5 downto 0);
+	I_shamt: in STD_LOGIC_VECTOR (4 downto 0);
+	I_funct: in STD_LOGIC_VECTOR (5 downto 0);
+	I_addr: in STD_LOGIC_VECTOR (25 downto 0);
+	
+	I_rs_data: in std_logic_vector (31 downto 0);
+	I_rt_data: in std_logic_vector (31 downto 0);
+	I_next_pc: in std_logic_vector (31 downto 0); -- pc + 4
 
 	-- control signals (passed from decode stage to wb stage)
-	destination_register_in: in std_logic_vector (4 downto 0); 	-- the destination register where to write the instr. result
-	branch_in: in std_logic; 					-- indicates if its is a branch operation (beq, bne)
-	jump_in: in std_logic; 						-- indicates if it is a jump instruction (j, jr, jal)
-	mem_read_in: in std_logic; 					-- indicates if a value must be read from memory at calculated address
-	mem_write_in: in std_logic; 					-- indicates if value in rt_data_in must be written in memory at calculated address
-	reg_write_in: in std_logic; 					-- indicates if value calculated in ALU must be written to destination register
-	mem_to_reg_in: in std_logic; 					-- indicates if value loaded from memory must be writte to destination register
+	I_rd: in std_logic_vector (4 downto 0); 	-- the destination register where to write the instr. result
+	I_branch: in std_logic; 					-- indicates if its is a branch operation (beq, bne)
+	I_jump: in std_logic; 						-- indicates if it is a jump instruction (j, jr, jal)
+	I_mem_read: in std_logic; 					-- indicates if a value must be read from memory at calculated address
+	I_mem_write: in std_logic; 					-- indicates if value in I_rt_data must be written in memory at calculated address
+	I_reg_write: in std_logic; 					-- indicates if value calculated in ALU must be written to destination register
+	I_mem_to_reg: in std_logic; 					-- indicates if value loaded from memory must be writte to destination register
 
 	-- OUTPUTS
-	alu_result: out std_logic_vector (31 downto 0);
-	updated_next_pc: out std_logic_vector (31 downto 0);
-	rt_data_out: out std_logic_vector (31 downto 0);
-	stall_out: out std_logic;
+	O_alu_result: out std_logic_vector (31 downto 0);
+	O_updated_next_pc: out std_logic_vector (31 downto 0);
+	O_rt_data: out std_logic_vector (31 downto 0);
+	O_stall: out std_logic;
 
 	-- control signals
-	destination_register_out: out std_logic_vector (4 downto 0);
-	branch_out: out std_logic;
-	jump_out: out std_logic;
-	mem_read_out: out std_logic;
-	mem_write_out: out std_logic;
-	reg_write_out: out std_logic;
-	mem_to_reg_out: out std_logic;
+	O_rd: out std_logic_vector (4 downto 0);
+	O_branch: out std_logic;
+	O_jump: out std_logic;
+	O_mem_read: out std_logic;
+	O_mem_write: out std_logic;
+	O_reg_write: out std_logic;
+	O_mem_to_reg: out std_logic;
 
 	-- forwarding
-	ex_data: in std_logic_vector (31 downto 0);
-	mem_data: in std_logic_vector (31 downto 0);
+	I_ex_data: in std_logic_vector (31 downto 0);
+	I_mem_data: in std_logic_vector (31 downto 0);
 
-	forward_rs: in std_logic_vector (1 downto 0);
-	forward_rt: in std_logic_vector (1 downto 0)
+	I_forward_rs: in std_logic_vector (1 downto 0);
+	I_forward_rt: in std_logic_vector (1 downto 0)
 );
 end component;
 
 -- Synchronoucity Inputs
-signal reset : std_logic := '0';
-signal clk : std_logic := '0';
+signal I_reset : std_logic := '0';
+signal I_clk : std_logic := '0';
 
 -- Execute Inputs
-signal instruction: std_logic_vector (31 downto 0);
-signal rs_data_in: std_logic_vector (31 downto 0);
-signal rt_data_in: std_logic_vector (31 downto 0);
-signal next_pc: std_logic_vector (31 downto 0); 
+
+-- instruction signals
+signal I_rs: std_logic_vector (4 downto 0);
+signal I_rt: std_logic_vector (4 downto 0);
+signal I_imm_SE :  std_logic_vector (31 downto 0);
+signal I_imm_ZE : std_logic_vector (31 downto 0);
+signal I_opcode :  std_logic_vector (5 downto 0);
+signal I_shamt: std_logic_vector (4 downto 0);
+signal I_funct: std_logic_vector (5 downto 0);
+signal I_addr: std_logic_vector (25 downto 0);
+signal I_rs_data: std_logic_vector (31 downto 0);
+signal I_rt_data: std_logic_vector (31 downto 0);
+signal I_next_pc: std_logic_vector (31 downto 0); 
 
 -- Control Signals Inputs
-signal destination_register_in: std_logic_vector (4 downto 0); 	
-signal branch_in: std_logic; 					
-signal jump_in: std_logic; 						
-signal mem_read_in: std_logic; 					
-signal mem_write_in: std_logic; 					
-signal reg_write_in: std_logic; 					
-signal mem_to_reg_in: std_logic; 					
+signal I_rd: std_logic_vector (4 downto 0); 	
+signal I_branch: std_logic; 					
+signal I_jump: std_logic; 						
+signal I_mem_read: std_logic; 					
+signal I_mem_write: std_logic; 					
+signal I_reg_write: std_logic; 					
+signal I_mem_to_reg: std_logic; 					
 
 -- Execute Outputs
-signal alu_result: std_logic_vector (31 downto 0);
-signal updated_next_pc: std_logic_vector (31 downto 0);
-signal rt_data_out: std_logic_vector (31 downto 0);
+signal O_alu_result: std_logic_vector (31 downto 0);
+signal O_updated_next_pc: std_logic_vector (31 downto 0);
+signal O_rt_data: std_logic_vector (31 downto 0);
 
 -- Control Signals Outputs
-signal destination_register_out: std_logic_vector (4 downto 0);
-signal branch_out: std_logic;
-signal jump_out: std_logic;
-signal mem_read_out: std_logic;
-signal mem_write_out: std_logic;
-signal reg_write_out: std_logic;
-signal mem_to_reg_out: std_logic;
-signal stall_out: std_logic;
+signal O_rd: std_logic_vector (4 downto 0);
+signal O_branch: std_logic;
+signal O_jump: std_logic;
+signal O_mem_read: std_logic;
+signal O_mem_write: std_logic;
+signal O_reg_write: std_logic;
+signal O_mem_to_reg: std_logic;
+signal O_stall: std_logic;
 
 -- Forwarding Signals
-signal ex_data: std_logic_vector (31 downto 0);
-signal mem_data: std_logic_vector (31 downto 0);
+signal I_ex_data: std_logic_vector (31 downto 0);
+signal I_mem_data: std_logic_vector (31 downto 0);
 
-signal forward_rs: std_logic_vector (1 downto 0);
-signal forward_rt: std_logic_vector (1 downto 0);
+signal I_forward_rs: std_logic_vector (1 downto 0);
+signal I_forward_rt: std_logic_vector (1 downto 0);
 
 -- Input data
 constant RD: std_logic_vector(4 downto 0) := "00011"; -- R3
@@ -163,8 +181,8 @@ constant RT: std_logic_vector(4 downto 0) := "00010"; -- R2
 constant LR: std_logic_vector(4 downto 0) := "11111"; -- R31
 constant R0: std_logic_vector(4 downto 0) := "00000"; -- $R0
 constant SHAMT: std_logic_vector(4 downto 0) := "00010"; -- 2
-constant IMM_8: std_logic_vector(15 downto 0) := x"0008"; 
-constant IMM_4: std_logic_vector(15 downto 0) := x"0004"; 
+constant IMM_8: std_logic_vector(31 downto 0) := x"00000008"; 
+constant IMM_4: std_logic_vector(31 downto 0) := x"00000004"; 
 constant ADDRESS: std_logic_vector(25 downto 0) := "00000000000000000000000100"; 
 
 constant DATA_8: std_logic_vector(31 downto 0) := x"00000008";
@@ -218,52 +236,60 @@ begin
 dut: execute 
 port map(
 	-- INPUTS
-	clk => clk,
-	reset => reset,
+	I_clk => I_clk,
+	I_reset => I_reset,
 
-	instruction => instruction,
-	rs_data_in => rs_data_in,
-	rt_data_in => rt_data_in,
-	next_pc => next_pc,
+	I_rs => I_rs,
+	I_rt => I_rt,
+	I_imm_SE => I_imm_SE,
+	I_imm_ZE => I_imm_ZE,
+	I_opcode => I_opcode,
+	I_shamt => I_shamt,
+	I_funct => I_funct,
+	I_addr => I_addr,
+
+	I_rs_data => I_rs_data,
+	I_rt_data => I_rt_data,
+	I_next_pc => I_next_pc,
 
 	-- control signals
-	destination_register_in => destination_register_in,
-	branch_in => branch_in,
-	jump_in => jump_in,
-	mem_read_in => mem_read_in,		
-	mem_write_in => mem_write_in, 					
-	reg_write_in => reg_write_in,				
-	mem_to_reg_in => mem_to_reg_in,	
+	I_rd => I_rd,
+	I_branch => I_branch,
+	I_jump => I_jump,
+	I_mem_read => I_mem_read,		
+	I_mem_write => I_mem_write, 					
+	I_reg_write => I_reg_write,				
+	I_mem_to_reg => I_mem_to_reg,	
 
 	-- forwarding
-	ex_data => ex_data,
-	mem_data => mem_data,
-	forward_rs => forward_rs,
-	forward_rt => forward_rt,	
+	I_ex_data => I_ex_data,
+	I_mem_data => I_mem_data,
+	I_forward_rs => I_forward_rs,
+	I_forward_rt => I_forward_rt,	
 
 	-- OUTPUTS
-	alu_result => alu_result,
-	updated_next_pc => updated_next_pc,
-	rt_data_out => rt_data_out,
-	stall_out => stall_out,
+	O_alu_result => O_alu_result,
+	O_updated_next_pc => O_updated_next_pc,
+	O_rt_data => O_rt_data,
+	O_stall => O_stall,
 
 	-- control signals
-	destination_register_out => destination_register_out,
-	branch_out => branch_out,
-	jump_out => jump_out,
-	mem_read_out => mem_read_out,
-	mem_write_out => mem_write_out,
-	reg_write_out => reg_write_out,
-	mem_to_reg_out => mem_to_reg_out
+	O_rd => O_rd,
+	O_branch => O_branch,
+	O_jump => O_jump,
+	O_mem_read => O_mem_read,
+	O_mem_write => O_mem_write,
+	O_reg_write => O_reg_write,
+	O_mem_to_reg => O_mem_to_reg
 );
 
 				
-clk_process : process
+I_clk_process : process
 begin
-  clk <= '0';
-  wait for CLK_PERIOD/2;
-  clk <= '1';
-  wait for CLK_PERIOD/2;
+  I_clk <= '0';
+  wait for clk_PERIOD/2;
+  I_clk <= '1';
+  wait for clk_PERIOD/2;
 end process;
 
 test_process : process
@@ -274,11 +300,11 @@ begin
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for clk_period;
-  	reset <= '1';
-  	wait for clk_period;
-  	reset <= '0';
-  	wait for clk_period;
+  	wait for clk_PERIOD;
+  	I_reset <= '1';
+  	wait for clk_PERIOD;
+  	I_reset <= '0';
+  	wait for clk_PERIOD;
   ----------------------------------------------------------------------------------
   
   	report "----- Starting tests -----";
@@ -287,1301 +313,1650 @@ begin
   -- TEST 1: ADD
   ----------------------------------------------------------------------------------
   	report "----- Test 1: ADD Instruction -----";
-
-	instruction <= R_OPCODE & RS & RT & RD & SHAMT & ADD_FUNCT;
-	rs_data_in <= DATA_8;
-	rt_data_in <= DATA_4;
-	next_pc <= NEXT_PC_VALUE;
+	
+	-- instruction signals
+	I_rs <= RS;
+	I_rt <= RT;
+	I_rd <= RD;
+	I_shamt <= SHAMT;
+	I_imm_ZE <= IMM_8;
+	I_imm_SE <= IMM_8;
+	I_addr <= ADDRESS;
+	I_opcode <= R_OPCODE;
+	I_funct <= ADD_FUNCT;
+	
+	I_rs_data <= DATA_8;
+	I_rt_data <= DATA_4;
+	I_next_pc <= NEXT_PC_VALUE;
 
 	-- control signals
-	destination_register_in <= RD;
-	branch_in <= '0';
-	jump_in <= '0';
-	mem_read_in <= '0';		
-	mem_write_in <= '0'; 					
-	reg_write_in <= '1';				
-	mem_to_reg_in <= '0';	
+	I_branch <= '0';
+	I_jump <= '0';
+	I_mem_read <= '0';		
+	I_mem_write <= '0'; 					
+	I_reg_write <= '1';				
+	I_mem_to_reg <= '0';	
 
 	-- forwarding
-	ex_data <= (others=>'0');
-	mem_data <= (others=>'0');
-	forward_rs <= "00";
-	forward_rt <= "00";
+	I_ex_data <= (others=>'0');
+	I_mem_data <= (others=>'0');
+	I_forward_rs <= "00";
+	I_forward_rt <= "00";
 	
-  	wait for CLK_PERIOD;
-  	assert alu_result = ADD_RESULT report "Test 1: Unsuccessful" severity error;
+  	wait for clk_PERIOD;
+  	assert O_alu_result = ADD_RESULT report "Test 1: Unsuccessful" severity error;
 
 ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	reset <= '1';
-  	wait for CLK_PERIOD;
-  	reset <= '0';
-  	wait for CLK_PERIOD;
+  	wait for clk_PERIOD;
+  	I_reset <= '1';
+  	wait for clk_PERIOD;
+  	I_reset <= '0';
+  	wait for clk_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 2: SUB
   ----------------------------------------------------------------------------------
   	report "----- Test 2: SUB Instruction -----";
 
-	instruction <= R_OPCODE & RS & RT & RD & SHAMT & SUB_FUNCT;
-	rs_data_in <= DATA_8;
-	rt_data_in <= DATA_4;
-	next_pc <= NEXT_PC_VALUE;
+	-- instruction signals
+	I_rs <= RS;
+	I_rt <= RT;
+	I_rd <= RD;
+	I_shamt <= SHAMT;
+	I_imm_ZE <= IMM_8;
+	I_imm_SE <= IMM_8;
+	I_addr <= ADDRESS;
+	I_opcode <= R_OPCODE;
+	I_funct <= SUB_FUNCT;
+	
+	I_rs_data <= DATA_8;
+	I_rt_data <= DATA_4;
+	I_next_pc <= NEXT_PC_VALUE;
+	I_rs_data <= DATA_8;
+	I_rt_data <= DATA_4;
+	I_next_pc <= NEXT_PC_VALUE;
 
 	-- control signals
-	destination_register_in <= RD;
-	branch_in <= '0';
-	jump_in <= '0';
-	mem_read_in <= '0';		
-	mem_write_in <= '0'; 					
-	reg_write_in <= '1';				
-	mem_to_reg_in <= '0';	
+	I_branch <= '0';
+	I_jump <= '0';
+	I_mem_read <= '0';		
+	I_mem_write <= '0'; 					
+	I_reg_write <= '1';				
+	I_mem_to_reg <= '0';	
 
 	-- forwarding
-	ex_data <= (others=>'0');
-	mem_data <= (others=>'0');
-	forward_rs <= "00";
-	forward_rt <= "00";	
+	I_ex_data <= (others=>'0');
+	I_mem_data <= (others=>'0');
+	I_forward_rs <= "00";
+	I_forward_rt <= "00";	
 
-  	wait for CLK_PERIOD;
-  	assert alu_result =  SUB_RESULT report "Test 2: Unsuccessful" severity error;
+  	wait for clk_PERIOD;
+  	assert O_alu_result =  SUB_RESULT report "Test 2: Unsuccessful" severity error;
   
 ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	reset <= '1';
-  	wait for CLK_PERIOD;
-  	reset <= '0';
-  	wait for CLK_PERIOD;
+  	wait for clk_PERIOD;
+  	I_reset <= '1';
+  	wait for clk_PERIOD;
+  	I_reset <= '0';
+  	wait for clk_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 3: MUL, MFHI, MFLO
   ----------------------------------------------------------------------------------
   	report "----- Test 3: MULT Instruction -----";
 
-	instruction <= R_OPCODE & RS & RT & RD & SHAMT & MULT_FUNCT;
-	rs_data_in <= DATA_8;
-	rt_data_in <= DATA_4;
-	next_pc <= NEXT_PC_VALUE;
+	-- instruction signals
+	I_rs <= RS;
+	I_rt <= RT;
+	I_rd <= RD;
+	I_shamt <= SHAMT;
+	I_imm_ZE <= IMM_8;
+	I_imm_SE <= IMM_8;
+	I_addr <= ADDRESS;
+	I_opcode <= R_OPCODE;
+	I_funct <= MULT_FUNCT;
+
+	I_rs_data <= DATA_8;
+	I_rt_data <= DATA_4;
+	I_next_pc <= NEXT_PC_VALUE;
 
 	-- control signals
-	destination_register_in <= RD;
-	branch_in <= '0';
-	jump_in <= '0';
-	mem_read_in <= '0';		
-	mem_write_in <= '0'; 					
-	reg_write_in <= '0';				
-	mem_to_reg_in <= '0';	
+	I_branch <= '0';
+	I_jump <= '0';
+	I_mem_read <= '0';		
+	I_mem_write <= '0'; 					
+	I_reg_write <= '0';				
+	I_mem_to_reg <= '0';	
 
 	-- forwarding
-	ex_data <= (others=>'0');
-	mem_data <= (others=>'0');
-	forward_rs <= "00";
-	forward_rt <= "00";
+	I_ex_data <= (others=>'0');
+	I_mem_data <= (others=>'0');
+	I_forward_rs <= "00";
+	I_forward_rt <= "00";
 
 	------------ MFLO ------------ 
-  	wait for CLK_PERIOD;
+  	wait for clk_PERIOD;
 
-	instruction <= R_OPCODE & RS & RT & RD & SHAMT & MFLO_FUNCT;
-	next_pc <= NEXT_PC_VALUE;
+	-- instruction signals
+	I_rs <= RS;
+	I_rt <= RT;
+	I_rd <= RD;
+	I_shamt <= SHAMT;
+	I_imm_ZE <= IMM_8;
+	I_imm_SE <= IMM_8;
+	I_addr <= ADDRESS;
+	I_opcode <= R_OPCODE;
+	I_funct <= MFLO_FUNCT;
+
+	I_next_pc <= NEXT_PC_VALUE;
 
 	-- control signals
-	destination_register_in <= RD;
-	branch_in <= '0';
-	jump_in <= '0';
-	mem_read_in <= '0';		
-	mem_write_in <= '0'; 					
-	reg_write_in <= '1';				
-	mem_to_reg_in <= '0';	
+	I_branch <= '0';
+	I_jump <= '0';
+	I_mem_read <= '0';		
+	I_mem_write <= '0'; 					
+	I_reg_write <= '1';				
+	I_mem_to_reg <= '0';	
 
 	-- forwarding
-	ex_data <= (others=>'0');
-	mem_data <= (others=>'0');
-	forward_rs <= "00";
-	forward_rt <= "00";
+	I_ex_data <= (others=>'0');
+	I_mem_data <= (others=>'0');
+	I_forward_rs <= "00";
+	I_forward_rt <= "00";
 
-  	wait for CLK_PERIOD;
-  	assert alu_result = MULT_LOW_RESULT report "Test 3: Unsuccessful - Invalid Low Value" severity error;
+  	wait for clk_PERIOD;
+  	assert O_alu_result = MULT_LOW_RESULT report "Test 3: Unsuccessful - Invalid Low Value" severity error;
 
 	------------ MFHI ------------
-	instruction <= R_OPCODE & RS & RT & RD & SHAMT & MFHI_FUNCT;
-	next_pc <= NEXT_PC_VALUE;
+
+	-- instruction signals
+	I_rs <= RS;
+	I_rt <= RT;
+	I_rd <= RD;
+	I_shamt <= SHAMT;
+	I_imm_ZE <= IMM_8;
+	I_imm_SE <= IMM_8;
+	I_addr <= ADDRESS;
+	I_opcode <= R_OPCODE;
+	I_funct <= MFHI_FUNCT;
+
+	I_next_pc <= NEXT_PC_VALUE;
 
 	-- control signals
-	destination_register_in <= RD;
-	branch_in <= '0';
-	jump_in <= '0';
-	mem_read_in <= '0';		
-	mem_write_in <= '0'; 					
-	reg_write_in <= '1';				
-	mem_to_reg_in <= '0';	
+	I_branch <= '0';
+	I_jump <= '0';
+	I_mem_read <= '0';		
+	I_mem_write <= '0'; 					
+	I_reg_write <= '1';				
+	I_mem_to_reg <= '0';	
 
 	-- forwarding
-	ex_data <= (others=>'0');
-	mem_data <= (others=>'0');
-	forward_rs <= "00";
-	forward_rt <= "00";
+	I_ex_data <= (others=>'0');
+	I_mem_data <= (others=>'0');
+	I_forward_rs <= "00";
+	I_forward_rt <= "00";
 
-  	wait for CLK_PERIOD;
-  	assert alu_result = MULT_HIGH_RESULT report "Test 3: Unsuccessful - Invalid High Value" severity error;
+  	wait for clk_PERIOD;
+  	assert O_alu_result = MULT_HIGH_RESULT report "Test 3: Unsuccessful - Invalid High Value" severity error;
   
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	reset <= '1';
-  	wait for CLK_PERIOD;
-  	reset <= '0';
-  	wait for CLK_PERIOD;
+  	wait for clk_PERIOD;
+  	I_reset <= '1';
+  	wait for clk_PERIOD;
+  	I_reset <= '0';
+  	wait for clk_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 4: DIV
   ----------------------------------------------------------------------------------
   	report "----- Test 4: DIV Instruction -----";
-  	instruction <= R_OPCODE & RS & RT & RD & SHAMT & DIV_FUNCT;
 
-	rs_data_in <= DATA_8;
-	rt_data_in <= DATA_4;
-	next_pc <= NEXT_PC_VALUE;
+	-- instruction signals
+	I_rs <= RS;
+	I_rt <= RT;
+	I_rd <= RD;
+	I_shamt <= SHAMT;
+	I_imm_ZE <= IMM_8;
+	I_imm_SE <= IMM_8;
+	I_addr <= ADDRESS;
+	I_opcode <= R_OPCODE;
+	I_funct <= DIV_FUNCT;
+
+	I_rs_data <= DATA_8;
+	I_rt_data <= DATA_4;
+	I_next_pc <= NEXT_PC_VALUE;
 
 	-- control signals
-	destination_register_in <= RD;
-	branch_in <= '0';
-	jump_in <= '0';
-	mem_read_in <= '0';		
-	mem_write_in <= '0'; 					
-	reg_write_in <= '0';				
-	mem_to_reg_in <= '0';	
+	I_branch <= '0';
+	I_jump <= '0';
+	I_mem_read <= '0';		
+	I_mem_write <= '0'; 					
+	I_reg_write <= '0';				
+	I_mem_to_reg <= '0';	
 
 	-- forwarding
-	ex_data <= (others=>'0');
-	mem_data <= (others=>'0');
-	forward_rs <= "00";
-	forward_rt <= "00";
+	I_ex_data <= (others=>'0');
+	I_mem_data <= (others=>'0');
+	I_forward_rs <= "00";
+	I_forward_rt <= "00";
 
-  	wait for CLK_PERIOD;
+  	wait for clk_PERIOD;
 
 	------------ MFLO ------------ 
-  	wait for CLK_PERIOD;
+  	wait for clk_PERIOD;
 
-	instruction <= R_OPCODE & RS & RT & RD & SHAMT & MFLO_FUNCT;
-	next_pc <= NEXT_PC_VALUE;
+	-- instruction signals
+	I_rs <= RS;
+	I_rt <= RT;
+	I_rd <= RD;
+	I_shamt <= SHAMT;
+	I_imm_ZE <= IMM_8;
+	I_imm_SE <= IMM_8;
+	I_addr <= ADDRESS;
+	I_opcode <= R_OPCODE;
+	I_funct <= MFLO_FUNCT;
+
+	I_next_pc <= NEXT_PC_VALUE;
 
 	-- control signals
-	destination_register_in <= RD;
-	branch_in <= '0';
-	jump_in <= '0';
-	mem_read_in <= '0';		
-	mem_write_in <= '0'; 					
-	reg_write_in <= '1';				
-	mem_to_reg_in <= '0';	
+	I_branch <= '0';
+	I_jump <= '0';
+	I_mem_read <= '0';		
+	I_mem_write <= '0'; 					
+	I_reg_write <= '1';				
+	I_mem_to_reg <= '0';	
 
 	-- forwarding
-	ex_data <= (others=>'0');
-	mem_data <= (others=>'0');
-	forward_rs <= "00";
-	forward_rt <= "00";
+	I_ex_data <= (others=>'0');
+	I_mem_data <= (others=>'0');
+	I_forward_rs <= "00";
+	I_forward_rt <= "00";
 
-  	wait for CLK_PERIOD;
-  	assert alu_result = DIV_LOW_RESULT report "Test 3: Unsuccessful - Invalid Low Value" severity error;
+  	wait for clk_PERIOD;
+  	assert O_alu_result = DIV_LOW_RESULT report "Test 3: Unsuccessful - Invalid Low Value" severity error;
 
 	------------ MFHI ------------
-	instruction <= R_OPCODE & RS & RT & RD & SHAMT & MFHI_FUNCT;
-	next_pc <= NEXT_PC_VALUE;
+	I_rs <= RS;
+	I_rt <= RT;
+	I_rd <= RD;
+	I_shamt <= SHAMT;
+	I_imm_ZE <= IMM_8;
+	I_imm_SE <= IMM_8;
+	I_addr <= ADDRESS;
+	I_opcode <= R_OPCODE;
+	I_funct <= MFHI_FUNCT;
+
+	I_next_pc <= NEXT_PC_VALUE;
 
 	-- control signals
-	destination_register_in <= RD;
-	branch_in <= '0';
-	jump_in <= '0';
-	mem_read_in <= '0';		
-	mem_write_in <= '0'; 					
-	reg_write_in <= '1';				
-	mem_to_reg_in <= '0';	
+	I_branch <= '0';
+	I_jump <= '0';
+	I_mem_read <= '0';		
+	I_mem_write <= '0'; 					
+	I_reg_write <= '1';				
+	I_mem_to_reg <= '0';	
 
 	-- forwarding
-	ex_data <= (others=>'0');
-	mem_data <= (others=>'0');
-	forward_rs <= "00";
-	forward_rt <= "00";
+	I_ex_data <= (others=>'0');
+	I_mem_data <= (others=>'0');
+	I_forward_rs <= "00";
+	I_forward_rt <= "00";
 
-  	wait for CLK_PERIOD;
-  	assert alu_result = DIV_HIGH_RESULT report "Test 3: Unsuccessful - Invalid High Value" severity error;
+  	wait for clk_PERIOD;
+  	assert O_alu_result = DIV_HIGH_RESULT report "Test 3: Unsuccessful - Invalid High Value" severity error;
   
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	reset <= '1';
-  	wait for CLK_PERIOD;
-  	reset <= '0';
-  	wait for CLK_PERIOD;
+  	wait for clk_PERIOD;
+  	I_reset <= '1';
+  	wait for clk_PERIOD;
+  	I_reset <= '0';
+  	wait for clk_PERIOD;
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	reset <= '1';
-  	wait for CLK_PERIOD;
-  	reset <= '0';
-  	wait for CLK_PERIOD;
+  	wait for clk_PERIOD;
+  	I_reset <= '1';
+  	wait for clk_PERIOD;
+  	I_reset <= '0';
+  	wait for clk_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 5: SLT
   ----------------------------------------------------------------------------------
   report "----- Test 5: SLT Instruction -----";
-  	instruction <= R_OPCODE & RS & RT & RD & SHAMT & SLT_FUNCT;
 
-	rs_data_in <= DATA_8;
-	rt_data_in <= DATA_4;
-	next_pc <= NEXT_PC_VALUE;
+	-- instruction signals
+	I_rs <= RS;
+	I_rt <= RT;
+	I_rd <= RD;
+	I_shamt <= SHAMT;
+	I_imm_ZE <= IMM_8;
+	I_imm_SE <= IMM_8;
+	I_addr <= ADDRESS;
+	I_opcode <= R_OPCODE;
+	I_funct <= SLT_FUNCT;
 
-	-- control signals
-	destination_register_in <= RD;
-	branch_in <= '0';
-	jump_in <= '0';
-	mem_read_in <= '0';		
-	mem_write_in <= '0'; 					
-	reg_write_in <= '1';				
-	mem_to_reg_in <= '0';	
-
-	-- forwarding
-	ex_data <= (others=>'0');
-	mem_data <= (others=>'0');
-	forward_rs <= "00";
-	forward_rt <= "00";
-
-  	wait for CLK_PERIOD;
-  	assert alu_result = SLT_FALSE_RESULT report "Test 5: Unsuccessful" severity error;
-
-
-  	instruction <= R_OPCODE & RS & RT & RD & SHAMT & SLT_FUNCT;
-
-	rs_data_in <= DATA_4;
-	rt_data_in <= DATA_8;
-	next_pc <= NEXT_PC_VALUE;
+	I_rs_data <= DATA_8;
+	I_rt_data <= DATA_4;
+	I_next_pc <= NEXT_PC_VALUE;
 
 	-- control signals
-	destination_register_in <= RD;
-	branch_in <= '0';
-	jump_in <= '0';
-	mem_read_in <= '0';		
-	mem_write_in <= '0'; 					
-	reg_write_in <= '1';				
-	mem_to_reg_in <= '0';	
+	I_branch <= '0';
+	I_jump <= '0';
+	I_mem_read <= '0';		
+	I_mem_write <= '0'; 					
+	I_reg_write <= '1';				
+	I_mem_to_reg <= '0';	
 
 	-- forwarding
-	ex_data <= (others=>'0');
-	mem_data <= (others=>'0');
-	forward_rs <= "00";
-	forward_rt <= "00";
+	I_ex_data <= (others=>'0');
+	I_mem_data <= (others=>'0');
+	I_forward_rs <= "00";
+	I_forward_rt <= "00";
 
-  	wait for CLK_PERIOD;
-  	assert alu_result = SLT_TRUE_RESULT report "Test 5: Unsuccessful" severity error;
+  	wait for clk_PERIOD;
+  	assert O_alu_result = SLT_FALSE_RESULT report "Test 5: Unsuccessful" severity error;
+
+
+	I_rs <= RS;
+	I_rt <= RT;
+	I_rd <= RD;
+	I_shamt <= SHAMT;
+	I_imm_ZE <= IMM_8;
+	I_imm_SE <= IMM_8;
+	I_addr <= ADDRESS;
+	I_opcode <= R_OPCODE;
+	I_funct <= SLT_FUNCT;
+
+	I_rs_data <= DATA_4;
+	I_rt_data <= DATA_8;
+	I_next_pc <= NEXT_PC_VALUE;
+
+	-- control signals
+	I_branch <= '0';
+	I_jump <= '0';
+	I_mem_read <= '0';		
+	I_mem_write <= '0'; 					
+	I_reg_write <= '1';				
+	I_mem_to_reg <= '0';	
+
+	-- forwarding
+	I_ex_data <= (others=>'0');
+	I_mem_data <= (others=>'0');
+	I_forward_rs <= "00";
+	I_forward_rt <= "00";
+
+  	wait for clk_PERIOD;
+  	assert O_alu_result = SLT_TRUE_RESULT report "Test 5: Unsuccessful" severity error;
   
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	reset <= '1';
-  	wait for CLK_PERIOD;
-  	reset <= '0';
-  	wait for CLK_PERIOD;
+  	wait for clk_PERIOD;
+  	I_reset <= '1';
+  	wait for clk_PERIOD;
+  	I_reset <= '0';
+  	wait for clk_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 6: AND
   ----------------------------------------------------------------------------------
   	report "----- Test 6: AND Instruction -----";
-  	instruction <= R_OPCODE & RS & RT & RD & SHAMT & AND_FUNCT;
 
+	-- instruction signals
+	I_rs <= RS;
+	I_rt <= RT;
+	I_rd <= RD;
+	I_shamt <= SHAMT;
+	I_imm_ZE <= IMM_8;
+	I_imm_SE <= IMM_8;
+	I_addr <= ADDRESS;
+	I_opcode <= R_OPCODE;
+	I_funct <= AND_FUNCT;
 
-	rs_data_in <= DATA_4;
-	rt_data_in <= DATA_8;
-	next_pc <= NEXT_PC_VALUE;
+	I_rs_data <= DATA_4;
+	I_rt_data <= DATA_8;
+	I_next_pc <= NEXT_PC_VALUE;
 
 	-- control signals
-	destination_register_in <= RD;
-	branch_in <= '0';
-	jump_in <= '0';
-	mem_read_in <= '0';		
-	mem_write_in <= '0'; 					
-	reg_write_in <= '1';				
-	mem_to_reg_in <= '0';	
+	I_branch <= '0';
+	I_jump <= '0';
+	I_mem_read <= '0';		
+	I_mem_write <= '0'; 					
+	I_reg_write <= '1';				
+	I_mem_to_reg <= '0';	
 
 	-- forwarding
-	ex_data <= (others=>'0');
-	mem_data <= (others=>'0');
-	forward_rs <= "00";
-	forward_rt <= "00";
+	I_ex_data <= (others=>'0');
+	I_mem_data <= (others=>'0');
+	I_forward_rs <= "00";
+	I_forward_rt <= "00";
 
-  	wait for CLK_PERIOD;
-  	assert alu_result = AND_RESULT report "Test 6: Unsuccessful" severity error;
+  	wait for clk_PERIOD;
+  	assert O_alu_result = AND_RESULT report "Test 6: Unsuccessful" severity error;
   
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	reset <= '1';
-  	wait for CLK_PERIOD;
-  	reset <= '0';
-  	wait for CLK_PERIOD;
+  	wait for clk_PERIOD;
+  	I_reset <= '1';
+  	wait for clk_PERIOD;
+  	I_reset <= '0';
+  	wait for clk_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 7: OR
   ----------------------------------------------------------------------------------
   	report "----- Test 7: OR Instruction -----";
-  	instruction <= R_OPCODE & RS & RT & RD & SHAMT & OR_FUNCT;
 
-	rs_data_in <= DATA_4;
-	rt_data_in <= DATA_8;
-	next_pc <= NEXT_PC_VALUE;
+	-- instruction signals
+	I_rs <= RS;
+	I_rt <= RT;
+	I_rd <= RD;
+	I_shamt <= SHAMT;
+	I_imm_ZE <= IMM_8;
+	I_imm_SE <= IMM_8;
+	I_addr <= ADDRESS;
+	I_opcode <= R_OPCODE;
+	I_funct <= OR_FUNCT;
+
+	I_rs_data <= DATA_4;
+	I_rt_data <= DATA_8;
+	I_next_pc <= NEXT_PC_VALUE;
 
 	-- control signals
-	destination_register_in <= RD;
-	branch_in <= '0';
-	jump_in <= '0';
-	mem_read_in <= '0';		
-	mem_write_in <= '0'; 					
-	reg_write_in <= '1';				
-	mem_to_reg_in <= '0';	
+	I_branch <= '0';
+	I_jump <= '0';
+	I_mem_read <= '0';		
+	I_mem_write <= '0'; 					
+	I_reg_write <= '1';				
+	I_mem_to_reg <= '0';	
 
 	-- forwarding
-	ex_data <= (others=>'0');
-	mem_data <= (others=>'0');
-	forward_rs <= "00";
-	forward_rt <= "00";
+	I_ex_data <= (others=>'0');
+	I_mem_data <= (others=>'0');
+	I_forward_rs <= "00";
+	I_forward_rt <= "00";
 
-  	wait for CLK_PERIOD;
-  	assert alu_result = OR_RESULT report "Test 7: Unsuccessful" severity error;
+  	wait for clk_PERIOD;
+  	assert O_alu_result = OR_RESULT report "Test 7: Unsuccessful" severity error;
   
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	reset <= '1';
-  	wait for CLK_PERIOD;
-  	reset <= '0';
-  	wait for CLK_PERIOD;
+  	wait for clk_PERIOD;
+  	I_reset <= '1';
+  	wait for clk_PERIOD;
+  	I_reset <= '0';
+  	wait for clk_PERIOD;
   ----------------------------------------------------------------------------------
   -- TEST 8: NOR
   ----------------------------------------------------------------------------------
   	report "----- Test 8: NOR Instruction -----";
-  	instruction <= R_OPCODE & RS & RT & RD & SHAMT & NOR_FUNCT;
-	
-	rs_data_in <= DATA_4;
-	rt_data_in <= DATA_8;
-	next_pc <= NEXT_PC_VALUE;
+
+	-- instruction signals
+	I_rs <= RS;
+	I_rt <= RT;
+	I_rd <= RD;
+	I_shamt <= SHAMT;
+	I_imm_ZE <= IMM_8;
+	I_imm_SE <= IMM_8;
+	I_addr <= ADDRESS;
+	I_opcode <= R_OPCODE;
+	I_funct <= NOR_FUNCT;
+
+	I_rs_data <= DATA_4;
+	I_rt_data <= DATA_8;
+	I_next_pc <= NEXT_PC_VALUE;
 
 	-- control signals
-	destination_register_in <= RD;
-	branch_in <= '0';
-	jump_in <= '0';
-	mem_read_in <= '0';		
-	mem_write_in <= '0'; 					
-	reg_write_in <= '1';				
-	mem_to_reg_in <= '0';	
+	I_branch <= '0';
+	I_jump <= '0';
+	I_mem_read <= '0';		
+	I_mem_write <= '0'; 					
+	I_reg_write <= '1';				
+	I_mem_to_reg <= '0';	
 
 	-- forwarding
-	ex_data <= (others=>'0');
-	mem_data <= (others=>'0');
-	forward_rs <= "00";
-	forward_rt <= "00";
+	I_ex_data <= (others=>'0');
+	I_mem_data <= (others=>'0');
+	I_forward_rs <= "00";
+	I_forward_rt <= "00";
 
-  	wait for CLK_PERIOD;
-  	assert alu_result = NOR_RESULT report "Test 8: Unsuccessful" severity error;
+  	wait for clk_PERIOD;
+  	assert O_alu_result = NOR_RESULT report "Test 8: Unsuccessful" severity error;
   
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	reset <= '1';
-  	wait for CLK_PERIOD;
-  	reset <= '0';
-  	wait for CLK_PERIOD;
+  	wait for clk_PERIOD;
+  	I_reset <= '1';
+  	wait for clk_PERIOD;
+  	I_reset <= '0';
+  	wait for clk_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 9: XOR
   ----------------------------------------------------------------------------------
   	report "----- Test 9: XOR Instruction -----";
-  	instruction <= R_OPCODE & RS & RT & RD & SHAMT & XOR_FUNCT;
-	
-	rs_data_in <= DATA_4;
-	rt_data_in <= DATA_8;
-	next_pc <= NEXT_PC_VALUE;
+
+	-- instruction signals
+	I_rs <= RS;
+	I_rt <= RT;
+	I_rd <= RD;
+	I_shamt <= SHAMT;
+	I_imm_ZE <= IMM_8;
+	I_imm_SE <= IMM_8;
+	I_addr <= ADDRESS;
+	I_opcode <= R_OPCODE;
+	I_funct <= XOR_FUNCT;
+
+	I_rs_data <= DATA_4;
+	I_rt_data <= DATA_8;
+	I_next_pc <= NEXT_PC_VALUE;
 
 	-- control signals
-	destination_register_in <= RD;
-	branch_in <= '0';
-	jump_in <= '0';
-	mem_read_in <= '0';		
-	mem_write_in <= '0'; 					
-	reg_write_in <= '1';				
-	mem_to_reg_in <= '0';	
+	I_branch <= '0';
+	I_jump <= '0';
+	I_mem_read <= '0';		
+	I_mem_write <= '0'; 					
+	I_reg_write <= '1';				
+	I_mem_to_reg <= '0';	
 
 	-- forwarding
-	ex_data <= (others=>'0');
-	mem_data <= (others=>'0');
-	forward_rs <= "00";
-	forward_rt <= "00";
+	I_ex_data <= (others=>'0');
+	I_mem_data <= (others=>'0');
+	I_forward_rs <= "00";
+	I_forward_rt <= "00";
 
-  	wait for CLK_PERIOD;
-  	assert alu_result = XOR_RESULT report "Test 9: Unsuccessful" severity error;
+  	wait for clk_PERIOD;
+  	assert O_alu_result = XOR_RESULT report "Test 9: Unsuccessful" severity error;
   
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	reset <= '1';
-  	wait for CLK_PERIOD;
-  	reset <= '0';
-  	wait for CLK_PERIOD;
+  	wait for clk_PERIOD;
+  	I_reset <= '1';
+  	wait for clk_PERIOD;
+  	I_reset <= '0';
+  	wait for clk_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 10: SLL
   ----------------------------------------------------------------------------------
   	report "----- Test 12: SLL Instruction -----";
-  	instruction <= R_OPCODE & RS & RT & RD & SHAMT & SLL_FUNCT;
 
-	rt_data_in <= DATA_8;
-	next_pc <= NEXT_PC_VALUE;
+	-- instruction signals
+	I_rs <= RS;
+	I_rt <= RT;
+	I_rd <= RD;
+	I_shamt <= SHAMT;
+	I_imm_ZE <= IMM_8;
+	I_imm_SE <= IMM_8;
+	I_addr <= ADDRESS;
+	I_opcode <= R_OPCODE;
+	I_funct <= SLL_FUNCT;
+
+	I_rt_data <= DATA_8;
+	I_next_pc <= NEXT_PC_VALUE;
 
 	-- control signals
-	destination_register_in <= RD;
-	branch_in <= '0';
-	jump_in <= '0';
-	mem_read_in <= '0';		
-	mem_write_in <= '0'; 					
-	reg_write_in <= '1';				
-	mem_to_reg_in <= '0';	
+	I_branch <= '0';
+	I_jump <= '0';
+	I_mem_read <= '0';		
+	I_mem_write <= '0'; 					
+	I_reg_write <= '1';				
+	I_mem_to_reg <= '0';	
 
 	-- forwarding
-	ex_data <= (others=>'0');
-	mem_data <= (others=>'0');
-	forward_rs <= "00";
-	forward_rt <= "00";
+	I_ex_data <= (others=>'0');
+	I_mem_data <= (others=>'0');
+	I_forward_rs <= "00";
+	I_forward_rt <= "00";
 
-  	wait for CLK_PERIOD;
-  	assert alu_result = SLL_RESULT report "Test 12: Unsuccessful" severity error;
+  	wait for clk_PERIOD;
+  	assert O_alu_result = SLL_RESULT report "Test 12: Unsuccessful" severity error;
   
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	reset <= '1';
-  	wait for CLK_PERIOD;
-  	reset <= '0';
-  	wait for CLK_PERIOD;
+  	wait for clk_PERIOD;
+  	I_reset <= '1';
+  	wait for clk_PERIOD;
+  	I_reset <= '0';
+  	wait for clk_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 13: SRL
   ----------------------------------------------------------------------------------
   	report "----- Test 13: SRL Instruction -----";
-  	instruction <= R_OPCODE & RS & RT & RD & SHAMT & SRL_FUNCT;
 
-	rt_data_in <= DATA_8;
-	next_pc <= NEXT_PC_VALUE;
+	-- instruction signals
+	I_rs <= RS;
+	I_rt <= RT;
+	I_rd <= RD;
+	I_shamt <= SHAMT;
+	I_imm_ZE <= IMM_8;
+	I_imm_SE <= IMM_8;
+	I_addr <= ADDRESS;
+	I_opcode <= R_OPCODE;
+	I_funct <= SRL_FUNCT;
+
+	I_rt_data <= DATA_8;
+	I_next_pc <= NEXT_PC_VALUE;
 
 	-- control signals
-	destination_register_in <= RD;
-	branch_in <= '0';
-	jump_in <= '0';
-	mem_read_in <= '0';		
-	mem_write_in <= '0'; 					
-	reg_write_in <= '1';				
-	mem_to_reg_in <= '0';	
+	I_branch <= '0';
+	I_jump <= '0';
+	I_mem_read <= '0';		
+	I_mem_write <= '0'; 					
+	I_reg_write <= '1';				
+	I_mem_to_reg <= '0';	
 
 	-- forwarding
-	ex_data <= (others=>'0');
-	mem_data <= (others=>'0');
-	forward_rs <= "00";
-	forward_rt <= "00";
+	I_ex_data <= (others=>'0');
+	I_mem_data <= (others=>'0');
+	I_forward_rs <= "00";
+	I_forward_rt <= "00";
 
-  	wait for CLK_PERIOD;
-  	assert alu_result = SRL_RESULT report "Test 13: Unsuccessful" severity error;
+  	wait for clk_PERIOD;
+  	assert O_alu_result = SRL_RESULT report "Test 13: Unsuccessful" severity error;
   
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	reset <= '1';
-  	wait for CLK_PERIOD;
-  	reset <= '0';
-  	wait for CLK_PERIOD;
+  	wait for clk_PERIOD;
+  	I_reset <= '1';
+  	wait for clk_PERIOD;
+  	I_reset <= '0';
+  	wait for clk_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 14: SRA
   ----------------------------------------------------------------------------------
   	report "----- Test 14: SRA Instruction -----";
-  	instruction <= R_OPCODE & RS & RT & RD & SHAMT & SRA_FUNCT;
 
-	rt_data_in <= DATA_8;
-	next_pc <= NEXT_PC_VALUE;
+	-- instruction signals
+	I_rs <= RS;
+	I_rt <= RT;
+	I_rd <= RD;
+	I_shamt <= SHAMT;
+	I_imm_ZE <= IMM_8;
+	I_imm_SE <= IMM_8;
+	I_addr <= ADDRESS;
+	I_opcode <= R_OPCODE;
+	I_funct <= SRA_FUNCT;
 
-	-- control signals
-	destination_register_in <= RD;
-	branch_in <= '0';
-	jump_in <= '0';
-	mem_read_in <= '0';		
-	mem_write_in <= '0'; 					
-	reg_write_in <= '1';				
-	mem_to_reg_in <= '0';	
-
-	-- forwarding
-	ex_data <= (others=>'0');
-	mem_data <= (others=>'0');
-	forward_rs <= "00";
-	forward_rt <= "00";
-
-  	wait for CLK_PERIOD;
-  	assert alu_result = SRA_RESULT report "Test 14: Unsuccessful" severity error;
-
-  	instruction <= R_OPCODE & RS & RT & RD & SHAMT & SRA_FUNCT;
-
-	rt_data_in <= DATA_MINUS_4;
-	next_pc <= NEXT_PC_VALUE;
+	I_rt_data <= DATA_8;
+	I_next_pc <= NEXT_PC_VALUE;
 
 	-- control signals
-	destination_register_in <= RD;
-	branch_in <= '0';
-	jump_in <= '0';
-	mem_read_in <= '0';		
-	mem_write_in <= '0'; 					
-	reg_write_in <= '1';				
-	mem_to_reg_in <= '0';	
+	I_branch <= '0';
+	I_jump <= '0';
+	I_mem_read <= '0';		
+	I_mem_write <= '0'; 					
+	I_reg_write <= '1';				
+	I_mem_to_reg <= '0';	
 
 	-- forwarding
-	ex_data <= (others=>'0');
-	mem_data <= (others=>'0');
-	forward_rs <= "00";
-	forward_rt <= "00";
+	I_ex_data <= (others=>'0');
+	I_mem_data <= (others=>'0');
+	I_forward_rs <= "00";
+	I_forward_rt <= "00";
 
-  	wait for CLK_PERIOD;
-  	assert alu_result = SRA_NEGATIVE_RESULT report "Test 14: Unsuccessful" severity error;
+  	wait for clk_PERIOD;
+  	assert O_alu_result = SRA_RESULT report "Test 14: Unsuccessful" severity error;
+
+	I_rs <= RS;
+	I_rt <= RT;
+	I_rd <= RD;
+	I_shamt <= SHAMT;
+	I_imm_ZE <= IMM_8;
+	I_imm_SE <= IMM_8;
+	I_addr <= ADDRESS;
+	I_opcode <= R_OPCODE;
+	I_funct <= SRA_FUNCT;
+
+	I_rt_data <= DATA_MINUS_4;
+	I_next_pc <= NEXT_PC_VALUE;
+
+	-- control signals
+	I_branch <= '0';
+	I_jump <= '0';
+	I_mem_read <= '0';		
+	I_mem_write <= '0'; 					
+	I_reg_write <= '1';				
+	I_mem_to_reg <= '0';	
+
+	-- forwarding
+	I_ex_data <= (others=>'0');
+	I_mem_data <= (others=>'0');
+	I_forward_rs <= "00";
+	I_forward_rt <= "00";
+
+  	wait for clk_PERIOD;
+  	assert O_alu_result = SRA_NEGATIVE_RESULT report "Test 14: Unsuccessful" severity error;
   
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	reset <= '1';
-  	wait for CLK_PERIOD;
-  	reset <= '0';
-  	wait for CLK_PERIOD;
+  	wait for clk_PERIOD;
+  	I_reset <= '1';
+  	wait for clk_PERIOD;
+  	I_reset <= '0';
+  	wait for clk_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 15: JR
   ----------------------------------------------------------------------------------
   	report "----- Test 15: JR Instruction -----";
-  	instruction <= R_OPCODE & RS & RT & RD & SHAMT & JR_FUNCT;
 
-	rs_data_in <= DATA_8;
-	next_pc <= NEXT_PC_VALUE;
+	-- instruction signals
+	I_rs <= RS;
+	I_rt <= RT;
+	I_rd <= RD;
+	I_shamt <= SHAMT;
+	I_imm_ZE <= IMM_8;
+	I_imm_SE <= IMM_8;
+	I_addr <= ADDRESS;
+	I_opcode <= R_OPCODE;
+	I_funct <= JR_FUNCT;
+
+	I_rs_data <= DATA_8;
+	I_next_pc <= NEXT_PC_VALUE;
 
 	-- control signals
-	destination_register_in <= RD;
-	branch_in <= '0';
-	jump_in <= '1';
-	mem_read_in <= '0';		
-	mem_write_in <= '0'; 					
-	reg_write_in <= '0';				
-	mem_to_reg_in <= '0';	
+	I_branch <= '0';
+	I_jump <= '1';
+	I_mem_read <= '0';		
+	I_mem_write <= '0'; 					
+	I_reg_write <= '0';				
+	I_mem_to_reg <= '0';	
 
 	-- forwarding
-	ex_data <= (others=>'0');
-	mem_data <= (others=>'0');
-	forward_rs <= "00";
-	forward_rt <= "00";
+	I_ex_data <= (others=>'0');
+	I_mem_data <= (others=>'0');
+	I_forward_rs <= "00";
+	I_forward_rt <= "00";
 
-  	wait for CLK_PERIOD;
-  	assert updated_next_pc = JR_PC_RESULT report "Test 15: Unsuccessful" severity error;
+  	wait for clk_PERIOD;
+  	assert O_updated_next_pc = JR_PC_RESULT report "Test 15: Unsuccessful" severity error;
   
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	reset <= '1';
-  	wait for CLK_PERIOD;
-  	reset <= '0';
-  	wait for CLK_PERIOD;
+  	wait for clk_PERIOD;
+  	I_reset <= '1';
+  	wait for clk_PERIOD;
+  	I_reset <= '0';
+  	wait for clk_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 16: ADDI
   ----------------------------------------------------------------------------------
   report "----- Test 16: ADDI Instruction -----";
-  	instruction <= ADDI_OPCODE & RS & RT & IMM_4;
 
-	rs_data_in <= DATA_8;
-	next_pc <= NEXT_PC_VALUE;
+	-- instruction signals
+	I_rs <= RS;
+	I_rt <= RT;
+	I_rd <= RT;
+	I_shamt <= SHAMT;
+	I_imm_ZE <= IMM_4;
+	I_imm_SE <= IMM_4;
+	I_addr <= ADDRESS;
+	I_opcode <= ADDI_OPCODE;
+	I_funct <= "000000";
+
+	I_rs_data <= DATA_8;
+	I_next_pc <= NEXT_PC_VALUE;
 
 	-- control signals
-	destination_register_in <= RT;
-	branch_in <= '0';
-	jump_in <= '0';
-	mem_read_in <= '0';		
-	mem_write_in <= '0'; 					
-	reg_write_in <= '1';				
-	mem_to_reg_in <= '0';	
+	I_rd <= RT;
+	I_branch <= '0';
+	I_jump <= '0';
+	I_mem_read <= '0';		
+	I_mem_write <= '0'; 					
+	I_reg_write <= '1';				
+	I_mem_to_reg <= '0';	
 
 	-- forwarding
-	ex_data <= (others=>'0');
-	mem_data <= (others=>'0');
-	forward_rs <= "00";
-	forward_rt <= "00";
+	I_ex_data <= (others=>'0');
+	I_mem_data <= (others=>'0');
+	I_forward_rs <= "00";
+	I_forward_rt <= "00";
 
-  	wait for CLK_PERIOD;
-  	assert alu_result = ADDI_RESULT report "Test 16: Unsuccessful" severity error;
+  	wait for clk_PERIOD;
+  	assert O_alu_result = ADDI_RESULT report "Test 16: Unsuccessful" severity error;
   
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	reset <= '1';
-  	wait for CLK_PERIOD;
-  	reset <= '0';
-  	wait for CLK_PERIOD;
+  	wait for clk_PERIOD;
+  	I_reset <= '1';
+  	wait for clk_PERIOD;
+  	I_reset <= '0';
+  	wait for clk_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 17: SLTI
   ----------------------------------------------------------------------------------
   	report "----- Test 17: SLTI Instruction -----";
-  	instruction <= SLTI_OPCODE & RS & RT & IMM_4;
 
-	rs_data_in <= DATA_8;
-	next_pc <= NEXT_PC_VALUE;
+	-- instruction signals
+	I_rs <= RS;
+	I_rt <= RT;
+	I_rd <= RT;
+	I_shamt <= SHAMT;
+	I_imm_ZE <= IMM_4;
+	I_imm_SE <= IMM_4;
+	I_addr <= ADDRESS;
+	I_opcode <= SLTI_OPCODE;
+	I_funct <= "000000";
+
+	I_rs_data <= DATA_8;
+	I_next_pc <= NEXT_PC_VALUE;
 
 	-- control signals
-	destination_register_in <= RT;
-	branch_in <= '0';
-	jump_in <= '0';
-	mem_read_in <= '0';		
-	mem_write_in <= '0'; 					
-	reg_write_in <= '1';				
-	mem_to_reg_in <= '0';	
+	I_rd <= RT;
+	I_branch <= '0';
+	I_jump <= '0';
+	I_mem_read <= '0';		
+	I_mem_write <= '0'; 					
+	I_reg_write <= '1';				
+	I_mem_to_reg <= '0';	
 
 	-- forwarding
-	ex_data <= (others=>'0');
-	mem_data <= (others=>'0');
-	forward_rs <= "00";
-	forward_rt <= "00";
+	I_ex_data <= (others=>'0');
+	I_mem_data <= (others=>'0');
+	I_forward_rs <= "00";
+	I_forward_rt <= "00";
 
-  	wait for CLK_PERIOD;
-  	assert alu_result = SLTI_FALSE_RESULT report "Test 17: Unsuccessful" severity error;
+  	wait for clk_PERIOD;
+  	assert O_alu_result = SLTI_FALSE_RESULT report "Test 17: Unsuccessful" severity error;
 
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	reset <= '1';
-  	wait for CLK_PERIOD;
-  	reset <= '0';
-  	wait for CLK_PERIOD;
+  	wait for clk_PERIOD;
+  	I_reset <= '1';
+  	wait for clk_PERIOD;
+  	I_reset <= '0';
+  	wait for clk_PERIOD;
 
-  	instruction <= SLTI_OPCODE & RS & RT & IMM_8;
-	rs_data_in <= DATA_4;
-	next_pc <= NEXT_PC_VALUE;
+	-- instruction signals
+	I_rs <= RS;
+	I_rt <= RT;
+	I_rd <= RT;
+	I_shamt <= SHAMT;
+	I_imm_ZE <= IMM_8;
+	I_imm_SE <= IMM_8;
+	I_addr <= ADDRESS;
+	I_opcode <= SLTI_OPCODE;
+	I_funct <= "000000";
+
+	I_rs_data <= DATA_4;
+	I_next_pc <= NEXT_PC_VALUE;
 
 	-- control signals
-	destination_register_in <= RT;
-	branch_in <= '0';
-	jump_in <= '0';
-	mem_read_in <= '0';		
-	mem_write_in <= '0'; 					
-	reg_write_in <= '1';				
-	mem_to_reg_in <= '0';	
+	I_rd <= RT;
+	I_branch <= '0';
+	I_jump <= '0';
+	I_mem_read <= '0';		
+	I_mem_write <= '0'; 					
+	I_reg_write <= '1';				
+	I_mem_to_reg <= '0';	
 
 	-- forwarding
-	ex_data <= (others=>'0');
-	mem_data <= (others=>'0');
-	forward_rs <= "00";
-	forward_rt <= "00";
+	I_ex_data <= (others=>'0');
+	I_mem_data <= (others=>'0');
+	I_forward_rs <= "00";
+	I_forward_rt <= "00";
 
-  	wait for CLK_PERIOD;
-  	assert alu_result = SLTI_TRUE_RESULT report "Test 17: Unsuccessful" severity error;
+  	wait for clk_PERIOD;
+  	assert O_alu_result = SLTI_TRUE_RESULT report "Test 17: Unsuccessful" severity error;
   
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	reset <= '1';
-  	wait for CLK_PERIOD;
-  	reset <= '0';
-  	wait for CLK_PERIOD;
+  	wait for clk_PERIOD;
+  	I_reset <= '1';
+  	wait for clk_PERIOD;
+  	I_reset <= '0';
+  	wait for clk_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 18: ORI
   ----------------------------------------------------------------------------------
   	report "----- Test 18: ORI Instruction -----";
 
-  	instruction <= ORI_OPCODE & RS & RT & IMM_8;
-	rs_data_in <= DATA_4;
-	next_pc <= NEXT_PC_VALUE;
+	-- instruction signals
+	I_rs <= RS;
+	I_rt <= RT;
+	I_rd <= RT;
+	I_shamt <= SHAMT;
+	I_imm_ZE <= IMM_8;
+	I_imm_SE <= IMM_8;
+	I_addr <= ADDRESS;
+	I_opcode <= ORI_OPCODE;
+	I_funct <= "000000";
+
+	I_rs_data <= DATA_4;
+	I_next_pc <= NEXT_PC_VALUE;
 
 	-- control signals
-	destination_register_in <= RT;
-	branch_in <= '0';
-	jump_in <= '0';
-	mem_read_in <= '0';		
-	mem_write_in <= '0'; 					
-	reg_write_in <= '1';				
-	mem_to_reg_in <= '0';	
+	I_rd <= RT;
+	I_branch <= '0';
+	I_jump <= '0';
+	I_mem_read <= '0';		
+	I_mem_write <= '0'; 					
+	I_reg_write <= '1';				
+	I_mem_to_reg <= '0';	
 
 	-- forwarding
-	ex_data <= (others=>'0');
-	mem_data <= (others=>'0');
-	forward_rs <= "00";
-	forward_rt <= "00";
+	I_ex_data <= (others=>'0');
+	I_mem_data <= (others=>'0');
+	I_forward_rs <= "00";
+	I_forward_rt <= "00";
 
-  	wait for CLK_PERIOD;
-  	assert alu_result = ORI_RESULT report "Test 18: Unsuccessful" severity error;
+  	wait for clk_PERIOD;
+  	assert O_alu_result = ORI_RESULT report "Test 18: Unsuccessful" severity error;
   
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	reset <= '1';
-  	wait for CLK_PERIOD;
-  	reset <= '0';
-  	wait for CLK_PERIOD;
+  	wait for clk_PERIOD;
+  	I_reset <= '1';
+  	wait for clk_PERIOD;
+  	I_reset <= '0';
+  	wait for clk_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 19: XORI
   ----------------------------------------------------------------------------------
   	report "----- Test 19: XORI Instruction -----";
-  	instruction <= XORI_OPCODE & RS & RT & IMM_8;
 
-	rs_data_in <= DATA_4;
-	next_pc <= NEXT_PC_VALUE;
+	-- instruction signals
+	I_rs <= RS;
+	I_rt <= RT;
+	I_rd <= RT;
+	I_shamt <= SHAMT;
+	I_imm_ZE <= IMM_8;
+	I_imm_SE <= IMM_8;
+	I_addr <= ADDRESS;
+	I_opcode <= XORI_OPCODE;
+	I_funct <= "000000";
+
+	I_rs_data <= DATA_4;
+	I_next_pc <= NEXT_PC_VALUE;
 
 	-- control signals
-	destination_register_in <= RT;
-	branch_in <= '0';
-	jump_in <= '0';
-	mem_read_in <= '0';		
-	mem_write_in <= '0'; 					
-	reg_write_in <= '1';				
-	mem_to_reg_in <= '0';	
+	I_rd <= RT;
+	I_branch <= '0';
+	I_jump <= '0';
+	I_mem_read <= '0';		
+	I_mem_write <= '0'; 					
+	I_reg_write <= '1';				
+	I_mem_to_reg <= '0';	
 
 	-- forwarding
-	ex_data <= (others=>'0');
-	mem_data <= (others=>'0');
-	forward_rs <= "00";
-	forward_rt <= "00";
+	I_ex_data <= (others=>'0');
+	I_mem_data <= (others=>'0');
+	I_forward_rs <= "00";
+	I_forward_rt <= "00";
 
-  	wait for CLK_PERIOD;
-  	assert alu_result = XORI_RESULT report "Test 19: Unsuccessful" severity error;
+  	wait for clk_PERIOD;
+  	assert O_alu_result = XORI_RESULT report "Test 19: Unsuccessful" severity error;
    
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	reset <= '1';
-  	wait for CLK_PERIOD;
-  	reset <= '0';
-  	wait for CLK_PERIOD;
+  	wait for clk_PERIOD;
+  	I_reset <= '1';
+  	wait for clk_PERIOD;
+  	I_reset <= '0';
+  	wait for clk_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 20: LUI
   ----------------------------------------------------------------------------------
   	report "----- Test 20: LUI Instruction -----";
-  	instruction <= LUI_OPCODE & RS & RT & IMM_4;
 
-	next_pc <= NEXT_PC_VALUE;
+	-- instruction signals
+	I_rs <= RS;
+	I_rt <= RT;
+	I_rd <= RT;
+	I_shamt <= SHAMT;
+	I_imm_ZE <= IMM_4;
+	I_imm_SE <= IMM_4;
+	I_addr <= ADDRESS;
+	I_opcode <= LUI_OPCODE;
+	I_funct <= "000000";
+
+
+	I_next_pc <= NEXT_PC_VALUE;
 
 	-- control signals
-	destination_register_in <= RT;
-	branch_in <= '0';
-	jump_in <= '0';
-	mem_read_in <= '0';		
-	mem_write_in <= '0'; 					
-	reg_write_in <= '1';				
-	mem_to_reg_in <= '0';	
+	I_rd <= RT;
+	I_branch <= '0';
+	I_jump <= '0';
+	I_mem_read <= '0';		
+	I_mem_write <= '0'; 					
+	I_reg_write <= '1';				
+	I_mem_to_reg <= '0';	
 
 	-- forwarding
-	ex_data <= (others=>'0');
-	mem_data <= (others=>'0');
-	forward_rs <= "00";
-	forward_rt <= "00";
+	I_ex_data <= (others=>'0');
+	I_mem_data <= (others=>'0');
+	I_forward_rs <= "00";
+	I_forward_rt <= "00";
 
-  	wait for CLK_PERIOD;
-  	assert alu_result = LUI_RESULT report "Test 20: Unsuccessful" severity error;
+  	wait for clk_PERIOD;
+  	assert O_alu_result = LUI_RESULT report "Test 20: Unsuccessful" severity error;
   
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	reset <= '1';
-  	wait for CLK_PERIOD;
-  	reset <= '0';
-  	wait for CLK_PERIOD;
+  	wait for clk_PERIOD;
+  	I_reset <= '1';
+  	wait for clk_PERIOD;
+  	I_reset <= '0';
+  	wait for clk_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 21: LW
   ----------------------------------------------------------------------------------
   report "----- Test 21: LW Instruction -----";
-  	instruction <= LW_OPCODE & RS & RT & IMM_4;
 
-	rs_data_in <= DATA_8;
-	next_pc <= NEXT_PC_VALUE;
+	-- instruction signals
+	I_rs <= RS;
+	I_rt <= RT;
+	I_rd <= RT;
+	I_shamt <= SHAMT;
+	I_imm_ZE <= IMM_4;
+	I_imm_SE <= IMM_4;
+	I_addr <= ADDRESS;
+	I_opcode <= LW_OPCODE;
+	I_funct <= "000000";
+
+	I_rs_data <= DATA_8;
+	I_next_pc <= NEXT_PC_VALUE;
 
 	-- control signals
-	destination_register_in <= RT;
-	branch_in <= '0';
-	jump_in <= '0';
-	mem_read_in <= '1';		
-	mem_write_in <= '0'; 					
-	reg_write_in <= '1';				
-	mem_to_reg_in <= '1';	
+	I_rd <= RT;
+	I_branch <= '0';
+	I_jump <= '0';
+	I_mem_read <= '1';		
+	I_mem_write <= '0'; 					
+	I_reg_write <= '1';				
+	I_mem_to_reg <= '1';	
 
 	-- forwarding
-	ex_data <= (others=>'0');
-	mem_data <= (others=>'0');
-	forward_rs <= "00";
-	forward_rt <= "00";
+	I_ex_data <= (others=>'0');
+	I_mem_data <= (others=>'0');
+	I_forward_rs <= "00";
+	I_forward_rt <= "00";
 
-  	wait for CLK_PERIOD;
-  	assert alu_result = LW_RESULT report "Test 21: Unsuccessful" severity error;
+  	wait for clk_PERIOD;
+  	assert O_alu_result = LW_RESULT report "Test 21: Unsuccessful" severity error;
   
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	reset <= '1';
-  	wait for CLK_PERIOD;
-  	reset <= '0';
-  	wait for CLK_PERIOD;
+  	wait for clk_PERIOD;
+  	I_reset <= '1';
+  	wait for clk_PERIOD;
+  	I_reset <= '0';
+  	wait for clk_PERIOD;
   ----------------------------------------------------------------------------------
   -- TEST 22: SW
   ----------------------------------------------------------------------------------
   	report "----- Test 22: SW Instruction -----";
-  	instruction <= SW_OPCODE & RS & RT & IMM_4;
 
-	rs_data_in <= DATA_8;
-	next_pc <= NEXT_PC_VALUE;
+	-- instruction signals
+	I_rs <= RS;
+	I_rt <= RT;
+	I_rd <= RT;
+	I_shamt <= SHAMT;
+	I_imm_ZE <= IMM_4;
+	I_imm_SE <= IMM_4;
+	I_addr <= ADDRESS;
+	I_opcode <= SW_OPCODE;
+	I_funct <= "000000";
+
+	I_rs_data <= DATA_8;
+	I_next_pc <= NEXT_PC_VALUE;
 
 	-- control signals
-	destination_register_in <= RT;
-	branch_in <= '0';
-	jump_in <= '0';
-	mem_read_in <= '0';		
-	mem_write_in <= '1'; 					
-	reg_write_in <= '0';				
-	mem_to_reg_in <= '0';	
+	I_rd <= RT;
+	I_branch <= '0';
+	I_jump <= '0';
+	I_mem_read <= '0';		
+	I_mem_write <= '1'; 					
+	I_reg_write <= '0';				
+	I_mem_to_reg <= '0';	
 
 	-- forwarding
-	ex_data <= (others=>'0');
-	mem_data <= (others=>'0');
-	forward_rs <= "00";
-	forward_rt <= "00";
+	I_ex_data <= (others=>'0');
+	I_mem_data <= (others=>'0');
+	I_forward_rs <= "00";
+	I_forward_rt <= "00";
 
-  	wait for CLK_PERIOD;
-  	assert alu_result = SW_RESULT report "Test 22: Unsuccessful" severity error;
+  	wait for clk_PERIOD;
+  	assert O_alu_result = SW_RESULT report "Test 22: Unsuccessful" severity error;
   
 
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	reset <= '1';
-  	wait for CLK_PERIOD;
-  	reset <= '0';
-  	wait for CLK_PERIOD;
+  	wait for clk_PERIOD;
+  	I_reset <= '1';
+  	wait for clk_PERIOD;
+  	I_reset <= '0';
+  	wait for clk_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 23: BEQ
   ----------------------------------------------------------------------------------
   	report "----- Test 23: BEQ Instruction -----";
-  	instruction <= BEQ_OPCODE & RS & RT & IMM_4;
 
-	rs_data_in <= DATA_4;
-	rt_data_in <= DATA_4;
-	next_pc <= NEXT_PC_VALUE;
+	-- instruction signals
+	I_rs <= RS;
+	I_rt <= RT;
+	I_rd <= "00000";
+	I_shamt <= SHAMT;
+	I_imm_ZE <= IMM_4;
+	I_imm_SE <= IMM_4;
+	I_addr <= ADDRESS;
+	I_opcode <= BEQ_OPCODE;
+	I_funct <= "000000";
+
+	I_rs_data <= DATA_4;
+	I_rt_data <= DATA_4;
+	I_next_pc <= NEXT_PC_VALUE;
 
 	-- control signals
-	destination_register_in <= "00000";
-	branch_in <= '1';
-	jump_in <= '0';
-	mem_read_in <= '0';		
-	mem_write_in <= '0'; 					
-	reg_write_in <= '0';				
-	mem_to_reg_in <= '0';	
+	I_rd <= "00000";
+	I_branch <= '1';
+	I_jump <= '0';
+	I_mem_read <= '0';		
+	I_mem_write <= '0'; 					
+	I_reg_write <= '0';				
+	I_mem_to_reg <= '0';	
 
 	-- forwarding
-	ex_data <= (others=>'0');
-	mem_data <= (others=>'0');
-	forward_rs <= "00";
-	forward_rt <= "00";
+	I_ex_data <= (others=>'0');
+	I_mem_data <= (others=>'0');
+	I_forward_rs <= "00";
+	I_forward_rt <= "00";
 
-  	wait for CLK_PERIOD;
-  	assert updated_next_pc = BEQ_TAKEN_PC_RESULT report "Test 23.a: Unsuccessful" severity error;
+  	wait for clk_PERIOD;
+  	assert O_updated_next_pc = BEQ_TAKEN_PC_RESULT report "Test 23.a: Unsuccessful" severity error;
 
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	reset <= '1';
-  	wait for CLK_PERIOD;
-  	reset <= '0';
-  	wait for CLK_PERIOD;
+  	wait for clk_PERIOD;
+  	I_reset <= '1';
+  	wait for clk_PERIOD;
+  	I_reset <= '0';
+  	wait for clk_PERIOD;
 
 ----------------------------------------------------------------------------------
 
-  	instruction <= BEQ_OPCODE & RS & RT & IMM_4;
+	-- instruction signals
+	I_rs <= RS;
+	I_rt <= RT;
+	I_rd <= "00000";
+	I_shamt <= SHAMT;
+	I_imm_ZE <= IMM_4;
+	I_imm_SE <= IMM_4;
+	I_addr <= ADDRESS;
+	I_opcode <= BEQ_OPCODE;
+	I_funct <= "000000";
 
-	rs_data_in <= DATA_4;
-	rt_data_in <= DATA_8;
-	next_pc <= NEXT_PC_VALUE;
+	I_rs_data <= DATA_4;
+	I_rt_data <= DATA_8;
+	I_next_pc <= NEXT_PC_VALUE;
 
 	-- control signals
-	destination_register_in <= "00000";
-	branch_in <= '1';
-	jump_in <= '0';
-	mem_read_in <= '0';		
-	mem_write_in <= '0'; 					
-	reg_write_in <= '0';				
-	mem_to_reg_in <= '0';	
+	I_rd <= "00000";
+	I_branch <= '1';
+	I_jump <= '0';
+	I_mem_read <= '0';		
+	I_mem_write <= '0'; 					
+	I_reg_write <= '0';				
+	I_mem_to_reg <= '0';	
 
 	-- forwarding
-	ex_data <= (others=>'0');
-	mem_data <= (others=>'0');
-	forward_rs <= "00";
-	forward_rt <= "00";
+	I_ex_data <= (others=>'0');
+	I_mem_data <= (others=>'0');
+	I_forward_rs <= "00";
+	I_forward_rt <= "00";
 
-  	wait for CLK_PERIOD;
-  	assert updated_next_pc = BEQ_NOT_TAKEN_PC_RESULT report "Test 23.b: Unsuccessful" severity error;
+  	wait for clk_PERIOD;
+  	assert O_updated_next_pc = BEQ_NOT_TAKEN_PC_RESULT report "Test 23.b: Unsuccessful" severity error;
   
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	reset <= '1';
-  	wait for CLK_PERIOD;
-  	reset <= '0';
-  	wait for CLK_PERIOD;
+  	wait for clk_PERIOD;
+  	I_reset <= '1';
+  	wait for clk_PERIOD;
+  	I_reset <= '0';
+  	wait for clk_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 24: BNE
   ----------------------------------------------------------------------------------
 
   	report "----- Test 24: BNE Instruction -----";
-  	instruction <= BNE_OPCODE & RS & RT & IMM_4;
 
-	rs_data_in <= DATA_4;
-	rt_data_in <= DATA_8;
-	next_pc <= NEXT_PC_VALUE;
+	-- instruction signals
+	I_rs <= RS;
+	I_rt <= RT;
+	I_rd <= "00000";
+	I_shamt <= SHAMT;
+	I_imm_ZE <= IMM_4;
+	I_imm_SE <= IMM_4;
+	I_addr <= ADDRESS;
+	I_opcode <= BNE_OPCODE;
+	I_funct <= "000000";
+
+	I_rs_data <= DATA_4;
+	I_rt_data <= DATA_8;
+	I_next_pc <= NEXT_PC_VALUE;
 
 	-- control signals
-	destination_register_in <= "00000";
-	branch_in <= '1';
-	jump_in <= '0';
-	mem_read_in <= '0';		
-	mem_write_in <= '0'; 					
-	reg_write_in <= '0';				
-	mem_to_reg_in <= '0';	
+	I_rd <= "00000";
+	I_branch <= '1';
+	I_jump <= '0';
+	I_mem_read <= '0';		
+	I_mem_write <= '0'; 					
+	I_reg_write <= '0';				
+	I_mem_to_reg <= '0';	
 
 	-- forwarding
-	ex_data <= (others=>'0');
-	mem_data <= (others=>'0');
-	forward_rs <= "00";
-	forward_rt <= "00";
+	I_ex_data <= (others=>'0');
+	I_mem_data <= (others=>'0');
+	I_forward_rs <= "00";
+	I_forward_rt <= "00";
 
-  	wait for CLK_PERIOD;
-  	assert updated_next_pc = BNE_TAKEN_PC_RESULT report "Test 24.a: Unsuccessful" severity error;
+  	wait for clk_PERIOD;
+  	assert O_updated_next_pc = BNE_TAKEN_PC_RESULT report "Test 24.a: Unsuccessful" severity error;
 
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	reset <= '1';
-  	wait for CLK_PERIOD;
-  	reset <= '0';
-  	wait for CLK_PERIOD;
+  	wait for clk_PERIOD;
+  	I_reset <= '1';
+  	wait for clk_PERIOD;
+  	I_reset <= '0';
+  	wait for clk_PERIOD;
 
 ----------------------------------------------------------------------------------
 
-  	instruction <= BNE_OPCODE & RS & RT & IMM_4;
+	-- instruction signals
+	I_rs <= RS;
+	I_rt <= RT;
+	I_rd <= "00000";
+	I_shamt <= SHAMT;
+	I_imm_ZE <= IMM_4;
+	I_imm_SE <= IMM_4;
+	I_addr <= ADDRESS;
+	I_opcode <= BNE_OPCODE;
+	I_funct <= "000000";
 
-	rs_data_in <= DATA_8;
-	rt_data_in <= DATA_8;
-	next_pc <= NEXT_PC_VALUE;
+	I_rs_data <= DATA_8;
+	I_rt_data <= DATA_8;
+	I_next_pc <= NEXT_PC_VALUE;
 
 	-- control signals
-	destination_register_in <= "00000";
-	branch_in <= '1';
-	jump_in <= '0';
-	mem_read_in <= '0';		
-	mem_write_in <= '0'; 					
-	reg_write_in <= '0';				
-	mem_to_reg_in <= '0';	
+	I_rd <= "00000";
+	I_branch <= '1';
+	I_jump <= '0';
+	I_mem_read <= '0';		
+	I_mem_write <= '0'; 					
+	I_reg_write <= '0';				
+	I_mem_to_reg <= '0';	
 
 	-- forwarding
-	ex_data <= (others=>'0');
-	mem_data <= (others=>'0');
-	forward_rs <= "00";
-	forward_rt <= "00";
+	I_ex_data <= (others=>'0');
+	I_mem_data <= (others=>'0');
+	I_forward_rs <= "00";
+	I_forward_rt <= "00";
 
-  	wait for CLK_PERIOD;
-  	assert updated_next_pc = BNE_NOT_TAKEN_PC_RESULT report "Test 24.b: Unsuccessful" severity error;
+  	wait for clk_PERIOD;
+  	assert O_updated_next_pc = BNE_NOT_TAKEN_PC_RESULT report "Test 24.b: Unsuccessful" severity error;
 
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	reset <= '1';
-  	wait for CLK_PERIOD;
-  	reset <= '0';
-  	wait for CLK_PERIOD;
+  	wait for clk_PERIOD;
+  	I_reset <= '1';
+  	wait for clk_PERIOD;
+  	I_reset <= '0';
+  	wait for clk_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 25: J
   ----------------------------------------------------------------------------------
   	report "----- Test 25: J Instruction -----";
-  	instruction <= J_OPCODE & ADDRESS;
 
-	next_pc <= NEXT_PC_VALUE;
+	-- instruction signals
+	I_rs <= RS;
+	I_rt <= RT;
+	I_rd <= "00000";
+	I_shamt <= SHAMT;
+	I_imm_ZE <= IMM_4;
+	I_imm_SE <= IMM_4;
+	I_addr <= ADDRESS;
+	I_opcode <= J_OPCODE;
+	I_funct <= "000000";
+	I_next_pc <= NEXT_PC_VALUE;
 
 	-- control signals
-	destination_register_in <= "00000";
-	branch_in <= '0';
-	jump_in <= '1';
-	mem_read_in <= '0';		
-	mem_write_in <= '0'; 					
-	reg_write_in <= '0';				
-	mem_to_reg_in <= '0';	
+	I_branch <= '0';
+	I_jump <= '1';
+	I_mem_read <= '0';		
+	I_mem_write <= '0'; 					
+	I_reg_write <= '0';				
+	I_mem_to_reg <= '0';	
 
 	-- forwarding
-	ex_data <= (others=>'0');
-	mem_data <= (others=>'0');
-	forward_rs <= "00";
-	forward_rt <= "00";
+	I_ex_data <= (others=>'0');
+	I_mem_data <= (others=>'0');
+	I_forward_rs <= "00";
+	I_forward_rt <= "00";
 
-  	wait for CLK_PERIOD;
-  	assert updated_next_pc = J_PC_RESULT report "Test 25: Unsuccessful" severity error;
+  	wait for clk_PERIOD;
+  	assert O_updated_next_pc = J_PC_RESULT report "Test 25: Unsuccessful" severity error;
 
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	reset <= '1';
-  	wait for CLK_PERIOD;
-  	reset <= '0';
-  	wait for CLK_PERIOD;
+  	wait for clk_PERIOD;
+  	I_reset <= '1';
+  	wait for clk_PERIOD;
+  	I_reset <= '0';
+  	wait for clk_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 26: JAL
   ----------------------------------------------------------------------------------
   	report "----- Test 26: JAL Instruction -----";
-  	instruction <= JAL_OPCODE & ADDRESS;
 
-	next_pc <= NEXT_PC_VALUE;
+	-- instruction signals
+	I_rs <= RS;
+	I_rt <= RT;
+	I_rd <= LR;
+	I_shamt <= SHAMT;
+	I_imm_ZE <= IMM_4;
+	I_imm_SE <= IMM_4;
+	I_addr <= ADDRESS;
+	I_opcode <= JAL_OPCODE;
+	I_funct <= "000000";
+	I_next_pc <= NEXT_PC_VALUE;
+
+
+	I_next_pc <= NEXT_PC_VALUE;
 
 	-- control signals
-	destination_register_in <= LR;
-	branch_in <= '0';
-	jump_in <= '1';
-	mem_read_in <= '0';		
-	mem_write_in <= '0'; 					
-	reg_write_in <= '0';				
-	mem_to_reg_in <= '0';	
+	I_branch <= '0';
+	I_jump <= '1';
+	I_mem_read <= '0';		
+	I_mem_write <= '0'; 					
+	I_reg_write <= '0';				
+	I_mem_to_reg <= '0';	
 
 	-- forwarding
-	ex_data <= (others=>'0');
-	mem_data <= (others=>'0');
-	forward_rs <= "00";
-	forward_rt <= "00";
+	I_ex_data <= (others=>'0');
+	I_mem_data <= (others=>'0');
+	I_forward_rs <= "00";
+	I_forward_rt <= "00";
 
-  	wait for CLK_PERIOD;
-  	assert alu_result = JAL_RESULT report "Test 26.a: Unsuccessful" severity error;
-	assert updated_next_pc = JAL_PC_RESULT report "Test 26.b: Unsuccessful" severity error;
+  	wait for clk_PERIOD;
+  	assert O_alu_result = JAL_RESULT report "Test 26.a: Unsuccessful" severity error;
+	assert O_updated_next_pc = JAL_PC_RESULT report "Test 26.b: Unsuccessful" severity error;
 
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	reset <= '1';
-  	wait for CLK_PERIOD;
-  	reset <= '0';
-  	wait for CLK_PERIOD;
+  	wait for clk_PERIOD;
+  	I_reset <= '1';
+  	wait for clk_PERIOD;
+  	I_reset <= '0';
+  	wait for clk_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 27: Forwarding from EX
   ----------------------------------------------------------------------------------
   	report "----- Test 27: Forwarding from EX -----";
 
-  	instruction <= R_OPCODE & RS & RT & RD & SHAMT & ADD_FUNCT;
+	-- instruction signals
+	I_rs <= RS;
+	I_rt <= RT;
+	I_rd <= RD;
+	I_shamt <= SHAMT;
+	I_imm_ZE <= IMM_8;
+	I_imm_SE <= IMM_8;
+	I_addr <= ADDRESS;
+	I_opcode <= R_OPCODE;
+	I_funct <= ADD_FUNCT;
 
-	rs_data_in <= (others=>'0');
-	rt_data_in <= DATA_4;
-	next_pc <= NEXT_PC_VALUE;
+	I_rs_data <= (others=>'0');
+	I_rt_data <= DATA_4;
+	I_next_pc <= NEXT_PC_VALUE;
 
 	-- control signals
-	destination_register_in <= RD;
-	branch_in <= '0';
-	jump_in <= '0';
-	mem_read_in <= '0';		
-	mem_write_in <= '0'; 					
-	reg_write_in <= '1';				
-	mem_to_reg_in <= '0';	
+	I_branch <= '0';
+	I_jump <= '0';
+	I_mem_read <= '0';		
+	I_mem_write <= '0'; 					
+	I_reg_write <= '1';				
+	I_mem_to_reg <= '0';	
 
 	-- forwarding
-	ex_data <= DATA_8;
-	mem_data <= (others=>'0');
-	forward_rs <= "01";
-	forward_rt <= "00";
+	I_ex_data <= DATA_8;
+	I_mem_data <= (others=>'0');
+	I_forward_rs <= "01";
+	I_forward_rt <= "00";
 	
-  	wait for CLK_PERIOD;
-  	assert alu_result = ADD_RESULT report "Test 27: Unsuccessful" severity error;
+  	wait for clk_PERIOD;
+  	assert O_alu_result = ADD_RESULT report "Test 27: Unsuccessful" severity error;
 
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	reset <= '1';
-  	wait for CLK_PERIOD;
-  	reset <= '0';
-  	wait for CLK_PERIOD;
+  	wait for clk_PERIOD;
+  	I_reset <= '1';
+  	wait for clk_PERIOD;
+  	I_reset <= '0';
+  	wait for clk_PERIOD;
 
-  	instruction <= R_OPCODE & RS & RT & RD & SHAMT & ADD_FUNCT;
+	-- instruction signals
+	I_rs <= RS;
+	I_rt <= RT;
+	I_rd <= RD;
+	I_shamt <= SHAMT;
+	I_imm_ZE <= IMM_8;
+	I_imm_SE <= IMM_8;
+	I_addr <= ADDRESS;
+	I_opcode <= R_OPCODE;
+	I_funct <= ADD_FUNCT;
 
-	rs_data_in <= DATA_8;
-	rt_data_in <= (others=>'0');
-	next_pc <= NEXT_PC_VALUE;
+	I_rs_data <= DATA_8;
+	I_rt_data <= (others=>'0');
+	I_next_pc <= NEXT_PC_VALUE;
 
 	-- control signals
-	destination_register_in <= RD;
-	branch_in <= '0';
-	jump_in <= '0';
-	mem_read_in <= '0';		
-	mem_write_in <= '0'; 					
-	reg_write_in <= '1';				
-	mem_to_reg_in <= '0';	
+	I_branch <= '0';
+	I_jump <= '0';
+	I_mem_read <= '0';		
+	I_mem_write <= '0'; 					
+	I_reg_write <= '1';				
+	I_mem_to_reg <= '0';	
 
 	-- forwarding
-	ex_data <= DATA_4;
-	mem_data <= (others=>'0');
-	forward_rs <= "00";
-	forward_rt <= "01";
+	I_ex_data <= DATA_4;
+	I_mem_data <= (others=>'0');
+	I_forward_rs <= "00";
+	I_forward_rt <= "01";
 	
-  	wait for CLK_PERIOD;
-  	assert alu_result = ADD_RESULT report "Test 27: Unsuccessful" severity error;
+  	wait for clk_PERIOD;
+  	assert O_alu_result = ADD_RESULT report "Test 27: Unsuccessful" severity error;
 
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	reset <= '1';
-  	wait for CLK_PERIOD;
-  	reset <= '0';
-  	wait for CLK_PERIOD;
+  	wait for clk_PERIOD;
+  	I_reset <= '1';
+  	wait for clk_PERIOD;
+  	I_reset <= '0';
+  	wait for clk_PERIOD;
 
 
   ----------------------------------------------------------------------------------
   -- TEST 28: Forwarding from MEM
   ----------------------------------------------------------------------------------
   	report "----- Test 28: Forwarding from MEM -----";
-  	instruction <= R_OPCODE & RS & RT & RD & SHAMT & ADD_FUNCT;
 
-	rs_data_in <= (others=>'0');
-	rt_data_in <= DATA_4;
-	next_pc <= NEXT_PC_VALUE;
+	-- instruction signals
+	I_rs <= RS;
+	I_rt <= RT;
+	I_rd <= RD;
+	I_shamt <= SHAMT;
+	I_imm_ZE <= IMM_8;
+	I_imm_SE <= IMM_8;
+	I_addr <= ADDRESS;
+	I_opcode <= R_OPCODE;
+	I_funct <= ADD_FUNCT;
+
+	I_rs_data <= (others=>'0');
+	I_rt_data <= DATA_4;
+	I_next_pc <= NEXT_PC_VALUE;
 
 	-- control signals
-	destination_register_in <= RD;
-	branch_in <= '0';
-	jump_in <= '0';
-	mem_read_in <= '0';		
-	mem_write_in <= '0'; 					
-	reg_write_in <= '1';				
-	mem_to_reg_in <= '0';	
+	I_branch <= '0';
+	I_jump <= '0';
+	I_mem_read <= '0';		
+	I_mem_write <= '0'; 					
+	I_reg_write <= '1';				
+	I_mem_to_reg <= '0';	
 
 	-- forwarding
-	ex_data <= (others=>'0');
-	mem_data <= DATA_8;
-	forward_rs <= "10";
-	forward_rt <= "00";
+	I_ex_data <= (others=>'0');
+	I_mem_data <= DATA_8;
+	I_forward_rs <= "10";
+	I_forward_rt <= "00";
 	
-  	wait for CLK_PERIOD;
-  	assert alu_result = ADD_RESULT report "Test 28: Unsuccessful" severity error;
+  	wait for clk_PERIOD;
+  	assert O_alu_result = ADD_RESULT report "Test 28: Unsuccessful" severity error;
 
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	reset <= '1';
-  	wait for CLK_PERIOD;
-  	reset <= '0';
-  	wait for CLK_PERIOD;
+  	wait for clk_PERIOD;
+  	I_reset <= '1';
+  	wait for clk_PERIOD;
+  	I_reset <= '0';
+  	wait for clk_PERIOD;
 
-  	instruction <= R_OPCODE & RS & RT & RD & SHAMT & ADD_FUNCT;
+	-- instruction signals
+	I_rs <= RS;
+	I_rt <= RT;
+	I_rd <= RD;
+	I_shamt <= SHAMT;
+	I_imm_ZE <= IMM_8;
+	I_imm_SE <= IMM_8;
+	I_addr <= ADDRESS;
+	I_opcode <= R_OPCODE;
+	I_funct <= ADD_FUNCT;
 
-	rs_data_in <= DATA_8;
-	rt_data_in <= (others=>'0');
-	next_pc <= NEXT_PC_VALUE;
+	I_rs_data <= DATA_8;
+	I_rt_data <= (others=>'0');
+	I_next_pc <= NEXT_PC_VALUE;
 
 	-- control signals
-	destination_register_in <= RD;
-	branch_in <= '0';
-	jump_in <= '0';
-	mem_read_in <= '0';		
-	mem_write_in <= '0'; 					
-	reg_write_in <= '1';				
-	mem_to_reg_in <= '0';	
+	I_branch <= '0';
+	I_jump <= '0';
+	I_mem_read <= '0';		
+	I_mem_write <= '0'; 					
+	I_reg_write <= '1';				
+	I_mem_to_reg <= '0';	
 
 	-- forwarding
-	ex_data <= (others=>'0');
-	mem_data <= DATA_4;
-	forward_rs <= "00";
-	forward_rt <= "10";
+	I_ex_data <= (others=>'0');
+	I_mem_data <= DATA_4;
+	I_forward_rs <= "00";
+	I_forward_rt <= "10";
 	
-  	wait for CLK_PERIOD;
-  	assert alu_result = ADD_RESULT report "Test 28: Unsuccessful" severity error;
+  	wait for clk_PERIOD;
+  	assert O_alu_result = ADD_RESULT report "Test 28: Unsuccessful" severity error;
 
 
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	reset <= '1';
-  	wait for CLK_PERIOD;
-  	reset <= '0';
-  	wait for CLK_PERIOD;
+  	wait for clk_PERIOD;
+  	I_reset <= '1';
+  	wait for clk_PERIOD;
+  	I_reset <= '0';
+  	wait for clk_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 29: Data Hazard
   ----------------------------------------------------------------------------------
   	report "----- Test 29: Data Hazard -----";
 
-	instruction <= R_OPCODE & R0 & R0 & R0 & SHAMT & ADD_FUNCT;
-	rs_data_in <= (others=>'0');
-	rt_data_in <= (others=>'0');
-	next_pc <= NEXT_PC_VALUE;
+	-- instruction signals
+	I_rs <= R0;
+	I_rt <= R0;
+	I_rd <= R0;
+	I_shamt <= SHAMT;
+	I_imm_ZE <= IMM_8;
+	I_imm_SE <= IMM_8;
+	I_addr <= ADDRESS;
+	I_opcode <= R_OPCODE;
+	I_funct <= ADD_FUNCT;
+
+	I_rs_data <= (others=>'0');
+	I_rt_data <= (others=>'0');
+	I_next_pc <= NEXT_PC_VALUE;
 
 	-- control signals
-	destination_register_in <= R0;
-	branch_in <= '0';
-	jump_in <= '0';
-	mem_read_in <= '0';		
-	mem_write_in <= '0'; 					
-	reg_write_in <= '0';				
-	mem_to_reg_in <= '0';	
+	I_branch <= '0';
+	I_jump <= '0';
+	I_mem_read <= '0';		
+	I_mem_write <= '0'; 					
+	I_reg_write <= '0';				
+	I_mem_to_reg <= '0';	
 
 	-- forwarding
-	ex_data <= (others=>'0');
-	mem_data <= (others=>'0');
-	forward_rs <= "00";
-	forward_rt <= "00";
+	I_ex_data <= (others=>'0');
+	I_mem_data <= (others=>'0');
+	I_forward_rs <= "00";
+	I_forward_rt <= "00";
 	
-  	wait for CLK_PERIOD;
-  	assert stall_out = '1' 
+  	wait for clk_PERIOD;
+  	assert O_stall = '1' 
 report "Test 29: Unsuccessful" severity error;
 
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	reset <= '1';
-  	wait for CLK_PERIOD;
-  	reset <= '0';
-  	wait for CLK_PERIOD;
+  	wait for clk_PERIOD;
+  	I_reset <= '1';
+  	wait for clk_PERIOD;
+  	I_reset <= '0';
+  	wait for clk_PERIOD;
 
 	
   report "----- Confirming all tests have ran -----";
