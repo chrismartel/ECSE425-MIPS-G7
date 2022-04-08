@@ -59,11 +59,11 @@ architecture Behavioral of decode is
 --	I_mem_reg_write: in std_logic -- reg_write setting for instruction completed by mem stage
 --	);
 --	end component;
-	signal rf_datad: STD_LOGIC_VECTOR(31 downto 0);
-	signal O_datas: STD_LOGIC_VECTOR (31 downto 0);
-	signal O_datat :  STD_LOGIC_VECTOR (31 downto 0);
-	signal I_we: STD_LOGIC;
-	signal I_ren: STD_LOGIC;
+--	signal rf_datad: STD_LOGIC_VECTOR(31 downto 0);
+--	signal O_datas: STD_LOGIC_VECTOR (31 downto 0);
+--	signal O_datat :  STD_LOGIC_VECTOR (31 downto 0);
+--	signal I_we: STD_LOGIC;
+--	signal I_ren: STD_LOGIC;
 	
 --	signal I_id_reg_write: std_logic;
     -- arithmetic
@@ -120,17 +120,17 @@ architecture Behavioral of decode is
 	constant JAL_OPCODE : std_logic_vector (5 downto 0) := "000011"; -- jump and link
 	
 begin
-	regsInst: regs port map(
-	I_clk => I_clk,
-	I_en => I_ren, 
-	I_datad => rf_datad,
-	O_datas => O_datas,
-	O_datat => O_datat,
-	I_rt => I_dataInst(20 downto 16),
-	I_rs => I_dataInst(25 downto 21),
-	I_rd => I_dataInst(15 downto 11),
-	I_we => I_we
-	);
+--	regsInst: regs port map(
+--	I_clk => I_clk,
+--	I_en => I_ren, 
+--	I_datad => rf_datad,
+--	O_datas => O_datas,
+--	O_datat => O_datat,
+--	I_rt => I_dataInst(20 downto 16),
+--	I_rs => I_dataInst(25 downto 21),
+--	I_rd => I_dataInst(15 downto 11),
+--	I_we => I_we
+--	);
 --	hdInst: hazard_detection_unit port map(
 --	I_clk => I_clk,
 --	I_reset => I_reset,
@@ -144,7 +144,28 @@ begin
 	
   process (I_clk)
   begin
-    if rising_edge(I_clk) and I_en = '1' then
+    if I_reset'event and I_reset = '1' then
+		O_next_pc <= (others => '0');
+           O_rs <= (others => '0');
+           O_rt <= (others => '0');
+           O_rd <= (others => '0');
+           O_dataIMM_SE <= (others => '0');
+			  O_dataIMM_ZE <= (others => '0');
+           O_regDwe <= '0';
+           O_aluop <= (others => '0');
+			  O_shamt<= (others => '0');
+			  O_funct <= (others => '0');
+			  O_branch <= '0';
+			  O_jump <= '0';
+			  O_mem_read <= '0';
+			  O_mem_write <= '0';
+			  O_mem_to_reg <= '0';
+			  O_addr <= (others => '0');
+	 
+	 
+	 
+	 
+	 elsif rising_edge(I_clk) and I_en = '1' then
 	
       if I_dataInst(31 downto 26) = "000000" then
                 			case I_dataInst(5 downto 0) is -- check functional bits for R type instructions
@@ -377,47 +398,61 @@ begin
                     
   	                  		-- control-flow
         	            		when BEQ_OPCODE=>
-											I_ren <= '1';
-											I_we <= '0'; 
-  		                      		if O_datas = O_datat then
-  	                          			O_regDwe <= '0';
-												I_id_reg_write <= '0';
-												O_branch <= '1';
-												O_jump <= '0';
-												O_mem_read <= '0';
-												O_mem_write <= '0';
-												O_mem_to_reg <= '0';
-        	                			else
-  	                          			O_regDwe <= '0';
-												I_id_reg_write <= '0';
-												O_branch <= '0';
-												O_jump <= '0';
-												O_mem_read <= '0';
-												O_mem_write <= '0';
-												O_mem_to_reg <= '0';
-											end if;
-											I_ren <= '0';
+									 	 	O_regDwe <= '0';
+											I_id_reg_write <= '0';
+											O_branch <= '0';
+											O_jump <= '0';
+											O_mem_read <= '0';
+											O_mem_write <= '0';
+											O_mem_to_reg <= '0';
+										 
+--  		                      		if O_datas = O_datat then
+--  	                          			O_regDwe <= '0';
+--												I_id_reg_write <= '0';
+--												O_branch <= '1';
+--												O_jump <= '0';
+--												O_mem_read <= '0';
+--												O_mem_write <= '0';
+--												O_mem_to_reg <= '0';
+--        	                			else
+--  	                          			O_regDwe <= '0';
+--												I_id_reg_write <= '0';
+--												O_branch <= '0';
+--												O_jump <= '0';
+--												O_mem_read <= '0';
+--												O_mem_write <= '0';
+--												O_mem_to_reg <= '0';
+--											end if;
+--											I_ren <= '0';
   	                  		when BNE_OPCODE=>
-										I_ren <= '1';
-										I_we <= '0';
-        	                		if O_datas /= O_datat then
-  	                          			O_regDwe <= '0';
-												I_id_reg_write <= '0';
-												O_branch <= '1';
-												O_jump <= '0';
-												O_mem_read <= '0';
-												O_mem_write <= '0';
-												O_mem_to_reg <= '0';
-        	                		else
-  	                          			O_regDwe <= '0';
-												I_id_reg_write <= '0';
-												O_branch <= '0';
-												O_jump <= '0';
-												O_mem_read <= '0';
-												O_mem_write <= '0';
-												O_mem_to_reg <= '0';
-        	                		end if;
-										I_ren <= '0';
+											O_regDwe <= '0';
+											I_id_reg_write <= '0';
+											O_branch <= '0';
+											O_jump <= '0';
+											O_mem_read <= '0';
+											O_mem_write <= '0';
+											O_mem_to_reg <= '0';
+											
+--										I_ren <= '1';
+--										I_we <= '0';
+--        	                		if O_datas /= O_datat then
+--  	                          			O_regDwe <= '0';
+--												I_id_reg_write <= '0';
+--												O_branch <= '1';
+--												O_jump <= '0';
+--												O_mem_read <= '0';
+--												O_mem_write <= '0';
+--												O_mem_to_reg <= '0';
+--        	                		else
+--  	                          			O_regDwe <= '0';
+--												I_id_reg_write <= '0';
+--												O_branch <= '0';
+--												O_jump <= '0';
+--												O_mem_read <= '0';
+--												O_mem_write <= '0';
+--												O_mem_to_reg <= '0';
+--        	                		end if;
+--										I_ren <= '0';
   	                  		when J_OPCODE=>
 												O_regDwe <= '0';
 												I_id_reg_write <= '0';
