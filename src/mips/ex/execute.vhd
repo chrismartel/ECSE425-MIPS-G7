@@ -149,15 +149,13 @@ begin
 			O_rd <= (others=>'0');
 			O_mem_read <= '0';
 			O_mem_write <= '0';
-			O_branch <= '0';
 			O_reg_write <= '0';
 			O_mem_to_reg <= '0';
 			O_jump <= '0';
-
 			O_stall <= '0';
 			
 		-- synchronous clock active high
-		elsif I_clk'event and I_clk = '0' then
+		elsif I_clk'event and I_clk = '1' then
 
 			-- check for stall instruction
 
@@ -172,12 +170,13 @@ begin
 				O_rd <= I_rd;
 				O_mem_read <= I_mem_read;
 				O_mem_write <= I_mem_write;
-				O_branch <= I_branch;
 				O_reg_write <= I_reg_write;
 				O_mem_to_reg <= I_mem_to_reg;
+				O_jump <= I_jump;
 
 				-- ALU results
 				if I_opcode = "000000" then
+					O_branch <= '0';
                 			case I_funct is -- check functional bits for R type instructions
                   	  		-- arithmetic
                     			when ADD_FUNCT =>
@@ -444,6 +443,7 @@ begin
   		                      			O_alu_result <= std_logic_vector(signed(I_mem_data) + signed(I_imm_SE));
 						when others =>
 						end case;
+						O_branch <= '0';
                         
   	                  		when SLTI_OPCODE =>
 						-- SignExtImm
@@ -468,6 +468,7 @@ begin
   		                      			end if;
 						when others =>
 						end case;
+						O_branch <= '0';
 
   	                  		-- logical
         	            		when ANDI_OPCODE =>
@@ -481,6 +482,7 @@ begin
   		                      			O_alu_result <= I_mem_data and I_imm_ZE;
 						when others =>
 						end case;
+						O_branch <= '0';
   		                      		
   	                  		when ORI_OPCODE =>
   		                      		-- ZeroExtImm
@@ -493,6 +495,7 @@ begin
   		                      			O_alu_result <= I_mem_data or I_imm_ZE;
 						when others =>
 						end case;
+						O_branch <= '0';
 
   	                  		when XORI_OPCODE =>
   		                      		-- ZeroExtImm
@@ -505,11 +508,12 @@ begin
   		                      			O_alu_result <= I_mem_data xor I_imm_ZE;
 						when others =>
 						end case;
-
+						O_branch <= '0';
   	                  		-- transfer
         	            		when LUI_OPCODE =>
   		                      		-- load immediate value into 16 upper bits of rt register
   		                      		O_alu_result <= I_imm_ZE(15 downto 0) & std_logic_vector(to_unsigned(0,16));
+						O_branch <= '0';
 
   	                  		-- memory
         	            		when LW_OPCODE | SW_OPCODE=>
@@ -522,90 +526,123 @@ begin
   		                      			O_alu_result <= std_logic_vector(signed(I_mem_data) + signed(I_imm_SE));
 						when others =>
 						end case;
+						O_branch <= '0';
   		                      		                    
   	                  		-- control-flow
         	            		when BEQ_OPCODE=>
 						if I_forward_rs = "00" and I_forward_rt = "00" then
   		                      			if I_rs_data = I_rt_data then
   	                          				O_updated_next_pc <= std_logic_vector(signed(I_next_pc) + signed(I_imm_SE(29 downto 0) & "00"));
-        	                			else
+        	                				O_branch <= '1';
+							else
   	                          				O_updated_next_pc <= I_next_pc;
+        	                				O_branch <= '0';
         	                			end if;
 						elsif I_forward_rs = "00" and I_forward_rt = "01" then
   		                      			if I_rs_data = I_ex_data then
   	                          				O_updated_next_pc <= std_logic_vector(signed(I_next_pc) + signed(I_imm_SE(29 downto 0) & "00"));
+        	                				O_branch <= '1';
         	                			else
   	                          				O_updated_next_pc <= I_next_pc;
+        	                				O_branch <= '0';
         	                			end if;
 						elsif I_forward_rs = "00" and I_forward_rt = "10" then
   		                      			if I_rs_data = I_mem_data then
-  	                          				O_updated_next_pc <= std_logic_vector(signed(I_next_pc) + signed(I_imm_SE(29 downto 0) & "00"));  	                          				O_updated_next_pc <= I_next_pc;
+  	                          				O_updated_next_pc <= std_logic_vector(signed(I_next_pc) + signed(I_imm_SE(29 downto 0) & "00"));  	                          				
+        	                				O_branch <= '1';
+							else
+								O_updated_next_pc <= I_next_pc;
+        	                				O_branch <= '0';
         	                			end if;
 						elsif I_forward_rs = "01" and I_forward_rt = "00" then
   		                      			if I_ex_data = I_rt_data then
   	                          				O_updated_next_pc <= std_logic_vector(signed(I_next_pc) + signed(I_imm_SE(29 downto 0) & "00"));
+        	                				O_branch <= '1';
         	                			else
   	                          				O_updated_next_pc <= I_next_pc;
+        	                				O_branch <= '0';
         	                			end if;
 						elsif I_forward_rs = "01" and I_forward_rt = "10" then
   		                      			if I_ex_data = I_mem_data then
   	                          				O_updated_next_pc <= std_logic_vector(signed(I_next_pc) + signed(I_imm_SE(29 downto 0) & "00"));
-        	                			else
+        	                			    	O_branch <= '1';
+							else
   	                          				O_updated_next_pc <= I_next_pc;
+        	                				O_branch <= '0';
         	                			end if;
 						elsif I_forward_rs = "10" and I_forward_rt = "00" then
   		                      			if I_mem_data = I_rt_data then
   	                          				O_updated_next_pc <= std_logic_vector(signed(I_next_pc) + signed(I_imm_SE(29 downto 0) & "00"));
+        	                				O_branch <= '1';
         	                			else
   	                          				O_updated_next_pc <= I_next_pc;
+        	                				O_branch <= '0';
         	                			end if;
 						elsif I_forward_rs = "10" and I_forward_rt = "01" then
   		                      			if I_mem_data = I_ex_data then
   	                          				O_updated_next_pc <= std_logic_vector(signed(I_next_pc) + signed(I_imm_SE(29 downto 0) & "00"));
+        	                				O_branch <= '1';
         	                			else
   	                          				O_updated_next_pc <= I_next_pc;
+        	                				O_branch <= '0';
         	                			end if;
                     				end if;
   	                  		when BNE_OPCODE=>
 						if I_forward_rs = "00" and I_forward_rt = "00" then
   		                      			if I_rs_data /= I_rt_data then
   	                          				O_updated_next_pc <= std_logic_vector(signed(I_next_pc) + signed(I_imm_SE(29 downto 0) & "00"));
+        	                				O_branch <= '1';
         	                			else
   	                          				O_updated_next_pc <= I_next_pc;
+        	                				O_branch <= '0';
         	                			end if;
 						elsif I_forward_rs = "00" and I_forward_rt = "01" then
-  		                      			if I_rs_data /= I_ex_data then
-  	                          				O_updated_next_pc <= std_logic_vector(signed(I_next_pc) + signed(I_imm_SE(29 downto 0) & "00"));  	                          				O_updated_next_pc <= I_next_pc;
+  		                      			if I_rs_data /= I_rt_data then
+  	                          				O_updated_next_pc <= std_logic_vector(signed(I_next_pc) + signed(I_imm_SE(29 downto 0) & "00"));
+        	                				O_branch <= '1';
+        	                			else
+  	                          				O_updated_next_pc <= I_next_pc;
+        	                				O_branch <= '0';
         	                			end if;
 						elsif I_forward_rs = "00" and I_forward_rt = "10" then
-  		                      			if I_rs_data /= I_mem_data then
+  		                      			if I_rs_data /= I_rt_data then
   	                          				O_updated_next_pc <= std_logic_vector(signed(I_next_pc) + signed(I_imm_SE(29 downto 0) & "00"));
+        	                				O_branch <= '1';
         	                			else
   	                          				O_updated_next_pc <= I_next_pc;
+        	                				O_branch <= '0';
         	                			end if;
 						elsif I_forward_rs = "01" and I_forward_rt = "00" then
-  		                      			if I_ex_data /= I_rt_data then
+  		                      			if I_rs_data /= I_rt_data then
   	                          				O_updated_next_pc <= std_logic_vector(signed(I_next_pc) + signed(I_imm_SE(29 downto 0) & "00"));
+        	                				O_branch <= '1';
         	                			else
   	                          				O_updated_next_pc <= I_next_pc;
+        	                				O_branch <= '0';
         	                			end if;
 						elsif I_forward_rs = "01" and I_forward_rt = "10" then
-  		                      			if I_ex_data /= I_mem_data then
+  		                      			if I_rs_data /= I_rt_data then
   	                          				O_updated_next_pc <= std_logic_vector(signed(I_next_pc) + signed(I_imm_SE(29 downto 0) & "00"));
+        	                				O_branch <= '1';
         	                			else
   	                          				O_updated_next_pc <= I_next_pc;
+        	                				O_branch <= '0';
         	                			end if;
 						elsif I_forward_rs = "10" and I_forward_rt = "00" then
-  		                      			if I_mem_data /= I_rt_data then
+  		                      			if I_rs_data /= I_rt_data then
   	                          				O_updated_next_pc <= std_logic_vector(signed(I_next_pc) + signed(I_imm_SE(29 downto 0) & "00"));
+        	                				O_branch <= '1';
         	                			else
   	                          				O_updated_next_pc <= I_next_pc;
+        	                				O_branch <= '0';
         	                			end if;
 						elsif I_forward_rs = "10" and I_forward_rt = "01" then
-  		                      			if I_mem_data /= I_ex_data then
+  		                      			if I_rs_data /= I_rt_data then
   	                          				O_updated_next_pc <= std_logic_vector(signed(I_next_pc) + signed(I_imm_SE(29 downto 0) & "00"));
+        	                				O_branch <= '1';
         	                			else
   	                          				O_updated_next_pc <= I_next_pc;
+        	                				O_branch <= '0';
         	                			end if;
                     				end if;
 					when J_OPCODE=>

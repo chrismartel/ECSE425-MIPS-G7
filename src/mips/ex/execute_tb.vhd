@@ -1484,7 +1484,7 @@ begin
 
 	-- control signals
 	I_rd <= "00000";
-	I_branch <= '1';
+	I_branch <= '0';
 	I_jump <= '0';
 	I_mem_read <= '0';		
 	I_mem_write <= '0'; 					
@@ -1498,7 +1498,8 @@ begin
 	I_forward_rt <= "00";
 
   	wait for clk_PERIOD;
-  	assert O_updated_next_pc = BEQ_TAKEN_PC_RESULT report "Test 23.a: Unsuccessful" severity error;
+	assert O_branch = '1' report "Test 23.a.i: Unsuccessful" severity error;
+  	assert O_updated_next_pc = BEQ_TAKEN_PC_RESULT report "Test 23.a.ii: Unsuccessful" severity error;
 
   ----------------------------------------------------------------------------------
   -- RESET
@@ -1528,7 +1529,7 @@ begin
 
 	-- control signals
 	I_rd <= "00000";
-	I_branch <= '1';
+	I_branch <= '0';
 	I_jump <= '0';
 	I_mem_read <= '0';		
 	I_mem_write <= '0'; 					
@@ -1542,7 +1543,8 @@ begin
 	I_forward_rt <= "00";
 
   	wait for clk_PERIOD;
-  	assert O_updated_next_pc = BEQ_NOT_TAKEN_PC_RESULT report "Test 23.b: Unsuccessful" severity error;
+	assert O_branch = '0' report "Test 23.b.i: Unsuccessful" severity error;
+  	assert O_updated_next_pc = BEQ_NOT_TAKEN_PC_RESULT report "Test 23.b.ii: Unsuccessful" severity error;
   
   ----------------------------------------------------------------------------------
   -- RESET
@@ -1576,7 +1578,7 @@ begin
 
 	-- control signals
 	I_rd <= "00000";
-	I_branch <= '1';
+	I_branch <= '0';
 	I_jump <= '0';
 	I_mem_read <= '0';		
 	I_mem_write <= '0'; 					
@@ -1590,7 +1592,8 @@ begin
 	I_forward_rt <= "00";
 
   	wait for clk_PERIOD;
-  	assert O_updated_next_pc = BNE_TAKEN_PC_RESULT report "Test 24.a: Unsuccessful" severity error;
+	assert O_branch = '1' report "Test 24.a.i: Unsuccessful" severity error;
+  	assert O_updated_next_pc = BNE_TAKEN_PC_RESULT report "Test 24.a.ii: Unsuccessful" severity error;
 
   ----------------------------------------------------------------------------------
   -- RESET
@@ -1620,7 +1623,7 @@ begin
 
 	-- control signals
 	I_rd <= "00000";
-	I_branch <= '1';
+	I_branch <= '0';
 	I_jump <= '0';
 	I_mem_read <= '0';		
 	I_mem_write <= '0'; 					
@@ -1634,7 +1637,8 @@ begin
 	I_forward_rt <= "00";
 
   	wait for clk_PERIOD;
-  	assert O_updated_next_pc = BNE_NOT_TAKEN_PC_RESULT report "Test 24.b: Unsuccessful" severity error;
+	assert O_branch = '0' report "Test 24.b.i: Unsuccessful" severity error;
+  	assert O_updated_next_pc = BNE_NOT_TAKEN_PC_RESULT report "Test 24.b.ii: Unsuccessful" severity error;
 
   ----------------------------------------------------------------------------------
   -- RESET
