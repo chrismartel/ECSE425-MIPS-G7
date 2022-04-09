@@ -6,12 +6,13 @@ entity regs is
 
 Port ( I_clk : in  STD_LOGIC;
        I_en : in  STD_LOGIC;
-       I_dataD : in  STD_LOGIC_VECTOR (31 downto 0);
-       O_dataA : out  STD_LOGIC_VECTOR (31 downto 0);
-       O_dataB : out  STD_LOGIC_VECTOR (31 downto 0);
-       I_selA : in  STD_LOGIC_VECTOR (4 downto 0);
-       I_selB : in  STD_LOGIC_VECTOR (4 downto 0);
-       I_selD : in  STD_LOGIC_VECTOR (4 downto 0);
+       I_datad : in  STD_LOGIC_VECTOR (31 downto 0);
+		 I_reset : in STD_LOGIC;
+       O_datas : out  STD_LOGIC_VECTOR (31 downto 0);
+       O_datat : out  STD_LOGIC_VECTOR (31 downto 0);
+       I_rt : in  STD_LOGIC_VECTOR (4 downto 0);
+       I_rs : in  STD_LOGIC_VECTOR (4 downto 0);
+       I_rd : in  STD_LOGIC_VECTOR (4 downto 0);
        I_we : in  STD_LOGIC);
 		 
 end regs;
@@ -30,15 +31,20 @@ process(I_clk)
 begin
 
   if rising_edge(I_clk) and I_en='1' then
-  
-    O_dataA <= regs(to_integer(unsigned(I_selA)));
-    O_dataB <= regs(to_integer(unsigned(I_selB)));
+	if I_reset = '1' then
+		for i in 0 to 31 loop
+			regs(i) <= (others => '0');
+		end loop;
+	else 
+    O_datas <= regs(to_integer(unsigned(I_rs)));
+    O_datat <= regs(to_integer(unsigned(I_rt)));
 	 
     if (I_we = '1') then
 	 
-      regs(to_integer(unsigned(I_selD))) <= I_dataD;
+      regs(to_integer(unsigned(I_rd))) <= I_datad;
 		
     end if;
+  end if;
   end if;
 end process;
 end Behavioral;

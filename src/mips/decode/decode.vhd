@@ -34,17 +34,17 @@ end decode;
 
 architecture Behavioral of decode is
 
-	component regs
-		port( I_clk : in  STD_LOGIC;
-       I_en : in  STD_LOGIC;
-       I_datad : in  STD_LOGIC_VECTOR (31 downto 0);
-       O_datas : out  STD_LOGIC_VECTOR (31 downto 0);
-       O_datat : out  STD_LOGIC_VECTOR (31 downto 0);
-       I_rt : in  STD_LOGIC_VECTOR (4 downto 0);
-       I_rs : in  STD_LOGIC_VECTOR (4 downto 0);
-       I_rd : in  STD_LOGIC_VECTOR (4 downto 0);
-       I_we : in  STD_LOGIC);
-	end component;
+--	component regs
+--		port( I_clk : in  STD_LOGIC;
+--       I_en : in  STD_LOGIC;
+--       I_datad : in  STD_LOGIC_VECTOR (31 downto 0);
+--       O_datas : out  STD_LOGIC_VECTOR (31 downto 0);
+--       O_datat : out  STD_LOGIC_VECTOR (31 downto 0);
+--       I_rt : in  STD_LOGIC_VECTOR (4 downto 0);
+--       I_rs : in  STD_LOGIC_VECTOR (4 downto 0);
+--       I_rd : in  STD_LOGIC_VECTOR (4 downto 0);
+--       I_we : in  STD_LOGIC);
+--	end component;
 --	component hazard_detection_unit
 --		port (I_clk : in std_logic;
 --	I_reset : in std_logic;
@@ -142,10 +142,34 @@ begin
 --	I_mem_reg_write => I_mem_reg_write
 --	);
 	
-  process (I_clk)
+ id_process: process (I_clk)
   begin
-    if I_reset'event and I_reset = '1' then
-		O_next_pc <= (others => '0');
+  if I_en = '1'  then
+--   if I_reset'event and I_reset = '1' then
+--	  -- if I_
+--		O_next_pc <= (others => '0');
+--           O_rs <= (others => '0');
+--           O_rt <= (others => '0');
+--           O_rd <= (others => '0');
+--           O_dataIMM_SE <= (others => '0');
+--			  O_dataIMM_ZE <= (others => '0');
+--           O_regDwe <= '0';
+--           O_aluop <= (others => '0');
+--			  O_shamt<= (others => '0');
+--			  O_funct <= (others => '0');
+--			  O_branch <= '0';
+--			  O_jump <= '0';
+--			  O_mem_read <= '0';
+--			  O_mem_write <= '0';
+--			  O_mem_to_reg <= '0';
+--			  O_addr <= (others => '0');
+--	 
+	 
+	 
+	 
+	 elsif I_clk'event and I_clk = '1' then
+		if I_reset = '1' then
+			O_next_pc <= (others => '0');
            O_rs <= (others => '0');
            O_rt <= (others => '0');
            O_rd <= (others => '0');
@@ -161,18 +185,12 @@ begin
 			  O_mem_write <= '0';
 			  O_mem_to_reg <= '0';
 			  O_addr <= (others => '0');
-	 
-	 
-	 
-	 
-	 elsif rising_edge(I_clk) and I_en = '1' then
-	
-      if I_dataInst(31 downto 26) = "000000" then
+      elsif I_dataInst(31 downto 26) = "000000" then
                 			case I_dataInst(5 downto 0) is -- check functional bits for R type instructions
                   	  		-- arithmetic
                     			when ADD_FUNCT =>
                         			O_regDwe <= '1';
-											I_id_reg_write <= '1';
+											--I_id_reg_write <= '1';
 											O_branch <= '0';
 											O_jump <= '0';
 											O_mem_read <= '0';
@@ -183,7 +201,7 @@ begin
                         
                     			when SUB_FUNCT =>
                         				O_regDwe <= '1';
-												I_id_reg_write <= '1';
+												--I_id_reg_write <= '1';
 											O_branch <= '0';
 											O_jump <= '0';
 											O_mem_read <= '0';
@@ -192,7 +210,7 @@ begin
 										--	O_next_pc <= std_logic_vector(unsigned(I_pc) + unsigned(4));
                     			when MULT_FUNCT =>
                         				O_regDwe <= '1';
-												I_id_reg_write <= '1';
+											--	I_id_reg_write <= '1';
 											O_branch <= '0';
 											O_jump <= '0';
 											O_mem_read <= '0';
@@ -201,7 +219,7 @@ begin
 										--	O_next_pc <= std_logic_vector(unsigned(I_pc) + unsigned(4));
                   	  		when DIV_FUNCT =>
           		              		O_regDwe <= '1';
-											I_id_reg_write <= '1';
+										--	I_id_reg_write <= '1';
 											O_branch <= '0';
 											O_jump <= '0';
 											O_mem_read <= '0';
@@ -210,7 +228,7 @@ begin
 											--O_next_pc <= std_logic_vector(unsigned(I_pc) + unsigned(4));
           	          		when SLT_FUNCT =>
   		                      			O_regDwe <= '1';
-												I_id_reg_write <= '1';
+										--		I_id_reg_write <= '1';
 											O_branch <= '0';
 											O_jump <= '0';
 											O_mem_read <= '0';
@@ -220,7 +238,7 @@ begin
   	                  		-- logical
         	            		when AND_FUNCT =>
   		                      			O_regDwe <= '1';
-												I_id_reg_write <= '1';
+										--		I_id_reg_write <= '1';
 											O_branch <= '0';
 											O_jump <= '0';
 											O_mem_read <= '0';
@@ -229,7 +247,7 @@ begin
 										--	O_next_pc <= std_logic_vector(unsigned(I_pc) + unsigned(4));
 									when OR_FUNCT =>
           		              		O_regDwe <= '1';
-											I_id_reg_write <= '1';
+										--	I_id_reg_write <= '1';
 											O_branch <= '0';
 											O_jump <= '0';
 											O_mem_read <= '0';
@@ -239,7 +257,7 @@ begin
                         
           	          		when NOR_FUNCT =>
   		                      			O_regDwe <= '1';
-												I_id_reg_write <= '1';
+										--		I_id_reg_write <= '1';
 											O_branch <= '0';
 											O_jump <= '0';
 											O_mem_read <= '0';
@@ -249,7 +267,7 @@ begin
 
   	                  		when XOR_FUNCT =>
         	                			O_regDwe <= '1';
-											I_id_reg_write <= '1';
+										--	I_id_reg_write <= '1';
 											O_branch <= '0';
 											O_jump <= '0';
 											O_mem_read <= '0';
@@ -260,7 +278,7 @@ begin
         	            		-- transfer
   	                  		when MFHI_FUNCT =>
         	                			O_regDwe <= '1';
-											I_id_reg_write <= '1';
+										--	I_id_reg_write <= '1';
 											O_branch <= '0';
 											O_jump <= '0';
 											O_mem_read <= '0';
@@ -270,7 +288,7 @@ begin
 
   	                  		when MFLO_FUNCT =>
         	                			O_regDwe <= '1';
-											I_id_reg_write <= '1';
+										--	I_id_reg_write <= '1';
 											O_branch <= '0';
 											O_jump <= '0';
 											O_mem_read <= '0';
@@ -280,7 +298,7 @@ begin
   	                  		-- shift
         	            		when SLL_FUNCT =>
   		                      			O_regDwe <= '1';
-												I_id_reg_write <= '1';
+										--		I_id_reg_write <= '1';
 											O_branch <= '0';
 											O_jump <= '0';
 											O_mem_read <= '0';
@@ -290,7 +308,7 @@ begin
 
   	                  		when SRL_FUNCT =>
         	                			O_regDwe <= '1';
-											I_id_reg_write <= '1';
+										--	I_id_reg_write <= '1';
 											O_branch <= '0';
 											O_jump <= '0';
 											O_mem_read <= '0';
@@ -300,7 +318,7 @@ begin
 
   	                  		when SRA_FUNCT =>
         	                			O_regDwe <= '1';
-											I_id_reg_write <= '1';
+										--	I_id_reg_write <= '1';
 											O_branch <= '0';
 											O_jump <= '0';
 											O_mem_read <= '0';
@@ -311,7 +329,7 @@ begin
   	                  		-- control-flow
         	            		when JR_FUNCT=>
   		                      		O_regDwe <= '1';
-											I_id_reg_write <= '1';
+									--		I_id_reg_write <= '1';
 											O_branch <= '0';
 											O_jump <= '0';
 											O_mem_read <= '0';
@@ -327,7 +345,7 @@ begin
         	            		when ADDI_OPCODE =>
   		                      		-- SignExtImm
   		                      		O_regDwe <= '1';
-											I_id_reg_write <= '1';
+										--	I_id_reg_write <= '1';
 											O_branch <= '0';
 											O_jump <= '0';
 											O_mem_read <= '0';
@@ -337,7 +355,7 @@ begin
 											
   	                  		when SLTI_OPCODE =>
         	                			O_regDwe <= '1';
-											I_id_reg_write <= '1';
+									--		I_id_reg_write <= '1';
 											O_branch <= '0';
 											O_jump <= '0';
 											O_mem_read <= '0';
@@ -349,7 +367,7 @@ begin
         	            		when ANDI_OPCODE =>
   		                      		-- ZeroExtImm
   		                      		O_regDwe <= '1';
-											I_id_reg_write <= '1';
+									--		I_id_reg_write <= '1';
 											O_branch <= '0';
 											O_jump <= '0';
 											O_mem_read <= '0';
@@ -358,7 +376,7 @@ begin
 										--	O_next_pc <= std_logic_vector(unsigned(I_pc) + unsigned(4));
   	                  		when ORI_OPCODE =>
 											O_regDwe <= '1';
-											I_id_reg_write <= '1';
+									--		I_id_reg_write <= '1';
 											O_branch <= '0';
 											O_jump <= '0';
 											O_mem_read <= '0';
@@ -367,7 +385,7 @@ begin
 										--	O_next_pc <= std_logic_vector(unsigned(I_pc) + unsigned(4));
   	                  		when XORI_OPCODE =>
 											O_regDwe <= '1';
-											I_id_reg_write <= '1';
+									--		I_id_reg_write <= '1';
 											O_branch <= '0';
 											O_jump <= '0';
 											O_mem_read <= '0';
@@ -377,7 +395,7 @@ begin
   	                  		-- transfer
         	            		when LUI_OPCODE =>
   		                      		O_regDwe <= '1';
-											I_id_reg_write <= '1';
+									--		I_id_reg_write <= '1';
 											O_branch <= '0';
 											O_jump <= '0';
 											O_mem_read <= '0';
@@ -388,7 +406,7 @@ begin
   	                  		-- memory
         	            		when LW_OPCODE | SW_OPCODE=>
   		                      		O_regDwe <= '1';
-											I_id_reg_write <= '1';
+									--		I_id_reg_write <= '1';
 											O_branch <= '0';
 											O_jump <= '0';
 											O_mem_read <= '1';
@@ -399,7 +417,7 @@ begin
   	                  		-- control-flow
         	            		when BEQ_OPCODE=>
 									 	 	O_regDwe <= '0';
-											I_id_reg_write <= '0';
+									--		I_id_reg_write <= '0';
 											O_branch <= '0';
 											O_jump <= '0';
 											O_mem_read <= '0';
@@ -426,7 +444,7 @@ begin
 --											I_ren <= '0';
   	                  		when BNE_OPCODE=>
 											O_regDwe <= '0';
-											I_id_reg_write <= '0';
+									--		I_id_reg_write <= '0';
 											O_branch <= '0';
 											O_jump <= '0';
 											O_mem_read <= '0';
@@ -455,7 +473,7 @@ begin
 --										I_ren <= '0';
   	                  		when J_OPCODE=>
 												O_regDwe <= '0';
-												I_id_reg_write <= '0';
+									--			I_id_reg_write <= '0';
 												O_branch <= '0';
 												O_jump <= '1';
 												O_mem_read <= '0';
@@ -464,7 +482,7 @@ begin
 	
         	            		when JAL_OPCODE=>
 												O_regDwe <= '0';
-												I_id_reg_write <= '0';
+									--			I_id_reg_write <= '0';
 												O_branch <= '0';
 												O_jump <= '1';
 												O_mem_read <= '0';
@@ -554,6 +572,7 @@ begin
 --			  O_mem_to_reg <= '0';
 --			  O_addr <= "00000000000000000000000000";
     end if;
+	
   end process;
 
 end Behavioral;
