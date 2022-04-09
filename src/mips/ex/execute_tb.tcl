@@ -3,6 +3,7 @@
 proc AddWaves {} {
     add wave -position end  sim:/execute_tb/I_reset
     add wave -position end  sim:/execute_tb/I_clk
+    add wave -position end  sim:/execute_tb/I_en
     add wave -position end  sim:/execute_tb/I_rs
     add wave -position end  sim:/execute_tb/I_rt
     add wave -position end  sim:/execute_tb/I_imm_SE
