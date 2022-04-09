@@ -308,7 +308,7 @@ constant R1: std_logic_vector(4 downto 0) := "00001"; -- R1
 constant R2: std_logic_vector(4 downto 0) := "00010"; -- R2
 constant LR: std_logic_vector(4 downto 0) := "11111"; -- R31
 constant R0: std_logic_vector(4 downto 0) := "00000"; -- $R0
-constant SHAMT_2: std_logic_vector(4 downto 0) := "00010";
+constant SHAMT: std_logic_vector(4 downto 0) := "00010";
 constant IMM_8: std_logic_vector(31 downto 0) := x"00000008"; 
 constant IMM_4: std_logic_vector(31 downto 0) := x"00000004"; 
 constant ADDRESS: std_logic_vector(25 downto 0) := "00000000000000000000000100"; 
@@ -316,7 +316,7 @@ constant ADDRESS: std_logic_vector(25 downto 0) := "00000000000000000000000100";
 constant DATA_8: std_logic_vector(31 downto 0) := x"00000008";
 constant DATA_4: std_logic_vector(31 downto 0) := x"00000004";
 constant DATA_MINUS_4: std_logic_vector(31 downto 0) := x"FFFFFFFC"; 
-constant NEXT_PC_VALUE: std_logic_vector(31 downto 0) := x"00000004";
+constant NEXT_PC: std_logic_vector(31 downto 0) := x"00000004";
 
 -- Results Data
 
@@ -524,48 +524,54 @@ begin
   ----------------------------------------------------------------------------------
   
   	report "----- Starting tests -----";
-
   ----------------------------------------------------------------------------------
-  -- TEST 1: ADD
+  -- TEST 0: Store data in register file
   ----------------------------------------------------------------------------------
-  	report "----- Test 1: ADD Instruction -----";
+  	report "----- Test 0: Store data in register file -----";
 
 	-- store 4 in R1
 	RF_I_en <= '1';
 	RF_I_we <= '1';
 	RF_I_datad <= DATA_4; --4
 	RF_I_rd <= R1;
-	wait for 1*CLK_PERIOD;
+	wait for CLK_PERIOD;
 
 	-- store 8 in R2
 	RF_I_en <= '1';
 	RF_I_we <= '1';
 	RF_I_datad <= DATA_8; --4
 	RF_I_rd <= R2;
-	wait for 1*CLK_PERIOD;
+	wait for CLK_PERIOD;
 
 	-- read value in R1 and R2
 	RF_I_we <= '0';
 	RF_I_en<= '1';
 	RF_I_rs <= R1;
 	RF_I_rt <= R2;
-	wait for 1*CLK_PERIOD;
+	wait for CLK_PERIOD;
 
-	assert RF_O_datas = DATA_4 report "Test 1.a: Unsuccessful" severity error;
-	assert RF_O_datat = DATA_8 report "Test 1.b: Unsuccessful" severity error;
+	assert RF_O_datas = DATA_4 report "Test 0.a: Unsuccessful" severity error;
+	assert RF_O_datat = DATA_8 report "Test 0.b: Unsuccessful" severity error;
 
-  	wait for 1*CLK_PERIOD;
+  ----------------------------------------------------------------------------------
+  -- SETUP
+  ----------------------------------------------------------------------------------
+  	
+	-- enable components
+	ID_I_en <= '1';
+	EX_I_en <= '1';
+	FWD_I_en <= '0';
+
+  ----------------------------------------------------------------------------------
+  -- TEST 1: ADD
+  ----------------------------------------------------------------------------------
+	report "----- Test 1: ADD Instruction -----";
 	
-	ID_O_rd <= "10001";
-	ID_O_regDwe <= '0';
-	EX_O_rd <= "10000";
-	EX_O_reg_write <= '0';
-	
-	F_O_PC <= (others => '0');
-	F_O_dataInst <= "00000000001000100001100000100000"; -- add r1 and r2, store in r3
-	--ID_I_en <= '1';	
-	wait for 3*CLK_PERIOD;
-	
+	F_O_PC <= NEXT_PC;
+	F_O_dataInst <= R_OPCODE & R1 & R2 & R3 & SHAMT & ADD_FUNCT; -- add r1 and r2, store in r3
+
+	wait for CLK_PERIOD;
+	wait for CLK_PERIOD;
   	assert EX_O_alu_result = ADD_RESULT report "Test 1: Unsuccessful" severity error;
 
 ----------------------------------------------------------------------------------
