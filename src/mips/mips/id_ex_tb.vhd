@@ -1,4 +1,3 @@
-
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -83,52 +82,58 @@ architecture behavior of id_ex_tb is
 --------------------------------------------------------------------
 
 -- REGISTER FILE COMPONENT 
-component register_file is
+component regs is
 port ( 
-	I_clk: in std_logic;
-	I_reset : in std_logic;
-       	I_en : in  std_logic;
-       	I_rs : in  std_logic_vector (4 downto 0);
-       	I_rt : in  std_logic_vector (4 downto 0);
-       	I_rd : in  std_logic_vector (4 downto 0);
-       	I_we : in  std_logic;
-
+	-- Inputs
+	I_clk : in  STD_LOGIC;
+       	I_reset : in STD_LOGIC;
+       	I_en : in  STD_LOGIC;
+       	I_datad : in  STD_LOGIC_VECTOR (31 downto 0);
+       	I_rt : in  STD_LOGIC_VECTOR (4 downto 0);
+       	I_rs : in  STD_LOGIC_VECTOR (4 downto 0);
+       	I_rd : in  STD_LOGIC_VECTOR (4 downto 0);
+       	I_we : in  STD_LOGIC;
+	
 	-- Outputs
-       	O_rs_data : out  std_logic_vector (31 downto 0);
-       	O_rt_data : out  std_logic_vector (31 downto 0)
+       	O_datas : out  STD_LOGIC_VECTOR (31 downto 0);
+       	O_datat : out  STD_LOGIC_VECTOR (31 downto 0)
 );	 
 end component;
 
 -- DECODE COMPONENT 
 component decode is
 port ( 
-	-- Inputs
-	I_clk : in  std_logic;
-	I_reset : in std_logic;
-    	I_dataInst : in  std_logic_vector (31 downto 0);
-       	I_en : in  std_logic;
-	I_pc: in std_logic_vector (31 downto 0);
-
-	-- hazard detection
-	I_hazards: in std_logic_vector (31 downto 0);
-	
-	-- Outputs
-	O_next_pc: out std_logic_vector (31 downto 0);
-	O_rs : out  std_logic_vector (4 downto 0);
-        O_rt : out  std_logic_vector (4 downto 0);
-        O_rd : out  std_logic_vector (4 downto 0);
-        O_imm_SE : out  std_logic_vector (31 downto 0);
-	O_imm_ZE : out std_logic_vector (31 downto 0);
-        O_reg_write : out  std_logic;
-        O_opcode : out  std_logic_vector (5 downto 0);
-	O_shamt: out std_logic_vector (4 downto 0);
-	O_funct: out std_logic_vector (5 downto 0);
-	O_branch: out std_logic;
-	O_jump: out std_logic;
-	O_mem_read: out std_logic;
-	O_mem_write: out std_logic;
-	O_mem_to_reg: out std_logic;
-	O_addr: out std_logic_vector (25 downto 0)
+    	-- Inputs
+	I_clk : in  STD_LOGIC;
+    	I_reset: in STD_LOGIC;
+        I_dataInst : in  STD_LOGIC_VECTOR (31 downto 0);
+        I_en : in  STD_LOGIC;
+    	I_pc: in STD_LOGIC_VECTOR (31 downto 0);
+    	-- hazard detection
+    	I_id_rd: in std_logic_vector (4 downto 0);
+    	I_id_reg_write: in std_logic;
+    	I_ex_rd: in std_logic_vector (4 downto 0);
+    	I_ex_reg_write: in std_logic;
+    	I_mem_rd: in std_logic_vector (4 downto 0);
+    	I_mem_reg_write: in std_logic;
+            
+   	-- Outputs
+    	O_next_pc: out STD_LOGIC_VECTOR (31 downto 0);
+        O_rs : out  STD_LOGIC_VECTOR (4 downto 0);
+        O_rt : out  STD_LOGIC_VECTOR (4 downto 0);
+        O_rd : out  STD_LOGIC_VECTOR (4 downto 0);
+        O_dataIMM_SE : out  STD_LOGIC_VECTOR (31 downto 0);
+    	O_dataIMM_ZE : out STD_LOGIC_VECTOR (31 downto 0);
+        O_regDwe : out  STD_LOGIC;
+        O_aluop : out  STD_LOGIC_VECTOR (5 downto 0);
+    	O_shamt: out STD_LOGIC_VECTOR (4 downto 0);
+    	O_funct: out STD_LOGIC_VECTOR (5 downto 0);
+    	O_branch: out STD_LOGIC;
+    	O_jump: out STD_LOGIC;
+    	O_mem_read: out STD_LOGIC;
+    	O_mem_write: out STD_LOGIC;
+    	O_mem_to_reg: out STD_LOGIC;
+    	O_addr: out STD_LOGIC_VECTOR (25 downto 0)
 );
 end component;
 
@@ -139,8 +144,9 @@ port(
 	-- INPUTS
 	I_clk : in std_logic;
 	I_reset : in std_logic;
+	I_en : in std_logic;
 
-	-- instruction signals
+	-- from decode
 	I_rs: in std_logic_vector (4 downto 0);
 	I_rt: in std_logic_vector (4 downto 0);
  	I_imm_SE : in  std_logic_vector (31 downto 0);
@@ -149,33 +155,35 @@ port(
 	I_shamt: in std_logic_vector (4 downto 0);
 	I_funct: in std_logic_vector (5 downto 0);
 	I_addr: in std_logic_vector (25 downto 0);
-	
+	-- control signals 
+	I_rd: in std_logic_vector (4 downto 0); 	
+	I_branch: in std_logic; 					
+	I_jump: in std_logic; 						
+	I_mem_read: in std_logic; 					
+	I_mem_write: in std_logic; 					
+	I_reg_write: in std_logic; 					
+	I_mem_to_reg: in std_logic; 
+
+	-- from register file
 	I_rs_data: in std_logic_vector (31 downto 0);
 	I_rt_data: in std_logic_vector (31 downto 0);
-	I_next_pc: in std_logic_vector (31 downto 0); -- pc + 4
-
-	-- control signals (passed from decode stage to wb stage)
-	I_rd: in std_logic_vector (4 downto 0); 	-- the destination register where to write the instr. result
-	I_branch: in std_logic; 					-- indicates if its is a branch operation (beq, bne)
-	I_jump: in std_logic; 						-- indicates if it is a jump instruction (j, jr, jal)
-	I_mem_read: in std_logic; 					-- indicates if a value must be read from memory at calculated address
-	I_mem_write: in std_logic; 					-- indicates if value in I_rt_data must be written in memory at calculated address
-	I_reg_write: in std_logic; 					-- indicates if value calculated in ALU must be written to destination register
-	I_mem_to_reg: in std_logic; 					-- indicates if value loaded from memory must be writte to destination register
+	I_next_pc: in std_logic_vector (31 downto 0); 
 
 	-- forwarding
 	I_ex_data: in std_logic_vector (31 downto 0);
 	I_mem_data: in std_logic_vector (31 downto 0);
-
+	
+	-- from forwarding unit
 	I_forward_rs: in std_logic_vector (1 downto 0);
 	I_forward_rt: in std_logic_vector (1 downto 0);
 
 	-- OUTPUTS
+
+	-- to memory component
 	O_alu_result: out std_logic_vector (31 downto 0);
 	O_updated_next_pc: out std_logic_vector (31 downto 0);
 	O_rt_data: out std_logic_vector (31 downto 0);
 	O_stall: out std_logic;
-
 	-- control signals
 	O_rd: out std_logic_vector (4 downto 0);
 	O_branch: out std_logic;
@@ -193,13 +201,14 @@ port(
 	-- INPUTS
 	I_clk : in std_logic;
 	I_reset : in std_logic;
+	I_en: in std_logic;
 
-	I_ex_rd: in std_logic_vector (4 downto 0); 		-- destination register for instruction completed by the ex stage
-	I_mem_rd: in std_logic_vector (4 downto 0); 	-- destination register for instruction completed by the mem stage
-	I_ex_reg_write: in std_logic; 			-- reg_write setting for instruction completed by ex stage
-	I_mem_reg_write: in std_logic; 			-- reg_write setting for instruction completed by mem stage
-	I_id_rs: in std_logic_vector(4 downto 0); 		-- left operand for instruction completed by id stage
-	I_id_rt: in std_logic_vector(4 downto 0); 		-- right operand for instruction completed by id stage
+	I_ex_rd: in std_logic_vector (4 downto 0); 		
+	I_mem_rd: in std_logic_vector (4 downto 0); 	
+	I_ex_reg_write: in std_logic; 			
+	I_mem_reg_write: in std_logic; 			
+	I_id_rs: in std_logic_vector(4 downto 0); 		
+	I_id_rt: in std_logic_vector(4 downto 0); 		
 
 	-- OUTPUTS
 
@@ -212,34 +221,6 @@ port(
 );
 end component;
 
-
--- HAZARD DETECTION COMPONENT 
-component hazard_detection_unit is
-port(
-	-- INPUTS
-	I_clk : in std_logic;
-	I_reset : in std_logic;
-
-	I_id_rd: in std_logic_vector (4 downto 0); 		-- destination register for instruction completed by the id stage
-	I_id_reg_write: in std_logic; 			-- reg_write setting for instruction completed by id stage
-	
-	I_ex_rd: in std_logic_vector (4 downto 0); 		-- destination register for instruction completed by the ex stage
-	I_ex_reg_write: in std_logic; 			-- reg_write setting for instruction completed by ex stage
-
-	I_mem_rd: in std_logic_vector (4 downto 0); 		-- destination register for instruction completed by the mem stage
-	I_mem_reg_write: in std_logic; 			-- reg_write setting for instruction completed by mem stage
-
-	-- OUTPUTS
-	
-	-- Indicate presence of hazard for each register in the RF.
-	-- '1': hazard
-	-- '0': no hazard
-	O_hazards: out std_logic_vector(number_of_registers-1 downto 0)
-);
-
-end component;
-
-
 --------------------------------------------------------------------
 -------------------------- III. SIGNALS --------------------------
 --------------------------------------------------------------------
@@ -248,33 +229,31 @@ end component;
 signal I_reset : std_logic := '0';
 signal I_clk : std_logic := '0';
 
-
 -- REGISTER FILE SIGNALS
 -- INPUTS
-signal RF_I_en :  std_logic := '1';
-signal RF_I_we :  std_logic := '1';
 signal RF_I_rs :  std_logic_vector (4 downto 0);
 signal RF_I_rt :  std_logic_vector (4 downto 0);
-signal RF_I_rd :  std_logic_vector (4 downto 0);
+signal RF_I_rd :  std_logic_vector (4 downto 0); -- from wb to rf
+signal RF_I_datad: std_logic_vector (31 downto 0); -- from wb to rf
+signal RF_I_we :  std_logic := '1'; -- from wb to rf
+signal RF_I_en :  std_logic := '1';
+
 -- OUTPUTS
-signal RF_O_rs_data :  std_logic_vector (31 downto 0);
-signal RF_O_rt_data :  std_logic_vector (31 downto 0);
+signal RF_O_datas :  std_logic_vector (31 downto 0); -- rf to ex
+signal RF_O_datat :  std_logic_vector (31 downto 0); -- rf to ex
 
 -- DECODE SIGNALS
--- INPUTS
-signal ID_I_dataInst : std_logic_vector (31 downto 0);
-signal ID_I_en : std_logic := '1';
-signal ID_I_pc: std_logic_vector (31 downto 0);
-signal ID_I_hazards: std_logic_vector (31 downto 0);
 -- OUTPUTS
+-- from id to ex
+signal ID_I_en : std_logic := '1'; 
 signal ID_O_next_pc: std_logic_vector (31 downto 0);
 signal ID_O_rs : std_logic_vector (4 downto 0);
 signal ID_O_rt : std_logic_vector (4 downto 0);
 signal ID_O_rd : std_logic_vector (4 downto 0);
-signal ID_O_imm_SE : std_logic_vector (31 downto 0);
-signal ID_O_imm_ZE : std_logic_vector (31 downto 0);
-signal ID_O_reg_write : std_logic;
-signal ID_O_opcode : std_logic_vector (5 downto 0);
+signal ID_O_dataIMM_SE : std_logic_vector (31 downto 0);
+signal ID_O_dataIMM_ZE : std_logic_vector (31 downto 0);
+signal ID_O_regDwe : std_logic;
+signal ID_O_aluop : std_logic_vector (5 downto 0);
 signal ID_O_shamt: std_logic_vector (4 downto 0);
 signal ID_O_funct: std_logic_vector (5 downto 0);
 signal ID_O_branch: std_logic;
@@ -285,31 +264,9 @@ signal ID_O_mem_to_reg: std_logic;
 signal ID_O_addr: std_logic_vector (25 downto 0);
 
 
--- EXECUTE SIGNALS
--- INPUTS
-signal EX_I_rs: std_logic_vector (4 downto 0);
-signal EX_I_rt: std_logic_vector (4 downto 0);
-signal EX_I_imm_SE :  std_logic_vector (31 downto 0);
-signal EX_I_imm_ZE : std_logic_vector (31 downto 0);
-signal EX_I_opcode :  std_logic_vector (5 downto 0);
-signal EX_I_shamt: std_logic_vector (4 downto 0);
-signal EX_I_funct: std_logic_vector (5 downto 0);
-signal EX_I_addr: std_logic_vector (25 downto 0);
-signal EX_I_rs_data: std_logic_vector (31 downto 0);
-signal EX_I_rt_data: std_logic_vector (31 downto 0);
-signal EX_I_next_pc: std_logic_vector (31 downto 0);
-signal EX_I_rd: std_logic_vector (4 downto 0); 	
-signal EX_I_branch: std_logic; 					
-signal EX_I_jump: std_logic; 						
-signal EX_I_mem_read: std_logic; 					
-signal EX_I_mem_write: std_logic; 					
-signal EX_I_reg_write: std_logic; 					
-signal EX_I_mem_to_reg: std_logic; 					
-signal EX_I_ex_data: std_logic_vector (31 downto 0);
-signal EX_I_mem_data: std_logic_vector (31 downto 0);
-signal EX_I_forward_rs: std_logic_vector (1 downto 0);
-signal EX_I_forward_rt: std_logic_vector (1 downto 0);
+-- EXECUTE SIGNALS				
 -- OUTPUTS
+signal EX_I_en: std_logic;
 signal EX_O_alu_result: std_logic_vector (31 downto 0);
 signal EX_O_updated_next_pc: std_logic_vector (31 downto 0);
 signal EX_O_rt_data: std_logic_vector (31 downto 0);
@@ -323,29 +280,23 @@ signal EX_O_reg_write: std_logic;
 signal EX_O_mem_to_reg: std_logic;
 
 
+-- FETCH
+signal F_O_dataInst : std_logic_vector (31 downto 0); -- from fetch to id
+signal F_O_pc: std_logic_vector (31 downto 0); -- from fetch to id
+
+-- MEMORY
+signal MEM_O_rd: std_logic_vector (4 downto 0); -- TODO: replace when memory added
+signal MEM_O_reg_write: std_logic; -- TODO: replace when memory added
+signal MEM_O_result: std_logic_vector (31 downto 0); -- TODO: replace when memory added
+
+-- WRITE BACK
+
+
 -- FORWARD UNIT SIGNALS
--- INPUTS
-signal FWD_I_ex_rd: std_logic_vector (4 downto 0); 		
-signal FWD_I_mem_rd: std_logic_vector (4 downto 0); 	
-signal FWD_I_ex_reg_write: std_logic; 			
-signal FWD_I_mem_reg_write: std_logic; 			
-signal FWD_I_id_rs: std_logic_vector(4 downto 0); 		
-signal FWD_I_id_rt: std_logic_vector(4 downto 0); 		
 -- OUTPUTS
+signal FWD_I_en :  std_logic := '1';
 signal FWD_O_forward_rs: std_logic_vector (1 downto 0);
 signal FWD_O_forward_rt: std_logic_vector (1 downto 0);
-
-
--- HAZARD DETECTION UNIT SIGNALS
--- INPUTS
-signal HD_I_id_rd: std_logic_vector (4 downto 0); 		
-signal HD_I_id_reg_write: std_logic; 			
-signal HD_I_ex_rd: std_logic_vector (4 downto 0); 		
-signal HD_I_ex_reg_write: std_logic; 			
-signal HD_I_mem_rd: std_logic_vector (4 downto 0); 		
-signal HD_I_mem_reg_write: std_logic; 			
--- OUTPUTS
-signal HD_O_hazards: std_logic_vector(number_of_registers-1 downto 0);
 
 
 --------------------------------------------------------------------
@@ -418,19 +369,20 @@ port map(
 	-- INPUTS
 	I_clk => I_clk,
 	I_reset => I_reset,
+	I_en => EX_I_en,
 
 	I_rs => ID_O_rs,
 	I_rt => ID_O_rt,
 	I_rd => ID_O_rd,
-	I_imm_SE => ID_O_imm_SE,
-	I_imm_ZE => ID_O_imm_ZE,
-	I_opcode => ID_O_opcode,
+	I_imm_SE => ID_O_dataIMM_SE,
+	I_imm_ZE => ID_O_dataIMM_ZE,
+	I_opcode => ID_O_aluop,
 	I_shamt => ID_O_shamt,
 	I_funct => ID_O_funct,
 	I_addr => ID_O_addr,
 
-	I_rs_data => RF_O_rs_data,
-	I_rt_data => RF_O_rt_data,
+	I_rs_data => RF_O_datas,
+	I_rt_data => RF_O_datat,
 	I_next_pc => ID_O_next_pc,
 
 	-- control signals
@@ -438,12 +390,12 @@ port map(
 	I_jump => ID_O_jump,
 	I_mem_read => ID_O_mem_read,		
 	I_mem_write => ID_O_mem_write, 					
-	I_reg_write => ID_O_reg_write,				
+	I_reg_write => ID_O_regDwe,				
 	I_mem_to_reg => ID_O_mem_to_reg,	
 
 	-- forwarding
 	I_ex_data => EX_O_alu_result,
-	I_mem_data => (others=>'0'), -- TODO: connect mem component
+	I_mem_data => MEM_O_result, 
 	I_forward_rs => FWD_O_forward_rs,
 	I_forward_rt => FWD_O_forward_rt,	
 
@@ -470,46 +422,54 @@ port map(
 	-- TODO: connect to fetch component
 	I_clk => I_clk,
 	I_reset => I_reset,
-    	I_dataInst => ID_I_dataInst,
+    	I_dataInst => F_O_dataInst,
        	I_en => ID_I_en,
-	I_pc => ID_I_pc,
-	I_hazards => HD_O_hazards,
+	I_pc => F_O_PC,
+	I_id_rd => ID_O_rd,
+	I_id_reg_write => ID_O_regDwe,
+	I_ex_rd => EX_O_rd,
+	I_ex_reg_write => EX_O_reg_write,
+	I_mem_rd => MEM_O_rd,
+	I_mem_reg_write => MEM_O_reg_write,
 
 	-- Outputs
-	O_next_pc => EX_I_next_pc,
-        O_rs => EX_I_rs,
-        O_rt => EX_I_rt,
-        O_rd => EX_I_rd,
-        O_imm_SE => EX_I_imm_SE,
-	O_imm_ZE => EX_I_imm_ZE,
-        O_reg_write => EX_I_reg_write,
-        O_opcode => EX_I_opcode,
-	O_shamt => EX_I_shamt,
-	O_funct => EX_I_funct,
-	O_branch => EX_I_branch,
-	O_jump => EX_I_jump,
-	O_mem_read => EX_I_mem_read,
-	O_mem_write => EX_I_mem_write,
-	O_mem_to_reg => EX_I_mem_to_reg,
-	O_addr => EX_I_addr
+	O_next_pc => ID_O_next_pc,
+        O_rs => ID_O_rs,
+        O_rt => ID_O_rt,
+        O_rd => ID_O_rd,
+        O_dataIMM_SE => ID_O_dataIMM_SE,
+	O_dataIMM_ZE => ID_O_dataIMM_ZE,
+        O_aluop => ID_O_aluop,
+	O_shamt => ID_O_shamt,
+	O_funct => ID_O_funct,
+	O_branch => ID_O_branch,
+	O_jump => ID_O_jump,
+	O_mem_read => ID_O_mem_read,
+	O_mem_write => ID_O_mem_write,
+	O_mem_to_reg => ID_O_mem_to_reg,
+	O_regdWe => ID_O_regDwe,
+	O_addr => ID_O_addr
 );
 
-rf: register_file 
+rf: regs 
 port map(
 	-- Inputs
 	-- requested registers come from decode output
 	I_clk => I_clk,
 	I_reset => I_reset,
+	I_dataD => RF_I_datad,
        	I_en => RF_I_en,
-       	I_rs => ID_O_rs,
-       	I_rt => ID_O_rt,
-       	I_rd => ID_O_rd,
+       	--I_rs => F_O_dataInst(25 downto 21),
+       	--I_rt => F_O_dataInst(20 downto 16),
+       	I_rs => RF_I_rs,
+       	I_rt => RF_I_rt,
+       	I_rd => RF_I_rd,
        	I_we => RF_I_we,
 
 	-- Outputs
 	-- connect data obtained from register file to execute component
-       	O_rs_data => EX_I_rs_data,
-       	O_rt_data => EX_I_rt_data
+       	O_datas => RF_O_datas,
+       	O_datat => RF_O_datat
 );
 
 fwd: forwarding_unit
@@ -517,11 +477,12 @@ port map(
 	-- INPUTS
 	I_clk => I_clk,
 	I_reset => I_reset,
+	I_en => FWD_I_en,
 
 	I_ex_rd => EX_O_rd,
-	I_mem_rd => "00000", -- connect: plug mem component
+	I_mem_rd => MEM_O_rd, -- connect: plug mem component
 	I_ex_reg_write => EX_O_reg_write,
-	I_mem_reg_write => '0', -- connect plug mem component
+	I_mem_reg_write => MEM_O_reg_write, -- connect plug mem component
 	I_id_rs => ID_O_rs,
 	I_id_rt => ID_O_rt,
 
@@ -531,35 +492,12 @@ port map(
 	-- '01' -> read from EX stage output
 	-- '10' -> read from MEM stage output
 
-	O_forward_rs => EX_I_forward_rs,
-	O_forward_rt => EX_I_forward_rt
-);
-
-hd: hazard_detection_unit
-port map(
-	-- INPUTS
-	I_clk => I_clk,
-	I_reset => I_reset,
-
-	I_id_rd => ID_O_rd,
-	I_id_reg_write => ID_O_reg_write,
-	
-	I_ex_rd => EX_O_rd,
-	I_ex_reg_write => EX_O_reg_write,
-
-	I_mem_rd => "00000", -- TODO: connect mem component
-	I_mem_reg_write => '0', -- TODO: connect mem component
-
-	-- OUTPUTS
-	
-	-- Indicate presence of hazard for each register in the RF.
-	-- '1': hazard
-	-- '0': no hazard
-	O_hazards => ID_I_hazards
+	O_forward_rs => FWD_O_forward_rs,
+	O_forward_rt => FWD_O_forward_rt
 );
 
 				
-I_clk_process : process
+clk_process : process
 begin
   I_clk <= '0';
   wait for CLK_PERIOD/2;
@@ -591,9 +529,43 @@ begin
   -- TEST 1: ADD
   ----------------------------------------------------------------------------------
   	report "----- Test 1: ADD Instruction -----";
+
+	-- store 4 in R1
+	RF_I_en <= '1';
+	RF_I_we <= '1';
+	RF_I_datad <= DATA_4; --4
+	RF_I_rd <= R1;
+	wait for 1*CLK_PERIOD;
+
+	-- store 8 in R2
+	RF_I_en <= '1';
+	RF_I_we <= '1';
+	RF_I_datad <= DATA_8; --4
+	RF_I_rd <= R2;
+	wait for 1*CLK_PERIOD;
+
+	-- read value in R1 and R2
+	RF_I_we <= '0';
+	RF_I_en<= '1';
+	RF_I_rs <= R1;
+	RF_I_rt <= R2;
+	wait for 1*CLK_PERIOD;
+
+	assert RF_O_datas = DATA_4 report "Test 1.a: Unsuccessful" severity error;
+	assert RF_O_datat = DATA_8 report "Test 1.b: Unsuccessful" severity error;
+
+  	wait for 1*CLK_PERIOD;
 	
+	ID_O_rd <= "10001";
+	ID_O_regDwe <= '0';
+	EX_O_rd <= "10000";
+	EX_O_reg_write <= '0';
 	
-  	wait for CLK_PERIOD;
+	F_O_PC <= (others => '0');
+	F_O_dataInst <= "00000000001000100001100000100000"; -- add r1 and r2, store in r3
+	--ID_I_en <= '1';	
+	wait for 3*CLK_PERIOD;
+	
   	assert EX_O_alu_result = ADD_RESULT report "Test 1: Unsuccessful" severity error;
 
 ----------------------------------------------------------------------------------
@@ -856,10 +828,10 @@ begin
   	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
-  -- TEST 16: ADDI
+  -- TEST 16: 
   ----------------------------------------------------------------------------------
   report "----- Test 16: ADDI Instruction -----";
-
+	
   	wait for CLK_PERIOD;
   	assert EX_O_alu_result = ADDI_RESULT report "Test 16: Unsuccessful" severity error;
   
@@ -1191,3 +1163,17 @@ report "Test 29: Unsuccessful" severity error;
 end process;
 	
 end;
+
+--    © 2022 GitHub, Inc.
+--
+--    Terms
+--    Privacy
+--    Security
+--    Status
+--    Docs
+--    Contact GitHub
+--    Pricing
+--    API
+--    Training
+--    Blog
+--    About

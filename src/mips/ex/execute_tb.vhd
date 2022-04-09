@@ -68,7 +68,7 @@ architecture behavior of execute_tb is
 	constant JAL_OPCODE : std_logic_vector (5 downto 0) := "000011"; -- jump and link
     
 -- CLOCK
-	constant clk_PERIOD : time := 10 ns;
+	constant CLK_PERIOD : time := 10 ns;
 
 component execute is
 
@@ -290,9 +290,9 @@ port map(
 I_clk_process : process
 begin
   I_clk <= '0';
-  wait for clk_PERIOD/2;
+  wait for CLK_PERIOD/2;
   I_clk <= '1';
-  wait for clk_PERIOD/2;
+  wait for CLK_PERIOD/2;
 end process;
 
 test_process : process
@@ -303,11 +303,11 @@ begin
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '1';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '0';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   ----------------------------------------------------------------------------------
   
   	report "----- Starting tests -----";
@@ -346,17 +346,17 @@ begin
 	I_forward_rs <= "00";
 	I_forward_rt <= "00";
 	
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	assert O_alu_result = ADD_RESULT report "Test 1: Unsuccessful" severity error;
 
 ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '1';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '0';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 2: SUB
@@ -395,17 +395,17 @@ begin
 	I_forward_rs <= "00";
 	I_forward_rt <= "00";	
 
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	assert O_alu_result =  SUB_RESULT report "Test 2: Unsuccessful" severity error;
   
 ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '1';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '0';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 3: MUL, MFHI, MFLO
@@ -442,7 +442,7 @@ begin
 	I_forward_rt <= "00";
 
 	------------ MFLO ------------ 
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
 
 	-- instruction signals
 	I_rs <= RS;
@@ -471,7 +471,7 @@ begin
 	I_forward_rs <= "00";
 	I_forward_rt <= "00";
 
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	assert O_alu_result = MULT_LOW_RESULT report "Test 3: Unsuccessful - Invalid Low Value" severity error;
 
 	------------ MFHI ------------
@@ -503,17 +503,17 @@ begin
 	I_forward_rs <= "00";
 	I_forward_rt <= "00";
 
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	assert O_alu_result = MULT_HIGH_RESULT report "Test 3: Unsuccessful - Invalid High Value" severity error;
   
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '1';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '0';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 4: DIV
@@ -549,10 +549,10 @@ begin
 	I_forward_rs <= "00";
 	I_forward_rt <= "00";
 
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
 
 	------------ MFLO ------------ 
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
 
 	-- instruction signals
 	I_rs <= RS;
@@ -581,7 +581,7 @@ begin
 	I_forward_rs <= "00";
 	I_forward_rt <= "00";
 
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	assert O_alu_result = DIV_LOW_RESULT report "Test 3: Unsuccessful - Invalid Low Value" severity error;
 
 	------------ MFHI ------------
@@ -611,25 +611,25 @@ begin
 	I_forward_rs <= "00";
 	I_forward_rt <= "00";
 
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	assert O_alu_result = DIV_HIGH_RESULT report "Test 3: Unsuccessful - Invalid High Value" severity error;
   
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '1';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '0';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '1';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '0';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 5: SLT
@@ -665,7 +665,7 @@ begin
 	I_forward_rs <= "00";
 	I_forward_rt <= "00";
 
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	assert O_alu_result = SLT_FALSE_RESULT report "Test 5: Unsuccessful" severity error;
 
 
@@ -697,17 +697,17 @@ begin
 	I_forward_rs <= "00";
 	I_forward_rt <= "00";
 
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	assert O_alu_result = SLT_TRUE_RESULT report "Test 5: Unsuccessful" severity error;
   
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '1';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '0';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 6: AND
@@ -743,17 +743,17 @@ begin
 	I_forward_rs <= "00";
 	I_forward_rt <= "00";
 
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	assert O_alu_result = AND_RESULT report "Test 6: Unsuccessful" severity error;
   
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '1';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '0';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 7: OR
@@ -789,17 +789,17 @@ begin
 	I_forward_rs <= "00";
 	I_forward_rt <= "00";
 
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	assert O_alu_result = OR_RESULT report "Test 7: Unsuccessful" severity error;
   
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '1';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '0';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   ----------------------------------------------------------------------------------
   -- TEST 8: NOR
   ----------------------------------------------------------------------------------
@@ -834,17 +834,17 @@ begin
 	I_forward_rs <= "00";
 	I_forward_rt <= "00";
 
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	assert O_alu_result = NOR_RESULT report "Test 8: Unsuccessful" severity error;
   
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '1';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '0';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 9: XOR
@@ -880,17 +880,17 @@ begin
 	I_forward_rs <= "00";
 	I_forward_rt <= "00";
 
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	assert O_alu_result = XOR_RESULT report "Test 9: Unsuccessful" severity error;
   
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '1';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '0';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 10: SLL
@@ -925,17 +925,17 @@ begin
 	I_forward_rs <= "00";
 	I_forward_rt <= "00";
 
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	assert O_alu_result = SLL_RESULT report "Test 12: Unsuccessful" severity error;
   
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '1';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '0';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 13: SRL
@@ -970,17 +970,17 @@ begin
 	I_forward_rs <= "00";
 	I_forward_rt <= "00";
 
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	assert O_alu_result = SRL_RESULT report "Test 13: Unsuccessful" severity error;
   
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '1';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '0';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 14: SRA
@@ -1015,7 +1015,7 @@ begin
 	I_forward_rs <= "00";
 	I_forward_rt <= "00";
 
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	assert O_alu_result = SRA_RESULT report "Test 14: Unsuccessful" severity error;
 
 	I_rs <= RS;
@@ -1045,17 +1045,17 @@ begin
 	I_forward_rs <= "00";
 	I_forward_rt <= "00";
 
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	assert O_alu_result = SRA_NEGATIVE_RESULT report "Test 14: Unsuccessful" severity error;
   
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '1';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '0';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 15: JR
@@ -1090,17 +1090,17 @@ begin
 	I_forward_rs <= "00";
 	I_forward_rt <= "00";
 
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	assert O_updated_next_pc = JR_PC_RESULT report "Test 15: Unsuccessful" severity error;
   
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '1';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '0';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 16: ADDI
@@ -1136,17 +1136,17 @@ begin
 	I_forward_rs <= "00";
 	I_forward_rt <= "00";
 
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	assert O_alu_result = ADDI_RESULT report "Test 16: Unsuccessful" severity error;
   
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '1';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '0';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 17: SLTI
@@ -1182,17 +1182,17 @@ begin
 	I_forward_rs <= "00";
 	I_forward_rt <= "00";
 
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	assert O_alu_result = SLTI_FALSE_RESULT report "Test 17: Unsuccessful" severity error;
 
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '1';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '0';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
 
 	-- instruction signals
 	I_rs <= RS;
@@ -1223,17 +1223,17 @@ begin
 	I_forward_rs <= "00";
 	I_forward_rt <= "00";
 
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	assert O_alu_result = SLTI_TRUE_RESULT report "Test 17: Unsuccessful" severity error;
   
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '1';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '0';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 18: ORI
@@ -1269,17 +1269,17 @@ begin
 	I_forward_rs <= "00";
 	I_forward_rt <= "00";
 
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	assert O_alu_result = ORI_RESULT report "Test 18: Unsuccessful" severity error;
   
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '1';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '0';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 19: XORI
@@ -1315,17 +1315,17 @@ begin
 	I_forward_rs <= "00";
 	I_forward_rt <= "00";
 
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	assert O_alu_result = XORI_RESULT report "Test 19: Unsuccessful" severity error;
    
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '1';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '0';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 20: LUI
@@ -1361,17 +1361,17 @@ begin
 	I_forward_rs <= "00";
 	I_forward_rt <= "00";
 
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	assert O_alu_result = LUI_RESULT report "Test 20: Unsuccessful" severity error;
   
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '1';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '0';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 21: LW
@@ -1407,17 +1407,17 @@ begin
 	I_forward_rs <= "00";
 	I_forward_rt <= "00";
 
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	assert O_alu_result = LW_RESULT report "Test 21: Unsuccessful" severity error;
   
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '1';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '0';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   ----------------------------------------------------------------------------------
   -- TEST 22: SW
   ----------------------------------------------------------------------------------
@@ -1452,18 +1452,18 @@ begin
 	I_forward_rs <= "00";
 	I_forward_rt <= "00";
 
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	assert O_alu_result = SW_RESULT report "Test 22: Unsuccessful" severity error;
   
 
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '1';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '0';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 23: BEQ
@@ -1500,18 +1500,18 @@ begin
 	I_forward_rs <= "00";
 	I_forward_rt <= "00";
 
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
 	assert O_branch = '1' report "Test 23.a.i: Unsuccessful" severity error;
   	assert O_updated_next_pc = BEQ_TAKEN_PC_RESULT report "Test 23.a.ii: Unsuccessful" severity error;
 
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '1';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '0';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
 
 ----------------------------------------------------------------------------------
 
@@ -1545,18 +1545,18 @@ begin
 	I_forward_rs <= "00";
 	I_forward_rt <= "00";
 
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
 	assert O_branch = '0' report "Test 23.b.i: Unsuccessful" severity error;
   	assert O_updated_next_pc = BEQ_NOT_TAKEN_PC_RESULT report "Test 23.b.ii: Unsuccessful" severity error;
   
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '1';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '0';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 24: BNE
@@ -1594,18 +1594,18 @@ begin
 	I_forward_rs <= "00";
 	I_forward_rt <= "00";
 
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
 	assert O_branch = '1' report "Test 24.a.i: Unsuccessful" severity error;
   	assert O_updated_next_pc = BNE_TAKEN_PC_RESULT report "Test 24.a.ii: Unsuccessful" severity error;
 
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '1';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '0';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
 
 ----------------------------------------------------------------------------------
 
@@ -1639,18 +1639,18 @@ begin
 	I_forward_rs <= "00";
 	I_forward_rt <= "00";
 
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
 	assert O_branch = '0' report "Test 24.b.i: Unsuccessful" severity error;
   	assert O_updated_next_pc = BNE_NOT_TAKEN_PC_RESULT report "Test 24.b.ii: Unsuccessful" severity error;
 
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '1';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '0';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 25: J
@@ -1683,17 +1683,17 @@ begin
 	I_forward_rs <= "00";
 	I_forward_rt <= "00";
 
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	assert O_updated_next_pc = J_PC_RESULT report "Test 25: Unsuccessful" severity error;
 
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '1';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '0';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 26: JAL
@@ -1729,18 +1729,18 @@ begin
 	I_forward_rs <= "00";
 	I_forward_rt <= "00";
 
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	assert O_alu_result = JAL_RESULT report "Test 26.a: Unsuccessful" severity error;
 	assert O_updated_next_pc = JAL_PC_RESULT report "Test 26.b: Unsuccessful" severity error;
 
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '1';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '0';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 27: Forwarding from EX
@@ -1776,17 +1776,17 @@ begin
 	I_forward_rs <= "01";
 	I_forward_rt <= "00";
 	
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	assert O_alu_result = ADD_RESULT report "Test 27: Unsuccessful" severity error;
 
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '1';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '0';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
 
 	-- instruction signals
 	I_rs <= RS;
@@ -1817,17 +1817,17 @@ begin
 	I_forward_rs <= "00";
 	I_forward_rt <= "01";
 	
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	assert O_alu_result = ADD_RESULT report "Test 27: Unsuccessful" severity error;
 
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '1';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '0';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
 
 
   ----------------------------------------------------------------------------------
@@ -1864,17 +1864,17 @@ begin
 	I_forward_rs <= "10";
 	I_forward_rt <= "00";
 	
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	assert O_alu_result = ADD_RESULT report "Test 28: Unsuccessful" severity error;
 
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '1';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '0';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
 
 	-- instruction signals
 	I_rs <= RS;
@@ -1905,18 +1905,18 @@ begin
 	I_forward_rs <= "00";
 	I_forward_rt <= "10";
 	
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	assert O_alu_result = ADD_RESULT report "Test 28: Unsuccessful" severity error;
 
 
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '1';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '0';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 29: Data Hazard
@@ -1952,18 +1952,18 @@ begin
 	I_forward_rs <= "00";
 	I_forward_rt <= "00";
 	
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	assert O_stall = '1' 
 report "Test 29: Unsuccessful" severity error;
 
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '1';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
   	I_reset <= '0';
-  	wait for clk_PERIOD;
+  	wait for CLK_PERIOD;
 
 	
   report "----- Confirming all tests have ran -----";
