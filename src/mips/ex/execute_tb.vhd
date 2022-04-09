@@ -76,6 +76,7 @@ port(
 	-- INPUTS
 	I_clk : in std_logic;
 	I_reset : in std_logic;
+	I_enable : in std_logic;
 
 	-- instruction signals
 	I_rs: in std_logic_vector (4 downto 0);
@@ -127,6 +128,7 @@ end component;
 -- Synchronoucity Inputs
 signal I_reset : std_logic := '0';
 signal I_clk : std_logic := '0';
+signal I_enable : std_logic := '1';
 
 -- Execute Inputs
 
@@ -238,6 +240,7 @@ port map(
 	-- INPUTS
 	I_clk => I_clk,
 	I_reset => I_reset,
+	I_enable => I_enable,
 
 	I_rs => I_rs,
 	I_rt => I_rt,

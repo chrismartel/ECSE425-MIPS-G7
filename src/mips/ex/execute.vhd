@@ -11,6 +11,7 @@ port(
 	-- Synchronoucity Inputs
 	I_clk : in std_logic;
 	I_reset : in std_logic;
+	I_enable : in std_logic;
 
 	-- Execute Inputs
         I_imm_SE : in  std_logic_vector (31 downto 0);
@@ -156,6 +157,7 @@ begin
 			
 		-- synchronous clock active high
 		elsif I_clk'event and I_clk = '1' then
+			if I_enable = '1' then
 
 			-- check for stall instruction
 
@@ -654,6 +656,7 @@ begin
   	                  		when others =>
         	        		end case;
 				end if;
+			end if;
 			end if;
 		end if;
 	end process;
