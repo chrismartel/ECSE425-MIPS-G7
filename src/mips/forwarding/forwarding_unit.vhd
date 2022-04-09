@@ -8,6 +8,7 @@ port(
 	-- INPUTS
 	I_clk : in std_logic;
 	I_reset : in std_logic;
+	I_en: in std_logic;
 
 	I_ex_rd: in std_logic_vector (4 downto 0); -- destination register for instruction completed by the ex stage
 	I_mem_rd: in std_logic_vector (4 downto 0); -- destination register for instruction completed by the mem stage
@@ -41,22 +42,24 @@ begin
 			
 		-- synchronous clock active high
 		elsif I_clk'event and I_clk = '1' then
-			-- rs input
-			if I_ex_reg_write = '1' and I_id_rs = I_ex_rd then
-				O_forward_rs <= "01"; -- read from ex stage output
-			elsif I_mem_reg_write = '1' and I_id_rs = I_mem_rd then
-				O_forward_rs <= "10"; -- read from mem stage output
-			else
-				O_forward_rs <= "00"; -- read from id stage output
-			end if;
+			if I_en = '1' then
+				-- rs input
+				if I_ex_reg_write = '1' and I_id_rs = I_ex_rd then
+					O_forward_rs <= "01"; -- read from ex stage output
+				elsif I_mem_reg_write = '1' and I_id_rs = I_mem_rd then
+					O_forward_rs <= "10"; -- read from mem stage output
+				else
+					O_forward_rs <= "00"; -- read from id stage output
+				end if;
 
-			-- rt input
-			if I_ex_reg_write = '1' and I_id_rt = I_ex_rd then
-				O_forward_rt <= "01"; -- read from ex stage output
-			elsif I_mem_reg_write = '1' and I_id_rt = I_mem_rd then
-				O_forward_rt <= "10"; -- read from mem stage output
-			else
-				O_forward_rt <= "00"; -- read from id stage output
+				-- rt input
+				if I_ex_reg_write = '1' and I_id_rt = I_ex_rd then
+					O_forward_rt <= "01"; -- read from ex stage output
+				elsif I_mem_reg_write = '1' and I_id_rt = I_mem_rd then
+					O_forward_rt <= "10"; -- read from mem stage output
+				else
+					O_forward_rt <= "00"; -- read from id stage output
+				end if;
 			end if;
 		end if;
 	end process;
