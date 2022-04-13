@@ -122,6 +122,7 @@ id_process: process (I_clk, I_reset)
 		O_mem_to_reg <= '0';
 		O_addr <= (others => '0');
 	 elsif I_clk'event and I_clk = '1' then
+		if I_en = '1' then
       		if I_dataInst(31 downto 26) = "000000" then
                 	case I_dataInst(5 downto 0) is -- check functional bits for R type instructions
 
@@ -630,6 +631,7 @@ id_process: process (I_clk, I_reset)
 	end if;
 	O_next_pc <= I_pc;
 	O_aluop <= I_dataInst(31 downto 26);
+	end if;
 	end if;
 end process;
 
