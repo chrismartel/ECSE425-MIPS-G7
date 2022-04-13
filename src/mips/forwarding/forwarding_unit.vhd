@@ -60,6 +60,9 @@ begin
 				else
 					O_forward_rt <= "00"; -- read from id stage output
 				end if;
+			else
+				O_forward_rs <= "00";
+				O_forward_rt <= "00";
 			end if;
 		end if;
 	end process;

@@ -128,7 +128,7 @@ end component;
 -- Synchronoucity Inputs
 signal I_reset : std_logic := '0';
 signal I_clk : std_logic := '0';
-signal I_en : std_logic := '1';
+signal I_en : std_logic := '0';
 
 -- Execute Inputs
 
@@ -311,6 +311,7 @@ begin
   ----------------------------------------------------------------------------------
   
   	report "----- Starting tests -----";
+	I_en <= '1';
 
   ----------------------------------------------------------------------------------
   -- TEST 1: ADD

@@ -235,8 +235,8 @@ signal RF_I_rs :  std_logic_vector (4 downto 0);
 signal RF_I_rt :  std_logic_vector (4 downto 0);
 signal RF_I_rd :  std_logic_vector (4 downto 0); -- from wb to rf
 signal RF_I_datad: std_logic_vector (31 downto 0); -- from wb to rf
-signal RF_I_we :  std_logic := '1'; -- from wb to rf
-signal RF_I_en :  std_logic := '1';
+signal RF_I_we :  std_logic := '0'; -- from wb to rf
+signal RF_I_en :  std_logic := '0';
 
 -- OUTPUTS
 signal RF_O_datas :  std_logic_vector (31 downto 0); -- rf to ex
@@ -245,7 +245,7 @@ signal RF_O_datat :  std_logic_vector (31 downto 0); -- rf to ex
 -- DECODE SIGNALS
 -- OUTPUTS
 -- from id to ex
-signal ID_I_en : std_logic := '1'; 
+signal ID_I_en : std_logic := '0'; 
 signal ID_O_next_pc: std_logic_vector (31 downto 0);
 signal ID_O_rs : std_logic_vector (4 downto 0);
 signal ID_O_rt : std_logic_vector (4 downto 0);
@@ -265,8 +265,8 @@ signal ID_O_addr: std_logic_vector (25 downto 0);
 
 
 -- EXECUTE SIGNALS				
--- OUTPUTS
-signal EX_I_en: std_logic;
+-- OUTPUTS 
+signal EX_I_en: std_logic := '0';
 signal EX_O_alu_result: std_logic_vector (31 downto 0);
 signal EX_O_updated_next_pc: std_logic_vector (31 downto 0);
 signal EX_O_rt_data: std_logic_vector (31 downto 0);
@@ -294,7 +294,7 @@ signal MEM_O_result: std_logic_vector (31 downto 0); -- TODO: replace when memor
 
 -- FORWARD UNIT SIGNALS
 -- OUTPUTS
-signal FWD_I_en :  std_logic := '1';
+signal FWD_I_en :  std_logic := '0';
 signal FWD_O_forward_rs: std_logic_vector (1 downto 0);
 signal FWD_O_forward_rt: std_logic_vector (1 downto 0);
 
@@ -306,11 +306,12 @@ signal FWD_O_forward_rt: std_logic_vector (1 downto 0);
 constant R3: std_logic_vector(4 downto 0) := "00011"; -- R3
 constant R1: std_logic_vector(4 downto 0) := "00001"; -- R1
 constant R2: std_logic_vector(4 downto 0) := "00010"; -- R2
+constant R4: std_logic_vector(4 downto 0) := "00100"; -- R4
 constant LR: std_logic_vector(4 downto 0) := "11111"; -- R31
 constant R0: std_logic_vector(4 downto 0) := "00000"; -- $R0
 constant SHAMT: std_logic_vector(4 downto 0) := "00010";
-constant IMM_8: std_logic_vector(31 downto 0) := x"00000008"; 
-constant IMM_4: std_logic_vector(31 downto 0) := x"00000004"; 
+constant IMM_8: std_logic_vector(15 downto 0) := x"0008"; 
+constant IMM_4: std_logic_vector(15 downto 0) := x"0004"; 
 constant ADDRESS: std_logic_vector(25 downto 0) := "00000000000000000000000100"; 
 
 constant DATA_8: std_logic_vector(31 downto 0) := x"00000008";
@@ -340,7 +341,7 @@ constant SRA_NEGATIVE_RESULT: std_logic_vector(31 downto 0) := x"FFFFFFFF"; -- -
 constant JR_PC_RESULT: std_logic_vector(31 downto 0) := x"00000008";
 
 -- I
-constant ADDI_RESULT: std_logic_vector(31 downto 0) := x"0000000C"; -- 4 + IMM_4
+constant ADDI_RESULT: std_logic_vector(31 downto 0) := x"00000008"; -- 4 + IMM_4
 constant SLTI_TRUE_RESULT: std_logic_vector(31 downto 0) := x"00000001"; -- 4 less than IMM_8
 constant SLTI_FALSE_RESULT: std_logic_vector(31 downto 0) := x"00000000"; -- 8 less than IMM_4
 constant ORI_RESULT: std_logic_vector(31 downto 0) := x"0000000C"; -- 4 or IMM_8
@@ -459,8 +460,6 @@ port map(
 	I_reset => I_reset,
 	I_dataD => RF_I_datad,
        	I_en => RF_I_en,
-       	--I_rs => F_O_dataInst(25 downto 21),
-       	--I_rt => F_O_dataInst(20 downto 16),
        	I_rs => RF_I_rs,
        	I_rt => RF_I_rt,
        	I_rd => RF_I_rd,
@@ -533,6 +532,8 @@ begin
 	RF_I_en <= '1';
 	RF_I_we <= '1';
 	RF_I_datad <= DATA_4; --4
+	RF_I_rs <= (others=>'0');
+	RF_I_rt <= (others=>'0');
 	RF_I_rd <= R1;
 	wait for CLK_PERIOD;
 
@@ -540,7 +541,18 @@ begin
 	RF_I_en <= '1';
 	RF_I_we <= '1';
 	RF_I_datad <= DATA_8; --4
+	RF_I_rs <= (others=>'0');
+	RF_I_rt <= (others=>'0');
 	RF_I_rd <= R2;
+	wait for CLK_PERIOD;
+	
+	-- store -4 in R4
+	RF_I_en <= '1';
+	RF_I_we <= '1';
+	RF_I_datad <= DATA_MINUS_4; --4
+	RF_I_rs <= (others=>'0');
+	RF_I_rt <= (others=>'0');
+	RF_I_rd <= R4;
 	wait for CLK_PERIOD;
 
 	-- read value in R1 and R2
@@ -553,20 +565,16 @@ begin
 	assert RF_O_datas = DATA_4 report "Test 0.a: Unsuccessful" severity error;
 	assert RF_O_datat = DATA_8 report "Test 0.b: Unsuccessful" severity error;
 
-  ----------------------------------------------------------------------------------
-  -- SETUP
-  ----------------------------------------------------------------------------------
-  	
-	-- enable components
-	ID_I_en <= '1';
-	EX_I_en <= '1';
-	FWD_I_en <= '0';
 
   ----------------------------------------------------------------------------------
   -- TEST 1: ADD
   ----------------------------------------------------------------------------------
 	report "----- Test 1: ADD Instruction -----";
-	
+
+	ID_I_en <= '1';
+	EX_I_en <= '1';
+	RF_I_en <= '1';
+	FWD_I_en <= '0';
 	F_O_PC <= NEXT_PC;
 	F_O_dataInst <= R_OPCODE & R1 & R2 & R3 & SHAMT & ADD_FUNCT; -- add r1 and r2, store in r3
 
@@ -574,31 +582,25 @@ begin
 	wait for CLK_PERIOD;
   	assert EX_O_alu_result = ADD_RESULT report "Test 1: Unsuccessful" severity error;
 
-----------------------------------------------------------------------------------
-  -- RESET
-  ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	I_reset <= '1';
-  	wait for CLK_PERIOD;
-  	I_reset <= '0';
-  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 2: SUB
   ----------------------------------------------------------------------------------
   	report "----- Test 2: SUB Instruction -----";
+	ID_I_en <= '1';
+	EX_I_en <= '1';
+	RF_I_en <= '1';
+	FWD_I_en <= '0';
+	RF_I_rs <= R2;
+	RF_I_rt <= R1;
 
+	F_O_PC <= NEXT_PC;
+	F_O_dataInst <= R_OPCODE & R2 & R1 & R3 & SHAMT & SUB_FUNCT; -- sub r2 and r1, store in r3
+	
   	wait for CLK_PERIOD;
+	wait for CLK_PERIOD;
   	assert EX_O_alu_result =  SUB_RESULT report "Test 2: Unsuccessful" severity error;
   
-----------------------------------------------------------------------------------
-  -- RESET
-  ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	I_reset <= '1';
-  	wait for CLK_PERIOD;
-  	I_reset <= '0';
-  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 3: MUL, MFHI, MFLO
@@ -606,249 +608,305 @@ begin
   	report "----- Test 3: MULT Instruction -----";
 
 	------------ MULT ------------ 
+	wait for CLK_PERIOD;
+	ID_I_en <= '1';
+	EX_I_en <= '1';
+	RF_I_en <= '1';
+	FWD_I_en <= '0';
+	RF_I_rs <= R1;
+	RF_I_rt <= R2;
+	
+	F_O_PC <= NEXT_PC;
+	F_O_dataInst <= R_OPCODE & R1 & R2 & R3 & SHAMT & MULT_FUNCT; -- MFHI r2 and r1, store in r3
 
+ 	wait for CLK_PERIOD;
+	wait for CLK_PERIOD;
+	
+	
 	------------ MFLO ------------ 
-  	wait for CLK_PERIOD;
+  	
+	ID_I_en <= '1';
+	EX_I_en <= '1';
+	RF_I_en <= '1';
+	FWD_I_en <= '0';
+	RF_I_rs <= R1;
+	RF_I_rt <= R2;
+	
+	F_O_PC <= NEXT_PC;
+	F_O_dataInst <= R_OPCODE & R1 & R2 & R3 & SHAMT & MFLO_FUNCT; -- MFHI r2 and r1, store in r3
 
-
   	wait for CLK_PERIOD;
+	wait for CLK_PERIOD;
   	assert EX_O_alu_result = MULT_LOW_RESULT report "Test 3: Unsuccessful - Invalid Low Value" severity error;
 
 	------------ MFHI ------------
 
-  	wait for CLK_PERIOD;
+  	F_O_PC <= NEXT_PC;
+	F_O_dataInst <= R_OPCODE & R1 & R2 & R3 & SHAMT & MFHI_FUNCT;
+	wait for CLK_PERIOD;
+	wait for CLK_PERIOD;
   	assert EX_O_alu_result = MULT_HIGH_RESULT report "Test 3: Unsuccessful - Invalid High Value" severity error;
   
-  ----------------------------------------------------------------------------------
-  -- RESET
-  ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	I_reset <= '1';
-  	wait for CLK_PERIOD;
-  	I_reset <= '0';
-  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 4: DIV
   ----------------------------------------------------------------------------------
   	report "----- Test 4: DIV Instruction -----";
 	------------ DIV ------------ 
+ 
+	ID_I_en <= '1';
+	EX_I_en <= '1';
+	RF_I_en <= '1';
+	FWD_I_en <= '0';
+	RF_I_rs <= R2;
+	RF_I_rt <= R1;
+	
+	F_O_PC <= NEXT_PC;
+	F_O_dataInst <= R_OPCODE & R1 & R2 & R3 & SHAMT & DIV_FUNCT; -- MFHI r2 and r1, store in r3
+
   	wait for CLK_PERIOD;
+	wait for CLK_PERIOD;
 
-	------------ MFLO ------------ 
+	------------ DIVLO ------------ 
+  
+	ID_I_en <= '1';
+	EX_I_en <= '1';
+	RF_I_en <= '1';
+	FWD_I_en <= '0';
+	RF_I_rs <= R2;
+	RF_I_rt <= R1;
+	
+	F_O_PC <= NEXT_PC;
+	F_O_dataInst <= R_OPCODE & R1 & R2 & R3 & SHAMT & MFLO_FUNCT; -- MFHI r2 and r1, store in r3
+
   	wait for CLK_PERIOD;
-
-
-
-  	wait for CLK_PERIOD;
-  	assert EX_O_alu_result = DIV_LOW_RESULT report "Test 3: Unsuccessful - Invalid Low Value" severity error;
+	wait for CLK_PERIOD;
+  	assert EX_O_alu_result = DIV_LOW_RESULT report "Test 4: Unsuccessful - Invalid Low Value" severity error;
 
 	------------ MFHI ------------
-
-  	wait for CLK_PERIOD;
-  	assert EX_O_alu_result = DIV_HIGH_RESULT report "Test 3: Unsuccessful - Invalid High Value" severity error;
+	F_O_PC <= NEXT_PC;
+	F_O_dataInst <= R_OPCODE & R1 & R2 & R3 & SHAMT & MFHI_FUNCT;
+	wait for CLK_PERIOD;
+	wait for CLK_PERIOD;
+  	assert EX_O_alu_result = DIV_HIGH_RESULT report "Test 4: Unsuccessful - Invalid High Value" severity error;
   
-  ----------------------------------------------------------------------------------
-  -- RESET
-  ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	I_reset <= '1';
-  	wait for CLK_PERIOD;
-  	I_reset <= '0';
-  	wait for CLK_PERIOD;
-  ----------------------------------------------------------------------------------
-  -- RESET
-  ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	I_reset <= '1';
-  	wait for CLK_PERIOD;
-  	I_reset <= '0';
-  	wait for CLK_PERIOD;
-
   ----------------------------------------------------------------------------------
   -- TEST 5: SLT
   ----------------------------------------------------------------------------------
   report "----- Test 5: SLT Instruction -----";
 	
+	ID_I_en <= '1';
+	EX_I_en <= '1';
+	RF_I_en <= '1';
+	FWD_I_en <= '0';
+	RF_I_rs <= R2;
+	RF_I_rt <= R1;
+	
+	F_O_PC <= NEXT_PC;
+	F_O_dataInst <= R_OPCODE & R2 & R1 & R3 & SHAMT & SLT_FUNCT; 
+  	wait for CLK_PERIOD;
+	wait for CLK_PERIOD;
 	
 	------------ SLT FALSE ------------ 
-  	wait for CLK_PERIOD;
   	assert EX_O_alu_result = SLT_FALSE_RESULT report "Test 5: Unsuccessful" severity error;
 
+
+
 	------------ SLT TRUE ------------ 
+	ID_I_en <= '1';
+	EX_I_en <= '1';
+	RF_I_en <= '1';
+	FWD_I_en <= '0';
+	RF_I_rs <= R1;
+	RF_I_rt <= R2;
+	
+	F_O_PC <= NEXT_PC;
+	F_O_dataInst <= R_OPCODE & R2 & R1 & R3 & SHAMT & SLT_FUNCT; 
   	wait for CLK_PERIOD;
+	wait for CLK_PERIOD;
+
   	assert EX_O_alu_result = SLT_TRUE_RESULT report "Test 5: Unsuccessful" severity error;
   
-  ----------------------------------------------------------------------------------
-  -- RESET
-  ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	I_reset <= '1';
-  	wait for CLK_PERIOD;
-  	I_reset <= '0';
-  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 6: AND
   ----------------------------------------------------------------------------------
   	report "----- Test 6: AND Instruction -----";
-
-
+	
+	ID_I_en <= '1';
+	EX_I_en <= '1';
+	RF_I_en <= '1';
+	FWD_I_en <= '0';
+	RF_I_rs <= R2;
+	RF_I_rt <= R1;
+	
+	F_O_PC <= NEXT_PC;
+	F_O_dataInst <= R_OPCODE & R2 & R1 & R3 & SHAMT & AND_FUNCT; 
   	wait for CLK_PERIOD;
+	wait for CLK_PERIOD;
+
   	assert EX_O_alu_result = AND_RESULT report "Test 6: Unsuccessful" severity error;
   
-  ----------------------------------------------------------------------------------
-  -- RESET
-  ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	I_reset <= '1';
-  	wait for CLK_PERIOD;
-  	I_reset <= '0';
-  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 7: OR
   ----------------------------------------------------------------------------------
   	report "----- Test 7: OR Instruction -----";
-
-
+	ID_I_en <= '1';
+	EX_I_en <= '1';
+	RF_I_en <= '1';
+	FWD_I_en <= '0';
+	RF_I_rs <= R2;
+	RF_I_rt <= R1;
+	
+	F_O_PC <= NEXT_PC;
+	F_O_dataInst <= R_OPCODE & R2 & R1 & R3 & SHAMT & OR_FUNCT; 
   	wait for CLK_PERIOD;
+	wait for CLK_PERIOD;
   	assert EX_O_alu_result = OR_RESULT report "Test 7: Unsuccessful" severity error;
   
-  ----------------------------------------------------------------------------------
-  -- RESET
-  ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	I_reset <= '1';
-  	wait for CLK_PERIOD;
-  	I_reset <= '0';
-  	wait for CLK_PERIOD;
+
   ----------------------------------------------------------------------------------
   -- TEST 8: NOR
   ----------------------------------------------------------------------------------
   	report "----- Test 8: NOR Instruction -----";
-
+	ID_I_en <= '1';
+	EX_I_en <= '1';
+	RF_I_en <= '1';
+	FWD_I_en <= '0';
+	RF_I_rs <= R2;
+	RF_I_rt <= R1;
+	
+	F_O_PC <= NEXT_PC;
+	F_O_dataInst <= R_OPCODE & R2 & R1 & R3 & SHAMT & NOR_FUNCT; 
   	wait for CLK_PERIOD;
+	wait for CLK_PERIOD;
   	assert EX_O_alu_result = NOR_RESULT report "Test 8: Unsuccessful" severity error;
   
-  ----------------------------------------------------------------------------------
-  -- RESET
-  ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	I_reset <= '1';
-  	wait for CLK_PERIOD;
-  	I_reset <= '0';
-  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 9: XOR
   ----------------------------------------------------------------------------------
   	report "----- Test 9: XOR Instruction -----";
-
+	
+	ID_I_en <= '1';
+	EX_I_en <= '1';
+	RF_I_en <= '1';
+	FWD_I_en <= '0';
+	RF_I_rs <= R2;
+	RF_I_rt <= R1;
+	
+	F_O_PC <= NEXT_PC;
+	F_O_dataInst <= R_OPCODE & R2 & R1 & R3 & SHAMT & XOR_FUNCT; 
   	wait for CLK_PERIOD;
+	wait for CLK_PERIOD;
   	assert EX_O_alu_result = XOR_RESULT report "Test 9: Unsuccessful" severity error;
   
-  ----------------------------------------------------------------------------------
-  -- RESET
-  ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	I_reset <= '1';
-  	wait for CLK_PERIOD;
-  	I_reset <= '0';
-  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 10: SLL
   ----------------------------------------------------------------------------------
   	report "----- Test 12: SLL Instruction -----";
-
+	ID_I_en <= '1';
+	EX_I_en <= '1';
+	RF_I_en <= '1';
+	FWD_I_en <= '0';
+	RF_I_rs <= R1;
+	RF_I_rt <= R2;
+	
+	F_O_PC <= NEXT_PC;
+	F_O_dataInst <= R_OPCODE & R1 & R2 & R3 & SHAMT & SLL_FUNCT; 
   	wait for CLK_PERIOD;
+	wait for CLK_PERIOD;
   	assert EX_O_alu_result = SLL_RESULT report "Test 12: Unsuccessful" severity error;
   
-  ----------------------------------------------------------------------------------
-  -- RESET
-  ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	I_reset <= '1';
-  	wait for CLK_PERIOD;
-  	I_reset <= '0';
-  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 13: SRL
   ----------------------------------------------------------------------------------
   	report "----- Test 13: SRL Instruction -----";
-
+	ID_I_en <= '1';
+	EX_I_en <= '1';
+	RF_I_en <= '1';
+	FWD_I_en <= '0';
+	RF_I_rs <= R1;
+	RF_I_rt <= R2;
+	
+	F_O_PC <= NEXT_PC;
+	F_O_dataInst <= R_OPCODE & R1 & R2 & R3 & SHAMT & SRL_FUNCT; 
   	wait for CLK_PERIOD;
+	wait for CLK_PERIOD;
   	assert EX_O_alu_result = SRL_RESULT report "Test 13: Unsuccessful" severity error;
   
-  ----------------------------------------------------------------------------------
-  -- RESET
-  ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	I_reset <= '1';
-  	wait for CLK_PERIOD;
-  	I_reset <= '0';
-  	wait for CLK_PERIOD;
-
   ----------------------------------------------------------------------------------
   -- TEST 14: SRA
   ----------------------------------------------------------------------------------
   	report "----- Test 14: SRA Instruction -----";
 	
 	--- POSITIVE NUMBER -----
-
+	ID_I_en <= '1';
+	EX_I_en <= '1';
+	RF_I_en <= '1';
+	FWD_I_en <= '0';
+	RF_I_rs <= R1;
+	RF_I_rt <= R2;
+	
+	F_O_PC <= NEXT_PC;
+	F_O_dataInst <= R_OPCODE & R1 & R2 & R3 & SHAMT & SRA_FUNCT; 
   	wait for CLK_PERIOD;
-  	assert EX_O_alu_result = SRA_RESULT report "Test 14: Unsuccessful" severity error;
+  	wait for CLK_PERIOD;
+  	assert EX_O_alu_result = SRA_RESULT report "Test 14a: Unsuccessful" severity error;
 
 
 	--- NEGATIVE NUMBER -----
-
+	ID_I_en <= '1';
+	EX_I_en <= '1';
+	RF_I_en <= '1';
+	FWD_I_en <= '0';
+	RF_I_rs <= R1;
+	RF_I_rt <= R4;
+	
+	F_O_PC <= NEXT_PC;
+	F_O_dataInst <= R_OPCODE & R1 & R4 & R3 & SHAMT & SRA_FUNCT; 
   	wait for CLK_PERIOD;
-  	assert EX_O_alu_result = SRA_NEGATIVE_RESULT report "Test 14: Unsuccessful" severity error;
-  
-  ----------------------------------------------------------------------------------
-  -- RESET
-  ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	I_reset <= '1';
-  	wait for CLK_PERIOD;
-  	I_reset <= '0';
-  	wait for CLK_PERIOD;
+	wait for CLK_PERIOD;
+  	assert EX_O_alu_result = SRA_NEGATIVE_RESULT report "Test 14b: Unsuccessful" severity error;
 
   ----------------------------------------------------------------------------------
   -- TEST 15: JR
   ----------------------------------------------------------------------------------
   	report "----- Test 15: JR Instruction -----";
-
+	ID_I_en <= '1';
+	EX_I_en <= '1';
+	RF_I_en <= '1';
+	FWD_I_en <= '0';
+	RF_I_rs <= R2;
+	RF_I_rt <= R1;
+	
+	F_O_PC <= NEXT_PC;
+	F_O_dataInst <= R_OPCODE & R2 & R1 & R3 & SHAMT & JR_FUNCT; 
+  	wait for CLK_PERIOD;
   	wait for CLK_PERIOD;
   	assert EX_O_updated_next_pc = JR_PC_RESULT report "Test 15: Unsuccessful" severity error;
   
   ----------------------------------------------------------------------------------
-  -- RESET
-  ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	I_reset <= '1';
-  	wait for CLK_PERIOD;
-  	I_reset <= '0';
-  	wait for CLK_PERIOD;
-
-  ----------------------------------------------------------------------------------
   -- TEST 16: 
   ----------------------------------------------------------------------------------
   report "----- Test 16: ADDI Instruction -----";
+	ID_I_en <= '1';
+	EX_I_en <= '1';
+	RF_I_en <= '1';
+	FWD_I_en <= '0';
+	RF_I_rs <= R1;
+	RF_I_rt <= (others=>'0');
 	
+	F_O_PC <= NEXT_PC;
+	F_O_dataInst <= ADDI_OPCODE & R1 & R3 & IMM_4; 
+  	wait for CLK_PERIOD;	
   	wait for CLK_PERIOD;
+
   	assert EX_O_alu_result = ADDI_RESULT report "Test 16: Unsuccessful" severity error;
   
-  ----------------------------------------------------------------------------------
-  -- RESET
-  ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	I_reset <= '1';
-  	wait for CLK_PERIOD;
-  	I_reset <= '0';
-  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 17: SLTI
@@ -856,152 +914,155 @@ begin
   	report "----- Test 17: SLTI Instruction -----";
 
 	--- SLTI FALSE -----
+	ID_I_en <= '1';
+	EX_I_en <= '1';
+	RF_I_en <= '1';
+	FWD_I_en <= '0';
+	RF_I_rs <= R2;
+	RF_I_rt <= (others=>'0');
+	
+	F_O_PC <= NEXT_PC;
+	F_O_dataInst <= SLTI_OPCODE & R2 & R3 & IMM_4; 
+  	wait for CLK_PERIOD;
+	wait for CLK_PERIOD;
+  	assert EX_O_alu_result = SLTI_FALSE_RESULT report "Test 17a: Unsuccessful" severity error;
 
-  	wait for CLK_PERIOD;
-  	assert EX_O_alu_result = SLTI_FALSE_RESULT report "Test 17: Unsuccessful" severity error;
-
-  ----------------------------------------------------------------------------------
-  -- RESET
-  ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	I_reset <= '1';
-  	wait for CLK_PERIOD;
-  	I_reset <= '0';
-  	wait for CLK_PERIOD;
 
 	--- SLTI TRUE -----
-
+	ID_I_en <= '1';
+	EX_I_en <= '1';
+	RF_I_en <= '1';
+	FWD_I_en <= '0';
+	RF_I_rs <= R1;
+	RF_I_rt <= (others=>'0');
+	
+	F_O_PC <= NEXT_PC;
+	F_O_dataInst <= SLTI_OPCODE & R1 & R3 & IMM_8; 
   	wait for CLK_PERIOD;
-  	assert EX_O_alu_result = SLTI_TRUE_RESULT report "Test 17: Unsuccessful" severity error;
+  	wait for CLK_PERIOD;
+  	assert EX_O_alu_result = SLTI_TRUE_RESULT report "Test 17b: Unsuccessful" severity error;
   
-  ----------------------------------------------------------------------------------
-  -- RESET
-  ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	I_reset <= '1';
-  	wait for CLK_PERIOD;
-  	I_reset <= '0';
-  	wait for CLK_PERIOD;
-
   ----------------------------------------------------------------------------------
   -- TEST 18: ORI
   ----------------------------------------------------------------------------------
   	report "----- Test 18: ORI Instruction -----";
-
+	ID_I_en <= '1';
+	EX_I_en <= '1';
+	RF_I_en <= '1';
+	FWD_I_en <= '0';
+	RF_I_rs <= R1;
+	RF_I_rt <= (others=>'0');
+	
+	F_O_PC <= NEXT_PC;
+	F_O_dataInst <= ORI_OPCODE & R1 & R3 & IMM_8; 
+  	wait for CLK_PERIOD;
   	wait for CLK_PERIOD;
   	assert EX_O_alu_result = ORI_RESULT report "Test 18: Unsuccessful" severity error;
   
-  ----------------------------------------------------------------------------------
-  -- RESET
-  ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	I_reset <= '1';
-  	wait for CLK_PERIOD;
-  	I_reset <= '0';
-  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 19: XORI
   ----------------------------------------------------------------------------------
   	report "----- Test 19: XORI Instruction -----";
-
+	ID_I_en <= '1';
+	EX_I_en <= '1';
+	RF_I_en <= '1';
+	FWD_I_en <= '0';
+	RF_I_rs <= R1;
+	RF_I_rt <= (others=>'0');
+	
+	F_O_PC <= NEXT_PC;
+	F_O_dataInst <= XORI_OPCODE & R1 & R3 & IMM_8; 
+  	wait for CLK_PERIOD;
   	wait for CLK_PERIOD;
   	assert EX_O_alu_result = XORI_RESULT report "Test 19: Unsuccessful" severity error;
-   
-  ----------------------------------------------------------------------------------
-  -- RESET
-  ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	I_reset <= '1';
-  	wait for CLK_PERIOD;
-  	I_reset <= '0';
-  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 20: LUI
   ----------------------------------------------------------------------------------
   	report "----- Test 20: LUI Instruction -----";
-
+	ID_I_en <= '1';
+	EX_I_en <= '1';
+	RF_I_en <= '1';
+	FWD_I_en <= '0';
+	RF_I_rs <= R1;
+	RF_I_rt <= (others=>'0');
+	
+	F_O_PC <= NEXT_PC;
+	F_O_dataInst <= LUI_OPCODE & R1 & R3 & IMM_4; 
+  	wait for CLK_PERIOD;
   	wait for CLK_PERIOD;
   	assert EX_O_alu_result = LUI_RESULT report "Test 20: Unsuccessful" severity error;
   
-  ----------------------------------------------------------------------------------
-  -- RESET
-  ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	I_reset <= '1';
-  	wait for CLK_PERIOD;
-  	I_reset <= '0';
-  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 21: LW
   ----------------------------------------------------------------------------------
   report "----- Test 21: LW Instruction -----";
-
+	ID_I_en <= '1';
+	EX_I_en <= '1';
+	RF_I_en <= '1';
+	FWD_I_en <= '0';
+	RF_I_rs <= R1;
+	RF_I_rt <= (others=>'0');
+	
+	F_O_PC <= NEXT_PC;
+	F_O_dataInst <= LW_OPCODE & R1 & R3 & IMM_8; 
+  	wait for CLK_PERIOD;
   	wait for CLK_PERIOD;
   	assert EX_O_alu_result = LW_RESULT report "Test 21: Unsuccessful" severity error;
   
-  ----------------------------------------------------------------------------------
-  -- RESET
-  ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	I_reset <= '1';
-  	wait for CLK_PERIOD;
-  	I_reset <= '0';
-  	wait for CLK_PERIOD;
+
   ----------------------------------------------------------------------------------
   -- TEST 22: SW
   ----------------------------------------------------------------------------------
   	report "----- Test 22: SW Instruction -----";
-
+	ID_I_en <= '1';
+	EX_I_en <= '1';
+	RF_I_en <= '1';
+	FWD_I_en <= '0';
+	RF_I_rs <= R1;
+	RF_I_rt <= (others=>'0');
+	
+	F_O_PC <= NEXT_PC;
+	F_O_dataInst <= SW_OPCODE & R1 & R3 & IMM_8; 
+  	wait for CLK_PERIOD;
   	wait for CLK_PERIOD;
   	assert EX_O_alu_result = SW_RESULT report "Test 22: Unsuccessful" severity error;
-  
-
-  ----------------------------------------------------------------------------------
-  -- RESET
-  ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	I_reset <= '1';
-  	wait for CLK_PERIOD;
-  	I_reset <= '0';
-  	wait for CLK_PERIOD;
-
+ 
   ----------------------------------------------------------------------------------
   -- TEST 23: BEQ
   ----------------------------------------------------------------------------------
   	report "----- Test 23: BEQ Instruction -----";
 
 	--- BEQ TAKEN -----
-
+	ID_I_en <= '1';
+	EX_I_en <= '1';
+	RF_I_en <= '1';
+	FWD_I_en <= '0';
+	RF_I_rs <= R1;
+	RF_I_rt <= R1;
+	
+	F_O_PC <= NEXT_PC;
+	F_O_dataInst <= BEQ_OPCODE & R1 & R1 & IMM_4; 
+  	wait for CLK_PERIOD;
   	wait for CLK_PERIOD;
   	assert EX_O_updated_next_pc = BEQ_TAKEN_PC_RESULT report "Test 23.a: Unsuccessful" severity error;
 
-  ----------------------------------------------------------------------------------
-  -- RESET
-  ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	I_reset <= '1';
-  	wait for CLK_PERIOD;
-  	I_reset <= '0';
-  	wait for CLK_PERIOD;
-
-----------------------------------------------------------------------------------
 	
 	--- BEQ NOT TAKEN -----
-
+	ID_I_en <= '1';
+	EX_I_en <= '1';
+	RF_I_en <= '1';
+	FWD_I_en <= '0';
+	RF_I_rs <= R1;
+	RF_I_rt <= R2;
+	
+	F_O_PC <= NEXT_PC;
+	F_O_dataInst <= BEQ_OPCODE & R1 & R2 & IMM_4; 
+  	wait for CLK_PERIOD;
   	wait for CLK_PERIOD;
   	assert EX_O_updated_next_pc = BEQ_NOT_TAKEN_PC_RESULT report "Test 23.b: Unsuccessful" severity error;
-  
-  ----------------------------------------------------------------------------------
-  -- RESET
-  ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	I_reset <= '1';
-  	wait for CLK_PERIOD;
-  	I_reset <= '0';
-  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 24: BNE
@@ -1010,70 +1071,75 @@ begin
   	report "----- Test 24: BNE Instruction -----";
 
 	--- BNE TAKEN -----
-
+	ID_I_en <= '1';
+	EX_I_en <= '1';
+	RF_I_en <= '1';
+	FWD_I_en <= '0';
+	RF_I_rs <= R1;
+	RF_I_rt <= R2;
+	
+	F_O_PC <= NEXT_PC;
+	F_O_dataInst <= BNE_OPCODE & R1 & R2 & IMM_4; 
+  	wait for CLK_PERIOD;
   	wait for CLK_PERIOD;
   	assert EX_O_updated_next_pc = BNE_TAKEN_PC_RESULT report "Test 24.a: Unsuccessful" severity error;
 
-  ----------------------------------------------------------------------------------
-  -- RESET
-  ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	I_reset <= '1';
-  	wait for CLK_PERIOD;
-  	I_reset <= '0';
-  	wait for CLK_PERIOD;
-
-----------------------------------------------------------------------------------
 	
 	--- BNE NOT TAKEN -----
-
+	ID_I_en <= '1';
+	EX_I_en <= '1';
+	RF_I_en <= '1';
+	FWD_I_en <= '0';
+	RF_I_rs <= R1;
+	RF_I_rt <= R1;
+	
+	F_O_PC <= NEXT_PC;
+	F_O_dataInst <= BNE_OPCODE & R1 & R1 & IMM_4; 
+  	wait for CLK_PERIOD;
   	wait for CLK_PERIOD;
   	assert EX_O_updated_next_pc = BNE_NOT_TAKEN_PC_RESULT report "Test 24.b: Unsuccessful" severity error;
-
-  ----------------------------------------------------------------------------------
-  -- RESET
-  ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	I_reset <= '1';
-  	wait for CLK_PERIOD;
-  	I_reset <= '0';
-  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 25: J
   ----------------------------------------------------------------------------------
   	report "----- Test 25: J Instruction -----";
+	ID_I_en <= '1';
+	EX_I_en <= '1';
+	RF_I_en <= '1';
+	FWD_I_en <= '0';
+	RF_I_rs <= (others=>'0');
+	RF_I_rt <= (others=>'0');
 
+	F_O_PC <= NEXT_PC;
+	F_O_dataInst <= J_OPCODE & ADDRESS; 
+  	wait for CLK_PERIOD;
 
   	wait for CLK_PERIOD;
   	assert EX_O_updated_next_pc = J_PC_RESULT report "Test 25: Unsuccessful" severity error;
 
   ----------------------------------------------------------------------------------
-  -- RESET
-  ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	I_reset <= '1';
-  	wait for CLK_PERIOD;
-  	I_reset <= '0';
-  	wait for CLK_PERIOD;
-
-  ----------------------------------------------------------------------------------
   -- TEST 26: JAL
   ----------------------------------------------------------------------------------
   	report "----- Test 26: JAL Instruction -----";
+	ID_I_en <= '1';
+	EX_I_en <= '1';
+	RF_I_en <= '1';
+	FWD_I_en <= '0';
+	RF_I_rs <= (others=>'0');
+	RF_I_rt <= (others=>'0');
+	
+	F_O_PC <= NEXT_PC;
+	F_O_dataInst <= JAL_OPCODE & ADDRESS; 
+  	wait for CLK_PERIOD;
 
   	wait for CLK_PERIOD;
   	assert EX_O_alu_result = JAL_RESULT report "Test 26.a: Unsuccessful" severity error;
 	assert EX_O_updated_next_pc = JAL_PC_RESULT report "Test 26.b: Unsuccessful" severity error;
 
+
   ----------------------------------------------------------------------------------
-  -- RESET
+  -- FORWARDING TESTS
   ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	I_reset <= '1';
-  	wait for CLK_PERIOD;
-  	I_reset <= '0';
-  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 27: Forwarding from EX
@@ -1088,11 +1154,11 @@ begin
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	I_reset <= '1';
-  	wait for CLK_PERIOD;
-  	I_reset <= '0';
-  	wait for CLK_PERIOD;
+--  	wait for CLK_PERIOD;
+--  	I_reset <= '1';
+--  	wait for CLK_PERIOD;
+--  	I_reset <= '0';
+--  	wait for CLK_PERIOD;
 
 	--- FWD RT -----
 	
@@ -1102,11 +1168,11 @@ begin
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	I_reset <= '1';
-  	wait for CLK_PERIOD;
-  	I_reset <= '0';
-  	wait for CLK_PERIOD;
+--  	wait for CLK_PERIOD;
+--  	I_reset <= '1';
+--  	wait for CLK_PERIOD;
+--  	I_reset <= '0';
+--  	wait for CLK_PERIOD;
 
 
   ----------------------------------------------------------------------------------
@@ -1122,11 +1188,11 @@ begin
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	I_reset <= '1';
-  	wait for CLK_PERIOD;
-  	I_reset <= '0';
-  	wait for CLK_PERIOD;
+--  	wait for CLK_PERIOD;
+--  	I_reset <= '1';
+--  	wait for CLK_PERIOD;
+--  	I_reset <= '0';
+--  	wait for CLK_PERIOD;
 
 	--- FWD RT -----
 	
@@ -1137,30 +1203,42 @@ begin
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	I_reset <= '1';
-  	wait for CLK_PERIOD;
-  	I_reset <= '0';
-  	wait for CLK_PERIOD;
+--  	wait for CLK_PERIOD;
+--  	I_reset <= '1';
+--  	wait for CLK_PERIOD;
+--  	I_reset <= '0';
+--  	wait for CLK_PERIOD;
 
   ----------------------------------------------------------------------------------
   -- TEST 29: Data Hazard
   ----------------------------------------------------------------------------------
   	report "----- Test 29: Data Hazard -----";
-	
+	ID_I_en <= '1';
+	MEM_O_rd <= R1;
+	MEM_O_reg_write <= '1';
+	EX_I_en <= '1';
+	RF_I_en <= '1';
+	FWD_I_en <= '1';
+	RF_I_rs <= R2;
+	RF_I_rt <= R1;
+	--RF_I_we <= '1';
+
+	F_O_PC <= NEXT_PC;
+	F_O_dataInst <= R_OPCODE & R2 & R1 & R3 & SHAMT & SUB_FUNCT; -- sub r2 and r1, store in r3
 	
   	wait for CLK_PERIOD;
-  	assert EX_O_stall = '1' 
-report "Test 29: Unsuccessful" severity error;
+	
+  	wait for CLK_PERIOD;
+  	assert EX_O_stall = '1' report "Test 29: Unsuccessful" severity error;
 
   ----------------------------------------------------------------------------------
   -- RESET
   ----------------------------------------------------------------------------------
-  	wait for CLK_PERIOD;
-  	I_reset <= '1';
-  	wait for CLK_PERIOD;
-  	I_reset <= '0';
-  	wait for CLK_PERIOD;
+--  	wait for CLK_PERIOD;
+--  	I_reset <= '1';
+--  	wait for CLK_PERIOD;
+--  	I_reset <= '0';
+--  	wait for CLK_PERIOD;
 
 	
   report "----- Confirming all tests have ran -----";
@@ -1169,17 +1247,3 @@ report "Test 29: Unsuccessful" severity error;
 end process;
 	
 end;
-
---    © 2022 GitHub, Inc.
---
---    Terms
---    Privacy
---    Security
---    Status
---    Docs
---    Contact GitHub
---    Pricing
---    API
---    Training
---    Blog
---    About
