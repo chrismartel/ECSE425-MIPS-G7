@@ -34,7 +34,8 @@ Entity decode is
 		O_mem_read: out STD_LOGIC;
 		O_mem_write: out STD_LOGIC;
 		O_mem_to_reg: out STD_LOGIC;
-		O_addr: out STD_LOGIC_VECTOR (25 downto 0)
+		O_addr: out STD_LOGIC_VECTOR (25 downto 0);
+		O_stall: out STD_LOGIC
 		);
 end decode;
 
@@ -121,6 +122,7 @@ id_process: process (I_clk, I_reset)
 		O_mem_write <= '0';
 		O_mem_to_reg <= '0';
 		O_addr <= (others => '0');
+		O_stall <= '0';
 	 elsif I_clk'event and I_clk = '1' then
 		if I_en = '1' then
       		if I_dataInst(31 downto 26) = "000000" then
@@ -338,6 +340,9 @@ id_process: process (I_clk, I_reset)
 						O_rd <= "00000";
 						O_shamt <= "00000";
 						O_funct <= ADD_FUNCT;
+						O_stall <= '1';
+					else
+						O_stall <= '0';
 					end if;
 
 				-- if forwarding disabled, stall
@@ -348,6 +353,7 @@ id_process: process (I_clk, I_reset)
 					O_rd <= "00000";
 					O_shamt <= "00000";
 					O_funct <= ADD_FUNCT;
+					O_stall <= '1';
 				end if;
 			
 			-- required rt operand is result of previous instruction
@@ -360,6 +366,9 @@ id_process: process (I_clk, I_reset)
 						O_rd <= "00000";
 						O_shamt <= "00000";
 						O_funct <= ADD_FUNCT;
+						O_stall <= '1';
+					else
+						O_stall <= '0';
 					end if;
 
 				-- if forwarding disabled, stall
@@ -370,6 +379,7 @@ id_process: process (I_clk, I_reset)
 					O_rd <= "00000";
 					O_shamt <= "00000";
 					O_funct <= ADD_FUNCT;
+					O_stall <= '1';
 				end if;
 
 			-- required rs operand is result of prev-prev instruction
@@ -382,6 +392,9 @@ id_process: process (I_clk, I_reset)
 					O_rd <= "00000";
 					O_shamt <= "00000";
 					O_funct <= ADD_FUNCT;
+					O_stall <= '1';
+				else
+					O_stall <= '0';
 				end if;
 
 			-- required rt operand is result of prev-prev instruction
@@ -394,6 +407,9 @@ id_process: process (I_clk, I_reset)
 					O_rd <= "00000";
 					O_shamt <= "00000";
 					O_funct <= ADD_FUNCT;
+					O_stall <= '1';
+				else 
+					O_stall <= '0';
 				end if;
 			end if;
   	          else
@@ -605,6 +621,9 @@ id_process: process (I_clk, I_reset)
 							O_rd <= "00000";
 							O_shamt <= "00000";
 							O_funct <= ADD_FUNCT;
+							O_stall <= '1';
+						else
+							O_stall <= '0';
 						end if;
 					else
 						O_aluop <= "000000";
@@ -613,6 +632,7 @@ id_process: process (I_clk, I_reset)
 						O_rd <= "00000";
 						O_shamt <= "00000";
 						O_funct <= ADD_FUNCT;	
+						O_stall <= '1';
 					end if;
 				
 				-- required rt operand is result of prev-prev instruction
@@ -625,6 +645,9 @@ id_process: process (I_clk, I_reset)
 						O_rd <= "00000";
 						O_shamt <= "00000";
 						O_funct <= ADD_FUNCT;
+						O_stall <= '1';
+					else
+						O_stall <= '0';
 					end if;
 				end if;		
 		end if;	

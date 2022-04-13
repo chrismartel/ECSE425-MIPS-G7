@@ -137,7 +137,8 @@ port (
     	O_mem_read: out STD_LOGIC;
     	O_mem_write: out STD_LOGIC;
     	O_mem_to_reg: out STD_LOGIC;
-    	O_addr: out STD_LOGIC_VECTOR (25 downto 0)
+    	O_addr: out STD_LOGIC_VECTOR (25 downto 0);
+	O_stall: out STD_LOGIC
 );
 end component;
 
@@ -267,6 +268,7 @@ signal ID_O_mem_read: std_logic;
 signal ID_O_mem_write: std_logic;
 signal ID_O_mem_to_reg: std_logic;
 signal ID_O_addr: std_logic_vector (25 downto 0);
+signal ID_O_stall: std_logic := '0';
 
 
 -- EXECUTE SIGNALS				
@@ -460,7 +462,8 @@ port map(
 	O_mem_write => ID_O_mem_write,
 	O_mem_to_reg => ID_O_mem_to_reg,
 	O_regdWe => ID_O_regDwe,
-	O_addr => ID_O_addr
+	O_addr => ID_O_addr,
+	O_stall => ID_O_stall
 );
 
 rf: regs 
