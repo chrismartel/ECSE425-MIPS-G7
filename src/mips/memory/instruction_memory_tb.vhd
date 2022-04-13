@@ -54,9 +54,9 @@ begin
 
   clk_process : process
   begin
-      clk <= '0';
-      wait for clk_period/2;
       clk <= '1';
+      wait for clk_period/2;
+      clk <= '0';
       wait for clk_period/2;
   end process;
 
@@ -81,18 +81,19 @@ begin
       writedata <= instruction;
       address <= count;
       memwrite <= '1';
-      wait until rising_edge(waitrequest);
+      wait until falling_edge(waitrequest);
       memwrite <= '0';
-      count := count + 4;
       wait for clk_period;
+      count := count + 4;
     end loop;
     file_close(read_file);
     file_close(write_file);
-
     -- TEST CASES:
     report "Starting Tests" ;
     -- TEST 1: read data
     -- addess is still at LSB of last loaded instruction
+    wait for clk_period;
+    wait for clk_period;
     memread <= '1';
     wait until rising_edge(waitrequest);
     assert readdata = instruction report "write unsuccessful" severity error;

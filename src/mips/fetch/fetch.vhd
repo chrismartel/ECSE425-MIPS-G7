@@ -39,34 +39,38 @@ architecture arch of fetch is
 	begin
 		-- if I_reset
 		if I_reset'event and I_reset = '1' then
-			O_pc_updated <= (others => '0');
-			O_instruction_address <= 0;
-			O_memread <= '0';
+				O_pc_updated <= (others => '0');
+				O_instruction_address <= 0;
+				O_memread <= '0';
 
 		-- if clock is high
 		elsif I_clk'event and I_clk = '1' then
-			-- if there is no I_stall start fetch component
-			if I_stall = '0' then
-				--Check if Instruction Memory is available (line goes low when data is ready)
-				if I_waitrequest = '1' then
-					--Ask Instruction Memory for next instruction
-					O_instruction_address <=to_integer(unsigned(pc));
-					O_memread <= '1';
-				elsif I_waitrequest = '0' then
-					-- no jump or branch so pc is incremented
-					if I_jump = '0' and I_branch = '0' then
-						O_pc_updated <= std_logic_vector(unsigned(pc) + 4); -- pc + 4
-						pc <= std_logic_vector(unsigned(pc) + 4);
-					-- jump or branch so pc is set to the branch or jump address
-					else
-						O_pc_updated <= I_pc_branch;
-						pc <= I_pc_branch;
+				-- if there is no I_stall start fetch component
+				if I_stall = '0' then
+					--Check if Instruction Memory is available (line goes low when data is ready)
+					if I_waitrequest = '1' then
+						--Ask Instruction Memory for next instruction
+						O_instruction_address <=to_integer(unsigned(pc));
+						O_memread <= '1';
 					end if;
+				end if;
+				-- no jump or branch so pc is incremented
+				if I_jump = '0' and I_branch = '0' then
+					O_pc_updated <= std_logic_vector(unsigned(pc) + 4); -- pc + 4
+					pc <= std_logic_vector(unsigned(pc) + 4);
+				-- jump or branch so pc is set to the branch or jump address
+				else
+					O_pc_updated <= I_pc_branch;
+					pc <= I_pc_branch;
+				end if;
+
+		-- Halfway through stage time (1cc) check if data can be read from cache, if so pass onto next stage
+		elsif I_clk'event and I_clk = '0' then
+				if I_waitrequest = '0' then
 					--Pass through the retrieved instruction
 					O_instruction <= I_mem_instruction;
 					O_memread <= '0';
 				end if;
-			end if;
 		end if;
 	end process;
 	end arch;
