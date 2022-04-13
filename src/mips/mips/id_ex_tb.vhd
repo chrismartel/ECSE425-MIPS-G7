@@ -76,6 +76,10 @@ architecture behavior of id_ex_tb is
 -- CLOCK
 	constant CLK_PERIOD : time := 10 ns;
 
+-- FORWARDING CODES
+	constant FORWARDING_NONE : std_logic_vector (1 downto 0):= "00";
+	constant FORWARDING_EX : std_logic_vector (1 downto 0):= "01";
+	constant FORWARDING_MEM : std_logic_vector (1 downto 0):= "10";
 
 --------------------------------------------------------------------
 -------------------------- II. COMPONENTS --------------------------
@@ -116,6 +120,9 @@ port (
     	I_ex_reg_write: in std_logic;
     	I_mem_rd: in std_logic_vector (4 downto 0);
     	I_mem_reg_write: in std_logic;
+	-- forwarding
+	I_forward_rs: in std_logic_vector (1 downto 0);
+	I_forward_rt: in std_logic_vector (1 downto 0);
             
    	-- Outputs
     	O_next_pc: out STD_LOGIC_VECTOR (31 downto 0);
@@ -307,6 +314,8 @@ constant R3: std_logic_vector(4 downto 0) := "00011"; -- R3
 constant R1: std_logic_vector(4 downto 0) := "00001"; -- R1
 constant R2: std_logic_vector(4 downto 0) := "00010"; -- R2
 constant R4: std_logic_vector(4 downto 0) := "00100"; -- R4
+constant R5: std_logic_vector(4 downto 0) := "00101"; -- R5
+constant R6: std_logic_vector(4 downto 0) := "00110"; -- R6
 constant LR: std_logic_vector(4 downto 0) := "11111"; -- R31
 constant R0: std_logic_vector(4 downto 0) := "00000"; -- $R0
 constant SHAMT: std_logic_vector(4 downto 0) := "00010";
@@ -323,6 +332,7 @@ constant NEXT_PC: std_logic_vector(31 downto 0) := x"00000004";
 
 -- R
 constant ADD_RESULT: std_logic_vector(31 downto 0) := x"0000000C"; -- 4 + 8
+constant ADD_RESULT_FWD: std_logic_vector(31 downto 0) := x"00000010"; -- 4 + 8 + 4
 constant SUB_RESULT: std_logic_vector(31 downto 0) := x"00000004"; -- 8 - 4
 constant MULT_LOW_RESULT: std_logic_vector(31 downto 0) := x"00000020"; -- 4 x 8 (lower)
 constant MULT_HIGH_RESULT: std_logic_vector(31 downto 0) := x"00000000"; -- 4 x 8 (upper)
@@ -432,6 +442,8 @@ port map(
 	I_ex_reg_write => EX_O_reg_write,
 	I_mem_rd => MEM_O_rd,
 	I_mem_reg_write => MEM_O_reg_write,
+	I_forward_rs => FWD_O_forward_rs,
+	I_forward_rt => FWD_O_forward_rt,
 
 	-- Outputs
 	O_next_pc => ID_O_next_pc,
@@ -482,14 +494,14 @@ port map(
 	I_mem_rd => MEM_O_rd, -- connect: plug mem component
 	I_ex_reg_write => EX_O_reg_write,
 	I_mem_reg_write => MEM_O_reg_write, -- connect plug mem component
-	I_id_rs => ID_O_rs,
-	I_id_rt => ID_O_rt,
+	I_id_rs => RF_I_rs,
+	I_id_rt => RF_I_rt,
 
 	-- OUTPUTS
 
-	-- '00' -> read from ID inputs
-	-- '01' -> read from EX stage output
-	-- '10' -> read from MEM stage output
+	-- FORWARDING_NONE -> read from ID inputs
+	-- FORWARDING_EX -> read from EX stage output
+	-- FORWARDING_MEM -> read from MEM stage output
 
 	O_forward_rs => FWD_O_forward_rs,
 	O_forward_rt => FWD_O_forward_rt
@@ -1147,9 +1159,36 @@ begin
   	report "----- Test 27: Forwarding from EX -----";
 
 	--- FWD RS -----
-	
+	ID_I_en <= '1';
+	EX_I_en <= '1';
+	RF_I_en <= '1';
+	FWD_I_en <= '1';
+	RF_I_rs <= R1;
+	RF_I_rt <= R2;
+
+	-- r1 + r2 --> r3
+	F_O_PC <= NEXT_PC;
+	F_O_dataInst <= R_OPCODE & R1 & R2 & R3 & SHAMT & ADD_FUNCT; -- add r1 and r2, store in r3
   	wait for CLK_PERIOD;
-  	assert EX_O_alu_result = ADD_RESULT report "Test 27: Unsuccessful" severity error;
+
+	-- r3 + r1 --> r4
+	-- should use the output of the execute stage as input data for rs
+	RF_I_rs <= R3;
+	RF_I_rt <= R1;
+	F_O_dataInst <= R_OPCODE & R3 & R1 & R4 & SHAMT & ADD_FUNCT; -- add r1 and r2, store in r3
+	wait for CLK_PERIOD;
+
+	assert EX_O_alu_result = ADD_RESULT report "Test 27.a: Unsuccessful" severity error;
+	assert EX_O_reg_write = '1' report "Test 27.b: Unsuccessful" severity error;
+	assert EX_O_rd = R3 report "Test 27.c: Unsuccessful" severity error;
+
+  	wait for CLK_PERIOD;
+	assert FWD_O_forward_rt = FORWARDING_NONE report "Test 27.d: Unsuccessful" severity error;
+	assert FWD_O_forward_rs = FORWARDING_EX report "Test 27.e: Unsuccessful" severity error;
+
+	wait for CLK_PERIOD;
+	assert EX_O_stall = '0' report "Test 27.f: Unsuccessful" severity error;
+  	assert EX_O_alu_result = ADD_RESULT_FWD report "Test 27.g: Unsuccessful" severity error;
 
   ----------------------------------------------------------------------------------
   -- RESET
