@@ -10,12 +10,13 @@ port(
 	I_reset : in std_logic;
 	I_en: in std_logic;
 
-	I_ex_rd: in std_logic_vector (4 downto 0); -- destination register for instruction completed by the ex stage
-	I_mem_rd: in std_logic_vector (4 downto 0); -- destination register for instruction completed by the mem stage
-	I_ex_reg_write: in std_logic; -- reg_write setting for instruction completed by ex stage
-	I_mem_reg_write: in std_logic; -- reg_write setting for instruction completed by mem stage
-	I_id_rs: in std_logic_vector(4 downto 0); -- left operand for instruction completed by id stage
-	I_id_rt: in std_logic_vector(4 downto 0); -- right operand for instruction completed by id stage
+	I_id_rd: in std_logic_vector (4 downto 0); -- destination register for instruction completed by the ex stage
+	I_ex_rd: in std_logic_vector (4 downto 0); -- destination register for instruction completed by the mem stage
+	I_id_reg_write: in std_logic; -- reg_write setting for instruction completed by ex stage
+	I_ex_reg_write: in std_logic; -- reg_write setting for instruction completed by mem stage
+	I_id_mem_read: in std_logic; -- reg_write setting for instruction completed by ex stage
+	I_f_rs: in std_logic_vector(4 downto 0); -- left operand for instruction completed by id stage
+	I_f_rt: in std_logic_vector(4 downto 0); -- right operand for instruction completed by id stage
 
 	-- OUTPUTS
 
@@ -49,18 +50,18 @@ begin
 		elsif I_clk'event and I_clk = '1' then
 			if I_en = '1' then
 				-- rs input
-				if I_ex_reg_write = '1' and I_id_rs = I_ex_rd then
+				if I_id_reg_write = '1' and I_id_mem_read = '0' and I_f_rs = I_id_rd then
 					O_forward_rs <= FORWARDING_EX; -- read from ex stage output
-				elsif I_mem_reg_write = '1' and I_id_rs = I_mem_rd then
+				elsif I_ex_reg_write = '1' and I_f_rs = I_ex_rd then
 					O_forward_rs <= FORWARDING_MEM; -- read from mem stage output
 				else
 					O_forward_rs <= FORWARDING_NONE; -- read from id stage output
 				end if;
 
 				-- rt input
-				if I_ex_reg_write = '1' and I_id_rt = I_ex_rd then
+				if I_id_reg_write = '1' and I_id_mem_read = '0' and I_f_rt = I_id_rd then
 					O_forward_rt <= FORWARDING_EX; -- read from ex stage output
-				elsif I_mem_reg_write = '1' and I_id_rt = I_mem_rd then
+				elsif I_ex_reg_write = '1' and I_f_rt = I_ex_rd then
 					O_forward_rt <= FORWARDING_MEM; -- read from mem stage output
 				else
 					O_forward_rt <= FORWARDING_NONE; -- read from id stage output

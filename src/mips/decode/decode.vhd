@@ -9,16 +9,14 @@ Entity decode is
            	I_dataInst : in  STD_LOGIC_VECTOR (31 downto 0);
            	I_en : in  STD_LOGIC;
 		I_pc: in STD_LOGIC_VECTOR (31 downto 0);
+		I_fwd_en: in std_logic;
+
 		-- hazard detection
 		I_id_rd: in std_logic_vector (4 downto 0);
 		I_id_reg_write: in std_logic;
+		I_id_mem_read: in std_logic;
 		I_ex_rd: in std_logic_vector (4 downto 0);
 		I_ex_reg_write: in std_logic;
-		I_mem_rd: in std_logic_vector (4 downto 0);
-		I_mem_reg_write: in std_logic;
-		-- forwarding unit
-		I_forward_rs: in std_logic_vector (1 downto 0);
-		I_forward_rt: in std_logic_vector (1 downto 0);
 			  
 		-- Outputs
 		O_next_pc: out STD_LOGIC_VECTOR (31 downto 0);
@@ -327,48 +325,75 @@ id_process: process (I_clk, I_reset)
   	              	when others =>
         	       	end case;
 			-- hazard detection
+			
+			-- required rs operand is result of previous instruction
 			if I_dataInst(25 downto 21) = I_id_rd AND I_id_reg_write = '1' then
-				O_aluop <= "000000";
-				O_rs <= "00000";
-				O_rt <= "00000";
-				O_rd <= "00000";
-				O_shamt <= "00000";
-				O_funct <= ADD_FUNCT;
+				-- if forwarding enabled, stall only if prev instr. was a load
+				if I_fwd_en = '1' then
+					if I_id_mem_read = '1' then -- stall if previous instruction was a load
+						O_aluop <= "000000";
+						O_rs <= "00000";
+						O_rt <= "00000";
+						O_rd <= "00000";
+						O_shamt <= "00000";
+						O_funct <= ADD_FUNCT;
+					end if;
+
+				-- if forwarding disabled, stall
+				else
+					O_aluop <= "000000";
+					O_rs <= "00000";
+					O_rt <= "00000";
+					O_rd <= "00000";
+					O_shamt <= "00000";
+					O_funct <= ADD_FUNCT;
+				end if;
+			
+			-- required rt operand is result of previous instruction
 			elsif I_dataInst(20 downto 16) = I_id_rd AND I_id_reg_write = '1' then
-				O_aluop <= "000000";
-				O_rs <= "00000";
-				O_rt <= "00000";
-				O_rd <= "00000";
-				O_shamt <= "00000";
-				O_funct <= ADD_FUNCT;
+				if I_fwd_en = '1' then
+					if I_id_mem_read = '1' then -- stall if previous instruction was a load
+						O_aluop <= "000000";
+						O_rs <= "00000";
+						O_rt <= "00000";
+						O_rd <= "00000";
+						O_shamt <= "00000";
+						O_funct <= ADD_FUNCT;
+					end if;
+
+				-- if forwarding disabled, stall
+				else
+					O_aluop <= "000000";
+					O_rs <= "00000";
+					O_rt <= "00000";
+					O_rd <= "00000";
+					O_shamt <= "00000";
+					O_funct <= ADD_FUNCT;
+				end if;
+
+			-- required rs operand is result of prev-prev instruction
 			elsif I_dataInst(25 downto 21) = I_ex_rd AND I_ex_reg_write = '1' then
-				O_aluop <= "000000";
-				O_rs <= "00000";
-				O_rt <= "00000";
-				O_rd <= "00000";
-				O_shamt <= "00000";
-				O_funct <= ADD_FUNCT;
-			elsif I_dataInst(25 downto 21) = I_mem_rd AND I_mem_reg_write = '1' then
-				O_aluop <= "000000";
-				O_rs <= "00000";
-				O_rt <= "00000";
-				O_rd <= "00000";
-				O_shamt <= "00000";
-				O_funct <= ADD_FUNCT;
+				-- check if forwarding enabled
+				if I_fwd_en = '0' then
+					O_aluop <= "000000";
+					O_rs <= "00000";
+					O_rt <= "00000";
+					O_rd <= "00000";
+					O_shamt <= "00000";
+					O_funct <= ADD_FUNCT;
+				end if;
+
+			-- required rt operand is result of prev-prev instruction
 			elsif I_dataInst(20 downto 16) = I_ex_rd AND I_ex_reg_write = '1' then
-				O_aluop <= "000000";
-				O_rs <= "00000";
-				O_rt <= "00000";
-				O_rd <= "00000";
-				O_shamt <= "00000";
-				O_funct <= ADD_FUNCT;
-			elsif I_dataInst(20 downto 16) = I_mem_rd AND I_mem_reg_write = '1' then
-				O_aluop <= "000000";
-				O_rs <= "00000";
-				O_rt <= "00000";
-				O_rd <= "00000";
-				O_shamt <= "00000";
-				O_funct <= ADD_FUNCT;
+				-- check if forwarding enabled
+				if I_fwd_en = '0' then
+					O_aluop <= "000000";
+					O_rs <= "00000";
+					O_rt <= "00000";
+					O_rd <= "00000";
+					O_shamt <= "00000";
+					O_funct <= ADD_FUNCT;
+				end if;
 			end if;
   	          else
         	        case I_dataInst(31 downto 26) is
@@ -567,28 +592,39 @@ id_process: process (I_clk, I_reset)
   	               	when others =>
         	        end case;
 			if I_dataInst(31 downto 26) /= JAL_OPCODE OR I_dataInst(31 downto 26) /= J_OPCODE then
+				
+				-- required rs operand is result of prev instruction
 				if I_dataInst(25 downto 21) = I_id_rd AND I_id_reg_write = '1' then
-					O_aluop <= "000000";
-					O_rs <= "00000";
-					O_rt <= "00000";
-					O_rd <= "00000";
-					O_shamt <= "00000";
-					O_funct <= ADD_FUNCT;
-						
+	
+					if I_fwd_en = '1' then
+						if I_id_mem_read = '1' then -- stall if previous instruction was a load
+							O_aluop <= "000000";
+							O_rs <= "00000";
+							O_rt <= "00000";
+							O_rd <= "00000";
+							O_shamt <= "00000";
+							O_funct <= ADD_FUNCT;
+						end if;
+					else
+						O_aluop <= "000000";
+						O_rs <= "00000";
+						O_rt <= "00000";
+						O_rd <= "00000";
+						O_shamt <= "00000";
+						O_funct <= ADD_FUNCT;	
+					end if;
+				
+				-- required rt operand is result of prev-prev instruction
 				elsif I_dataInst(25 downto 21) = I_ex_rd AND I_ex_reg_write = '1' then
-					O_aluop <= "000000";
-					O_rs <= "00000";
-					O_rt <= "00000";
-					O_rd <= "00000";
-					O_shamt <= "00000";
-					O_funct <= ADD_FUNCT;
-				elsif I_dataInst(25 downto 21) = I_mem_rd AND I_mem_reg_write = '1' then
-					O_aluop <= "000000";
-					O_rs <= "00000";
-					O_rt <= "00000";
-					O_rd <= "00000";
-					O_shamt <= "00000";
-					O_funct <= ADD_FUNCT;
+					-- stall if forwarding not enabled
+					if I_fwd_en = '0' then
+						O_aluop <= "000000";
+						O_rs <= "00000";
+						O_rt <= "00000";
+						O_rd <= "00000";
+						O_shamt <= "00000";
+						O_funct <= ADD_FUNCT;
+					end if;
 				end if;		
 		end if;	
 	end if;

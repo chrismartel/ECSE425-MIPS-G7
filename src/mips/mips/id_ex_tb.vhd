@@ -113,16 +113,13 @@ port (
         I_dataInst : in  STD_LOGIC_VECTOR (31 downto 0);
         I_en : in  STD_LOGIC;
     	I_pc: in STD_LOGIC_VECTOR (31 downto 0);
+	I_fwd_en: in std_logic;
     	-- hazard detection
     	I_id_rd: in std_logic_vector (4 downto 0);
     	I_id_reg_write: in std_logic;
+	I_id_mem_read: in std_logic;
     	I_ex_rd: in std_logic_vector (4 downto 0);
     	I_ex_reg_write: in std_logic;
-    	I_mem_rd: in std_logic_vector (4 downto 0);
-    	I_mem_reg_write: in std_logic;
-	-- forwarding
-	I_forward_rs: in std_logic_vector (1 downto 0);
-	I_forward_rt: in std_logic_vector (1 downto 0);
             
    	-- Outputs
     	O_next_pc: out STD_LOGIC_VECTOR (31 downto 0);
@@ -210,12 +207,13 @@ port(
 	I_reset : in std_logic;
 	I_en: in std_logic;
 
-	I_ex_rd: in std_logic_vector (4 downto 0); 		
-	I_mem_rd: in std_logic_vector (4 downto 0); 	
-	I_ex_reg_write: in std_logic; 			
-	I_mem_reg_write: in std_logic; 			
-	I_id_rs: in std_logic_vector(4 downto 0); 		
-	I_id_rt: in std_logic_vector(4 downto 0); 		
+	I_id_rd: in std_logic_vector (4 downto 0); 		
+	I_ex_rd: in std_logic_vector (4 downto 0); 	
+	I_id_reg_write: in std_logic; 			
+	I_ex_reg_write: in std_logic;
+	I_id_mem_read: in std_logic;		
+	I_f_rs: in std_logic_vector(4 downto 0); 		
+	I_f_rt: in std_logic_vector(4 downto 0); 		
 
 	-- OUTPUTS
 
@@ -321,6 +319,7 @@ constant R0: std_logic_vector(4 downto 0) := "00000"; -- $R0
 constant SHAMT: std_logic_vector(4 downto 0) := "00010";
 constant IMM_8: std_logic_vector(15 downto 0) := x"0008"; 
 constant IMM_4: std_logic_vector(15 downto 0) := x"0004"; 
+constant IMM_0: std_logic_vector(15 downto 0) := x"0000"; 
 constant ADDRESS: std_logic_vector(25 downto 0) := "00000000000000000000000100"; 
 
 constant DATA_8: std_logic_vector(31 downto 0) := x"00000008";
@@ -436,14 +435,14 @@ port map(
     	I_dataInst => F_O_dataInst,
        	I_en => ID_I_en,
 	I_pc => F_O_PC,
+
+	-- forwarding
+	I_fwd_en => FWD_I_en,
 	I_id_rd => ID_O_rd,
 	I_id_reg_write => ID_O_regDwe,
+	I_id_mem_read => ID_O_mem_read,
 	I_ex_rd => EX_O_rd,
 	I_ex_reg_write => EX_O_reg_write,
-	I_mem_rd => MEM_O_rd,
-	I_mem_reg_write => MEM_O_reg_write,
-	I_forward_rs => FWD_O_forward_rs,
-	I_forward_rt => FWD_O_forward_rt,
 
 	-- Outputs
 	O_next_pc => ID_O_next_pc,
@@ -490,12 +489,13 @@ port map(
 	I_reset => I_reset,
 	I_en => FWD_I_en,
 
-	I_ex_rd => EX_O_rd,
-	I_mem_rd => MEM_O_rd, -- connect: plug mem component
-	I_ex_reg_write => EX_O_reg_write,
-	I_mem_reg_write => MEM_O_reg_write, -- connect plug mem component
-	I_id_rs => RF_I_rs,
-	I_id_rt => RF_I_rt,
+	I_id_rd => ID_O_rd,
+	I_ex_rd => EX_O_rd, -- connect: plug mem component
+	I_id_reg_write => ID_O_regDwe,
+	I_ex_reg_write => EX_O_reg_write, -- connect plug mem component
+	I_id_mem_read => ID_O_mem_read,
+	I_f_rs => RF_I_rs,
+	I_f_rt => RF_I_rt,
 
 	-- OUTPUTS
 
@@ -1154,7 +1154,7 @@ begin
   ----------------------------------------------------------------------------------
 
   ----------------------------------------------------------------------------------
-  -- TEST 27: Forwarding from EX
+  -- TEST 27: Forwarding from EX of RS
   ----------------------------------------------------------------------------------
   	report "----- Test 27: Forwarding from EX -----";
 
@@ -1177,109 +1177,119 @@ begin
 	RF_I_rt <= R1;
 	F_O_dataInst <= R_OPCODE & R3 & R1 & R4 & SHAMT & ADD_FUNCT; -- add r1 and r2, store in r3
 	wait for CLK_PERIOD;
-
-	assert EX_O_alu_result = ADD_RESULT report "Test 27.a: Unsuccessful" severity error;
-	assert EX_O_reg_write = '1' report "Test 27.b: Unsuccessful" severity error;
-	assert EX_O_rd = R3 report "Test 27.c: Unsuccessful" severity error;
-
-  	wait for CLK_PERIOD;
-	assert FWD_O_forward_rt = FORWARDING_NONE report "Test 27.d: Unsuccessful" severity error;
-	assert FWD_O_forward_rs = FORWARDING_EX report "Test 27.e: Unsuccessful" severity error;
-
-	wait for CLK_PERIOD;
-	assert EX_O_stall = '0' report "Test 27.f: Unsuccessful" severity error;
-  	assert EX_O_alu_result = ADD_RESULT_FWD report "Test 27.g: Unsuccessful" severity error;
-
-  ----------------------------------------------------------------------------------
-  -- RESET
-  ----------------------------------------------------------------------------------
---  	wait for CLK_PERIOD;
---  	I_reset <= '1';
---  	wait for CLK_PERIOD;
---  	I_reset <= '0';
---  	wait for CLK_PERIOD;
-
-	--- FWD RT -----
+	assert FWD_O_forward_rt = FORWARDING_NONE report "Test 27 fwd rt: Unsuccessful" severity error;
+	assert FWD_O_forward_rs = FORWARDING_EX report "Test 27 fwd rs: Unsuccessful" severity error;
 	
-  	wait for CLK_PERIOD;
-  	assert EX_O_alu_result = ADD_RESULT report "Test 27: Unsuccessful" severity error;
+	wait for CLK_PERIOD;
+	assert EX_O_stall = '0' report "Test 27 no stall: Unsuccessful" severity error;
+  	assert EX_O_alu_result = ADD_RESULT_FWD report "Test 27 fwd result: Unsuccessful" severity error;
+	
 
   ----------------------------------------------------------------------------------
-  -- RESET
-  ----------------------------------------------------------------------------------
---  	wait for CLK_PERIOD;
---  	I_reset <= '1';
---  	wait for CLK_PERIOD;
---  	I_reset <= '0';
---  	wait for CLK_PERIOD;
-
-
-  ----------------------------------------------------------------------------------
-  -- TEST 28: Forwarding from MEM
+  -- TEST 28: Forwarding from EX on RT
   ----------------------------------------------------------------------------------
   	report "----- Test 28: Forwarding from MEM -----";
 
-	--- FWD RS -----
-	
-  	wait for CLK_PERIOD;
-  	assert EX_O_alu_result = ADD_RESULT report "Test 28: Unsuccessful" severity error;
-
-  ----------------------------------------------------------------------------------
-  -- RESET
-  ----------------------------------------------------------------------------------
---  	wait for CLK_PERIOD;
---  	I_reset <= '1';
---  	wait for CLK_PERIOD;
---  	I_reset <= '0';
---  	wait for CLK_PERIOD;
-
 	--- FWD RT -----
-	
   	wait for CLK_PERIOD;
-  	assert EX_O_alu_result = ADD_RESULT report "Test 28: Unsuccessful" severity error;
 
-
-  ----------------------------------------------------------------------------------
-  -- RESET
-  ----------------------------------------------------------------------------------
---  	wait for CLK_PERIOD;
---  	I_reset <= '1';
---  	wait for CLK_PERIOD;
---  	I_reset <= '0';
---  	wait for CLK_PERIOD;
-
-  ----------------------------------------------------------------------------------
-  -- TEST 29: Data Hazard
-  ----------------------------------------------------------------------------------
-  	report "----- Test 29: Data Hazard -----";
 	ID_I_en <= '1';
-	MEM_O_rd <= R1;
-	MEM_O_reg_write <= '1';
 	EX_I_en <= '1';
 	RF_I_en <= '1';
 	FWD_I_en <= '1';
-	RF_I_rs <= R2;
-	RF_I_rt <= R1;
-	--RF_I_we <= '1';
+	RF_I_rs <= R1;
+	RF_I_rt <= R2;
 
+	-- r1 + r2 --> r3
 	F_O_PC <= NEXT_PC;
-	F_O_dataInst <= R_OPCODE & R2 & R1 & R3 & SHAMT & SUB_FUNCT; -- sub r2 and r1, store in r3
-	
+	F_O_dataInst <= R_OPCODE & R1 & R2 & R3 & SHAMT & ADD_FUNCT; -- add r1 and r2, store in r3
   	wait for CLK_PERIOD;
+
+	-- r3 + r1 --> r4
+	-- should use the output of the execute stage as input data for rs
+	RF_I_rs <= R1;
+	RF_I_rt <= R3;
+	F_O_dataInst <= R_OPCODE & R1 & R3 & R4 & SHAMT & ADD_FUNCT; -- add r1 and r2, store in r3
+	wait for CLK_PERIOD;
+	assert FWD_O_forward_rs = FORWARDING_NONE report "Test 28 fwd rt: Unsuccessful" severity error;
+	assert FWD_O_forward_rt = FORWARDING_EX report "Test 28 fwd rs: Unsuccessful" severity error;
 	
-  	wait for CLK_PERIOD;
-  	assert EX_O_stall = '1' report "Test 29: Unsuccessful" severity error;
+	wait for CLK_PERIOD;
+	assert EX_O_stall = '0' report "Test 28 no stall: Unsuccessful" severity error;
+  	assert EX_O_alu_result = ADD_RESULT_FWD report "Test 28 fwd result: Unsuccessful" severity error;
+
+
 
   ----------------------------------------------------------------------------------
-  -- RESET
+  -- TEST 29: Data Hazard on RS
   ----------------------------------------------------------------------------------
---  	wait for CLK_PERIOD;
---  	I_reset <= '1';
---  	wait for CLK_PERIOD;
---  	I_reset <= '0';
---  	wait for CLK_PERIOD;
+  	report "----- Test 29: Data Hazard -----";
 
+	--- Hazard RS With Forwarding-----
+  	wait for CLK_PERIOD;
+
+	ID_I_en <= '1';
+	EX_I_en <= '1';
+	RF_I_en <= '1';
+	FWD_I_en <= '1';
+	RF_I_rs <= R1;
+
+	-- r1 + r2 --> r3
+	F_O_PC <= NEXT_PC;
+	F_O_dataInst <= LW_OPCODE & R1 & R3 & IMM_0;  -- load r1 in r3
+  	wait for CLK_PERIOD;
+
+	-- r3 + r1 --> r4
+	RF_I_rs <= R1;
+	RF_I_rt <= R3;
+	F_O_dataInst <= R_OPCODE & R1 & R3 & R4 & SHAMT & ADD_FUNCT; -- add r1 and r2, store in r3
+	wait for CLK_PERIOD;
 	
+	-- should not be able to forward
+	assert FWD_O_forward_rs = FORWARDING_NONE report "Test 29 fwd rt: Unsuccessful" severity error;
+	assert FWD_O_forward_rt = FORWARDING_NONE report "Test 29 fwd rs: Unsuccessful" severity error;
+	
+	-- should stall since the previous instruction is a load instruction writing to r1
+	wait for CLK_PERIOD;
+	assert EX_O_stall = '1' report "Test 29 no stall: Unsuccessful" severity error;
+
+	wait for CLK_PERIOD;
+
+  ----------------------------------------------------------------------------------
+  -- TEST 30: Data Hazard on RT
+  ----------------------------------------------------------------------------------
+  	report "----- Test 30: Data Hazard -----";
+
+	--- Hazard RT With Forwarding-----
+  	wait for CLK_PERIOD;
+
+	ID_I_en <= '1';
+	EX_I_en <= '1';
+	RF_I_en <= '1';
+	FWD_I_en <= '1';
+	RF_I_rs <= R1;
+
+	-- r1 + r2 --> r3
+	F_O_PC <= NEXT_PC;
+	F_O_dataInst <= LW_OPCODE & R1 & R3 & IMM_0;  -- load r1 in r3
+  	wait for CLK_PERIOD;
+
+	-- r1 + r3 --> r4
+	RF_I_rs <= R3;
+	RF_I_rt <= R1;
+	F_O_dataInst <= R_OPCODE & R3 & R1 & R4 & SHAMT & ADD_FUNCT; -- add r1 and r2, store in r3
+	wait for CLK_PERIOD;
+	
+	-- should not be able to forward
+	assert FWD_O_forward_rs = FORWARDING_NONE report "Test 30 fwd rt: Unsuccessful" severity error;
+	assert FWD_O_forward_rt = FORWARDING_NONE report "Test 30 fwd rs: Unsuccessful" severity error;
+	
+	-- should stall since the previous instruction is a load instruction writing to r1
+	wait for CLK_PERIOD;
+	assert EX_O_stall = '1' report "Test 30 no stall: Unsuccessful" severity error;
+
+	wait for CLK_PERIOD;
+
   report "----- Confirming all tests have ran -----";
   wait;
 
