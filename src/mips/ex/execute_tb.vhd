@@ -70,6 +70,11 @@ architecture behavior of execute_tb is
 -- CLOCK
 	constant CLK_PERIOD : time := 10 ns;
 
+-- FORWARDING CODES
+	constant FORWARDING_NONE : std_logic_vector (1 downto 0):= "00";
+	constant FORWARDING_EX : std_logic_vector (1 downto 0):= "01";
+	constant FORWARDING_MEM : std_logic_vector (1 downto 0):= "10";
+
 component execute is
 
 port(
@@ -344,8 +349,8 @@ begin
 	-- forwarding
 	I_ex_data <= (others=>'0');
 	I_mem_data <= (others=>'0');
-	I_forward_rs <= "00";
-	I_forward_rt <= "00";
+	I_forward_rs <= FORWARDING_NONE;
+	I_forward_rt <= FORWARDING_NONE;
 	
   	wait for CLK_PERIOD;
   	assert O_alu_result = ADD_RESULT report "Test 1: Unsuccessful" severity error;
@@ -393,8 +398,8 @@ begin
 	-- forwarding
 	I_ex_data <= (others=>'0');
 	I_mem_data <= (others=>'0');
-	I_forward_rs <= "00";
-	I_forward_rt <= "00";	
+	I_forward_rs <= FORWARDING_NONE;
+	I_forward_rt <= FORWARDING_NONE;	
 
   	wait for CLK_PERIOD;
   	assert O_alu_result =  SUB_RESULT report "Test 2: Unsuccessful" severity error;
@@ -439,8 +444,8 @@ begin
 	-- forwarding
 	I_ex_data <= (others=>'0');
 	I_mem_data <= (others=>'0');
-	I_forward_rs <= "00";
-	I_forward_rt <= "00";
+	I_forward_rs <= FORWARDING_NONE;
+	I_forward_rt <= FORWARDING_NONE;
 
 	------------ MFLO ------------ 
   	wait for CLK_PERIOD;
@@ -469,8 +474,8 @@ begin
 	-- forwarding
 	I_ex_data <= (others=>'0');
 	I_mem_data <= (others=>'0');
-	I_forward_rs <= "00";
-	I_forward_rt <= "00";
+	I_forward_rs <= FORWARDING_NONE;
+	I_forward_rt <= FORWARDING_NONE;
 
   	wait for CLK_PERIOD;
   	assert O_alu_result = MULT_LOW_RESULT report "Test 3: Unsuccessful - Invalid Low Value" severity error;
@@ -501,8 +506,8 @@ begin
 	-- forwarding
 	I_ex_data <= (others=>'0');
 	I_mem_data <= (others=>'0');
-	I_forward_rs <= "00";
-	I_forward_rt <= "00";
+	I_forward_rs <= FORWARDING_NONE;
+	I_forward_rt <= FORWARDING_NONE;
 
   	wait for CLK_PERIOD;
   	assert O_alu_result = MULT_HIGH_RESULT report "Test 3: Unsuccessful - Invalid High Value" severity error;
@@ -547,8 +552,8 @@ begin
 	-- forwarding
 	I_ex_data <= (others=>'0');
 	I_mem_data <= (others=>'0');
-	I_forward_rs <= "00";
-	I_forward_rt <= "00";
+	I_forward_rs <= FORWARDING_NONE;
+	I_forward_rt <= FORWARDING_NONE;
 
   	wait for CLK_PERIOD;
 
@@ -579,8 +584,8 @@ begin
 	-- forwarding
 	I_ex_data <= (others=>'0');
 	I_mem_data <= (others=>'0');
-	I_forward_rs <= "00";
-	I_forward_rt <= "00";
+	I_forward_rs <= FORWARDING_NONE;
+	I_forward_rt <= FORWARDING_NONE;
 
   	wait for CLK_PERIOD;
   	assert O_alu_result = DIV_LOW_RESULT report "Test 3: Unsuccessful - Invalid Low Value" severity error;
@@ -609,8 +614,8 @@ begin
 	-- forwarding
 	I_ex_data <= (others=>'0');
 	I_mem_data <= (others=>'0');
-	I_forward_rs <= "00";
-	I_forward_rt <= "00";
+	I_forward_rs <= FORWARDING_NONE;
+	I_forward_rt <= FORWARDING_NONE;
 
   	wait for CLK_PERIOD;
   	assert O_alu_result = DIV_HIGH_RESULT report "Test 3: Unsuccessful - Invalid High Value" severity error;
@@ -663,8 +668,8 @@ begin
 	-- forwarding
 	I_ex_data <= (others=>'0');
 	I_mem_data <= (others=>'0');
-	I_forward_rs <= "00";
-	I_forward_rt <= "00";
+	I_forward_rs <= FORWARDING_NONE;
+	I_forward_rt <= FORWARDING_NONE;
 
   	wait for CLK_PERIOD;
   	assert O_alu_result = SLT_FALSE_RESULT report "Test 5: Unsuccessful" severity error;
@@ -695,8 +700,8 @@ begin
 	-- forwarding
 	I_ex_data <= (others=>'0');
 	I_mem_data <= (others=>'0');
-	I_forward_rs <= "00";
-	I_forward_rt <= "00";
+	I_forward_rs <= FORWARDING_NONE;
+	I_forward_rt <= FORWARDING_NONE;
 
   	wait for CLK_PERIOD;
   	assert O_alu_result = SLT_TRUE_RESULT report "Test 5: Unsuccessful" severity error;
@@ -741,8 +746,8 @@ begin
 	-- forwarding
 	I_ex_data <= (others=>'0');
 	I_mem_data <= (others=>'0');
-	I_forward_rs <= "00";
-	I_forward_rt <= "00";
+	I_forward_rs <= FORWARDING_NONE;
+	I_forward_rt <= FORWARDING_NONE;
 
   	wait for CLK_PERIOD;
   	assert O_alu_result = AND_RESULT report "Test 6: Unsuccessful" severity error;
@@ -787,8 +792,8 @@ begin
 	-- forwarding
 	I_ex_data <= (others=>'0');
 	I_mem_data <= (others=>'0');
-	I_forward_rs <= "00";
-	I_forward_rt <= "00";
+	I_forward_rs <= FORWARDING_NONE;
+	I_forward_rt <= FORWARDING_NONE;
 
   	wait for CLK_PERIOD;
   	assert O_alu_result = OR_RESULT report "Test 7: Unsuccessful" severity error;
@@ -832,8 +837,8 @@ begin
 	-- forwarding
 	I_ex_data <= (others=>'0');
 	I_mem_data <= (others=>'0');
-	I_forward_rs <= "00";
-	I_forward_rt <= "00";
+	I_forward_rs <= FORWARDING_NONE;
+	I_forward_rt <= FORWARDING_NONE;
 
   	wait for CLK_PERIOD;
   	assert O_alu_result = NOR_RESULT report "Test 8: Unsuccessful" severity error;
@@ -878,8 +883,8 @@ begin
 	-- forwarding
 	I_ex_data <= (others=>'0');
 	I_mem_data <= (others=>'0');
-	I_forward_rs <= "00";
-	I_forward_rt <= "00";
+	I_forward_rs <= FORWARDING_NONE;
+	I_forward_rt <= FORWARDING_NONE;
 
   	wait for CLK_PERIOD;
   	assert O_alu_result = XOR_RESULT report "Test 9: Unsuccessful" severity error;
@@ -923,8 +928,8 @@ begin
 	-- forwarding
 	I_ex_data <= (others=>'0');
 	I_mem_data <= (others=>'0');
-	I_forward_rs <= "00";
-	I_forward_rt <= "00";
+	I_forward_rs <= FORWARDING_NONE;
+	I_forward_rt <= FORWARDING_NONE;
 
   	wait for CLK_PERIOD;
   	assert O_alu_result = SLL_RESULT report "Test 12: Unsuccessful" severity error;
@@ -968,8 +973,8 @@ begin
 	-- forwarding
 	I_ex_data <= (others=>'0');
 	I_mem_data <= (others=>'0');
-	I_forward_rs <= "00";
-	I_forward_rt <= "00";
+	I_forward_rs <= FORWARDING_NONE;
+	I_forward_rt <= FORWARDING_NONE;
 
   	wait for CLK_PERIOD;
   	assert O_alu_result = SRL_RESULT report "Test 13: Unsuccessful" severity error;
@@ -1013,8 +1018,8 @@ begin
 	-- forwarding
 	I_ex_data <= (others=>'0');
 	I_mem_data <= (others=>'0');
-	I_forward_rs <= "00";
-	I_forward_rt <= "00";
+	I_forward_rs <= FORWARDING_NONE;
+	I_forward_rt <= FORWARDING_NONE;
 
   	wait for CLK_PERIOD;
   	assert O_alu_result = SRA_RESULT report "Test 14: Unsuccessful" severity error;
@@ -1043,8 +1048,8 @@ begin
 	-- forwarding
 	I_ex_data <= (others=>'0');
 	I_mem_data <= (others=>'0');
-	I_forward_rs <= "00";
-	I_forward_rt <= "00";
+	I_forward_rs <= FORWARDING_NONE;
+	I_forward_rt <= FORWARDING_NONE;
 
   	wait for CLK_PERIOD;
   	assert O_alu_result = SRA_NEGATIVE_RESULT report "Test 14: Unsuccessful" severity error;
@@ -1088,8 +1093,8 @@ begin
 	-- forwarding
 	I_ex_data <= (others=>'0');
 	I_mem_data <= (others=>'0');
-	I_forward_rs <= "00";
-	I_forward_rt <= "00";
+	I_forward_rs <= FORWARDING_NONE;
+	I_forward_rt <= FORWARDING_NONE;
 
   	wait for CLK_PERIOD;
   	assert O_updated_next_pc = JR_PC_RESULT report "Test 15: Unsuccessful" severity error;
@@ -1134,8 +1139,8 @@ begin
 	-- forwarding
 	I_ex_data <= (others=>'0');
 	I_mem_data <= (others=>'0');
-	I_forward_rs <= "00";
-	I_forward_rt <= "00";
+	I_forward_rs <= FORWARDING_NONE;
+	I_forward_rt <= FORWARDING_NONE;
 
   	wait for CLK_PERIOD;
   	assert O_alu_result = ADDI_RESULT report "Test 16: Unsuccessful" severity error;
@@ -1180,8 +1185,8 @@ begin
 	-- forwarding
 	I_ex_data <= (others=>'0');
 	I_mem_data <= (others=>'0');
-	I_forward_rs <= "00";
-	I_forward_rt <= "00";
+	I_forward_rs <= FORWARDING_NONE;
+	I_forward_rt <= FORWARDING_NONE;
 
   	wait for CLK_PERIOD;
   	assert O_alu_result = SLTI_FALSE_RESULT report "Test 17: Unsuccessful" severity error;
@@ -1221,8 +1226,8 @@ begin
 	-- forwarding
 	I_ex_data <= (others=>'0');
 	I_mem_data <= (others=>'0');
-	I_forward_rs <= "00";
-	I_forward_rt <= "00";
+	I_forward_rs <= FORWARDING_NONE;
+	I_forward_rt <= FORWARDING_NONE;
 
   	wait for CLK_PERIOD;
   	assert O_alu_result = SLTI_TRUE_RESULT report "Test 17: Unsuccessful" severity error;
@@ -1267,8 +1272,8 @@ begin
 	-- forwarding
 	I_ex_data <= (others=>'0');
 	I_mem_data <= (others=>'0');
-	I_forward_rs <= "00";
-	I_forward_rt <= "00";
+	I_forward_rs <= FORWARDING_NONE;
+	I_forward_rt <= FORWARDING_NONE;
 
   	wait for CLK_PERIOD;
   	assert O_alu_result = ORI_RESULT report "Test 18: Unsuccessful" severity error;
@@ -1313,8 +1318,8 @@ begin
 	-- forwarding
 	I_ex_data <= (others=>'0');
 	I_mem_data <= (others=>'0');
-	I_forward_rs <= "00";
-	I_forward_rt <= "00";
+	I_forward_rs <= FORWARDING_NONE;
+	I_forward_rt <= FORWARDING_NONE;
 
   	wait for CLK_PERIOD;
   	assert O_alu_result = XORI_RESULT report "Test 19: Unsuccessful" severity error;
@@ -1359,8 +1364,8 @@ begin
 	-- forwarding
 	I_ex_data <= (others=>'0');
 	I_mem_data <= (others=>'0');
-	I_forward_rs <= "00";
-	I_forward_rt <= "00";
+	I_forward_rs <= FORWARDING_NONE;
+	I_forward_rt <= FORWARDING_NONE;
 
   	wait for CLK_PERIOD;
   	assert O_alu_result = LUI_RESULT report "Test 20: Unsuccessful" severity error;
@@ -1405,8 +1410,8 @@ begin
 	-- forwarding
 	I_ex_data <= (others=>'0');
 	I_mem_data <= (others=>'0');
-	I_forward_rs <= "00";
-	I_forward_rt <= "00";
+	I_forward_rs <= FORWARDING_NONE;
+	I_forward_rt <= FORWARDING_NONE;
 
   	wait for CLK_PERIOD;
   	assert O_alu_result = LW_RESULT report "Test 21: Unsuccessful" severity error;
@@ -1450,8 +1455,8 @@ begin
 	-- forwarding
 	I_ex_data <= (others=>'0');
 	I_mem_data <= (others=>'0');
-	I_forward_rs <= "00";
-	I_forward_rt <= "00";
+	I_forward_rs <= FORWARDING_NONE;
+	I_forward_rt <= FORWARDING_NONE;
 
   	wait for CLK_PERIOD;
   	assert O_alu_result = SW_RESULT report "Test 22: Unsuccessful" severity error;
@@ -1498,8 +1503,8 @@ begin
 	-- forwarding
 	I_ex_data <= (others=>'0');
 	I_mem_data <= (others=>'0');
-	I_forward_rs <= "00";
-	I_forward_rt <= "00";
+	I_forward_rs <= FORWARDING_NONE;
+	I_forward_rt <= FORWARDING_NONE;
 
   	wait for CLK_PERIOD;
 	assert O_branch = '1' report "Test 23.a.i: Unsuccessful" severity error;
@@ -1543,8 +1548,8 @@ begin
 	-- forwarding
 	I_ex_data <= (others=>'0');
 	I_mem_data <= (others=>'0');
-	I_forward_rs <= "00";
-	I_forward_rt <= "00";
+	I_forward_rs <= FORWARDING_NONE;
+	I_forward_rt <= FORWARDING_NONE;
 
   	wait for CLK_PERIOD;
 	assert O_branch = '0' report "Test 23.b.i: Unsuccessful" severity error;
@@ -1592,8 +1597,8 @@ begin
 	-- forwarding
 	I_ex_data <= (others=>'0');
 	I_mem_data <= (others=>'0');
-	I_forward_rs <= "00";
-	I_forward_rt <= "00";
+	I_forward_rs <= FORWARDING_NONE;
+	I_forward_rt <= FORWARDING_NONE;
 
   	wait for CLK_PERIOD;
 	assert O_branch = '1' report "Test 24.a.i: Unsuccessful" severity error;
@@ -1637,8 +1642,8 @@ begin
 	-- forwarding
 	I_ex_data <= (others=>'0');
 	I_mem_data <= (others=>'0');
-	I_forward_rs <= "00";
-	I_forward_rt <= "00";
+	I_forward_rs <= FORWARDING_NONE;
+	I_forward_rt <= FORWARDING_NONE;
 
   	wait for CLK_PERIOD;
 	assert O_branch = '0' report "Test 24.b.i: Unsuccessful" severity error;
@@ -1681,8 +1686,8 @@ begin
 	-- forwarding
 	I_ex_data <= (others=>'0');
 	I_mem_data <= (others=>'0');
-	I_forward_rs <= "00";
-	I_forward_rt <= "00";
+	I_forward_rs <= FORWARDING_NONE;
+	I_forward_rt <= FORWARDING_NONE;
 
   	wait for CLK_PERIOD;
   	assert O_updated_next_pc = J_PC_RESULT report "Test 25: Unsuccessful" severity error;
@@ -1727,8 +1732,8 @@ begin
 	-- forwarding
 	I_ex_data <= (others=>'0');
 	I_mem_data <= (others=>'0');
-	I_forward_rs <= "00";
-	I_forward_rt <= "00";
+	I_forward_rs <= FORWARDING_NONE;
+	I_forward_rt <= FORWARDING_NONE;
 
   	wait for CLK_PERIOD;
   	assert O_alu_result = JAL_RESULT report "Test 26.a: Unsuccessful" severity error;
@@ -1774,8 +1779,8 @@ begin
 	-- forwarding
 	I_ex_data <= DATA_8;
 	I_mem_data <= (others=>'0');
-	I_forward_rs <= "01";
-	I_forward_rt <= "00";
+	I_forward_rs <= FORWARDING_EX;
+	I_forward_rt <= FORWARDING_NONE;
 	
   	wait for CLK_PERIOD;
   	assert O_alu_result = ADD_RESULT report "Test 27: Unsuccessful" severity error;
@@ -1815,8 +1820,8 @@ begin
 	-- forwarding
 	I_ex_data <= DATA_4;
 	I_mem_data <= (others=>'0');
-	I_forward_rs <= "00";
-	I_forward_rt <= "01";
+	I_forward_rs <= FORWARDING_NONE;
+	I_forward_rt <= FORWARDING_EX;
 	
   	wait for CLK_PERIOD;
   	assert O_alu_result = ADD_RESULT report "Test 27: Unsuccessful" severity error;
@@ -1862,8 +1867,8 @@ begin
 	-- forwarding
 	I_ex_data <= (others=>'0');
 	I_mem_data <= DATA_8;
-	I_forward_rs <= "10";
-	I_forward_rt <= "00";
+	I_forward_rs <= FORWARDING_MEM;
+	I_forward_rt <= FORWARDING_NONE;
 	
   	wait for CLK_PERIOD;
   	assert O_alu_result = ADD_RESULT report "Test 28: Unsuccessful" severity error;
@@ -1903,8 +1908,8 @@ begin
 	-- forwarding
 	I_ex_data <= (others=>'0');
 	I_mem_data <= DATA_4;
-	I_forward_rs <= "00";
-	I_forward_rt <= "10";
+	I_forward_rs <= FORWARDING_NONE;
+	I_forward_rt <= FORWARDING_MEM;
 	
   	wait for CLK_PERIOD;
   	assert O_alu_result = ADD_RESULT report "Test 28: Unsuccessful" severity error;
@@ -1950,8 +1955,8 @@ begin
 	-- forwarding
 	I_ex_data <= (others=>'0');
 	I_mem_data <= (others=>'0');
-	I_forward_rs <= "00";
-	I_forward_rt <= "00";
+	I_forward_rs <= FORWARDING_NONE;
+	I_forward_rt <= FORWARDING_NONE;
 	
   	wait for CLK_PERIOD;
   	assert O_stall = '1' 

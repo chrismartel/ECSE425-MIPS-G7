@@ -30,6 +30,11 @@ end forwarding_unit;
 
 architecture arch of forwarding_unit is
 
+-- constants
+	constant FORWARDING_NONE : std_logic_vector (1 downto 0):= "00";
+	constant FORWARDING_EX : std_logic_vector (1 downto 0):= "01";
+	constant FORWARDING_MEM : std_logic_vector (1 downto 0):= "10";
+
 begin
 	-- forwarding pprocess
 	forwarding_process: process(I_clk, I_reset)
@@ -37,32 +42,32 @@ begin
 		-- asynchronous I_reset active high
 		if I_reset'event and I_reset = '1' then
 			-- by defaut, read from id stage outputs (no forwarding)
-			O_forward_rs <= "00";
-			O_forward_rt <= "00";
+			O_forward_rs <= FORWARDING_NONE;
+			O_forward_rt <= FORWARDING_NONE;
 			
 		-- synchronous clock active high
 		elsif I_clk'event and I_clk = '1' then
 			if I_en = '1' then
 				-- rs input
 				if I_ex_reg_write = '1' and I_id_rs = I_ex_rd then
-					O_forward_rs <= "01"; -- read from ex stage output
+					O_forward_rs <= FORWARDING_EX; -- read from ex stage output
 				elsif I_mem_reg_write = '1' and I_id_rs = I_mem_rd then
-					O_forward_rs <= "10"; -- read from mem stage output
+					O_forward_rs <= FORWARDING_MEM; -- read from mem stage output
 				else
-					O_forward_rs <= "00"; -- read from id stage output
+					O_forward_rs <= FORWARDING_NONE; -- read from id stage output
 				end if;
 
 				-- rt input
 				if I_ex_reg_write = '1' and I_id_rt = I_ex_rd then
-					O_forward_rt <= "01"; -- read from ex stage output
+					O_forward_rt <= FORWARDING_EX; -- read from ex stage output
 				elsif I_mem_reg_write = '1' and I_id_rt = I_mem_rd then
-					O_forward_rt <= "10"; -- read from mem stage output
+					O_forward_rt <= FORWARDING_MEM; -- read from mem stage output
 				else
-					O_forward_rt <= "00"; -- read from id stage output
+					O_forward_rt <= FORWARDING_NONE; -- read from id stage output
 				end if;
 			else
-				O_forward_rs <= "00";
-				O_forward_rt <= "00";
+				O_forward_rs <= FORWARDING_NONE;
+				O_forward_rt <= FORWARDING_NONE;
 			end if;
 		end if;
 	end process;
