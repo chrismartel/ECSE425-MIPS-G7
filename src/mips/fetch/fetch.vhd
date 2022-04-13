@@ -8,25 +8,26 @@ port(
 	-- INPUTS
 
 	-- Synchronoucity Inputs
-	clk: in std_logic;
-	reset: in std_logic;
-	stall: in std_logic;
+	I_clk: in std_logic;
+	I_reset: in std_logic;
+	I_stall: in std_logic;
 
-	-- jump flag
-	jump: in std_logic;
-	-- branch flag 
-	branch: in std_logic; 
+	-- I_jump flag
+	I_jump: in std_logic;
+	-- branch flag
+	I_branch: in std_logic;
 	-- incase of a branch or a jump use this
-	pc_branch: in std_logic_vector (31 downto 0); 
-	
+	I_pc_branch: in std_logic_vector (31 downto 0);
+
 	-- Memory Inputs:
-	mem_instruction : in std_logic_vector (31 downto 0);
-	waitrequest : in std_logic;
+	I_mem_instruction : in std_logic_vector (31 downto 0);
+	I_waitrequest : in std_logic;
 
 	-- Outputs for fetch unit
-	pc_updated: out std_logic_vector (31 downto 0);
-	instruction_address: out std_logic_vector (31 downto 0);
-	memread: out std_logic
+	O_pc_updated: out std_logic_vector (31 downto 0);
+	O_instruction_address: out INTEGER RANGE 0 TO 32768-1;
+	O_memread: out std_logic;
+	O_instruction : out std_logic_vector (31 downto 0)
 );
 
 end fetch;
@@ -34,35 +35,42 @@ end fetch;
 architecture arch of fetch is
 	signal pc: std_logic_vector(31 downto 0) := "00000000000000000000000000000000"; -- initial pc
 	begin
-	fetch_process: process(clk, reset)	
+	fetch_process: process(I_clk, I_reset)
 	begin
-		-- if reset
-		if reset'event and reset = '1' then
-			pc_updated <= (others => '0');
-			instruction_address <= (others => '0');
-			memread <= '0';
-		
+		-- if I_reset
+		if I_reset'event and I_reset = '1' then
+				O_pc_updated <= (others => '0');
+				O_instruction_address <= 0;
+				O_memread <= '0';
+
 		-- if clock is high
-		elsif clk'event and clk = '1' then
-			-- if there is no stall start fetch component
-			if stall = '0' then
-				if waitrequest = '1' then
-					instruction_address <= pc;
-					memread <= '1';
-				elsif waitrequest = '0' then
-					-- no jump or branch so pc is incremented
-					if jump = '0' and branch = '0' then 
-						pc_updated <= std_logic_vector(unsigned(pc) + 4); -- pc + 4
-						pc <= std_logic_vector(unsigned(pc) + 4);
-						-- instruction_address <= mem_instruction;
-					-- jump or branch so pc is set to the branch or jump address
-					else 
-						pc_updated <= pc_branch;
-						pc <= pc_branch;
+		elsif I_clk'event and I_clk = '1' then
+				-- if there is no I_stall start fetch component
+				if I_stall = '0' then
+					--Check if Instruction Memory is available (line goes low when data is ready)
+					if I_waitrequest = '1' then
+						--Ask Instruction Memory for next instruction
+						O_instruction_address <=to_integer(unsigned(pc));
+						O_memread <= '1';
 					end if;
-					memread <= '0';
 				end if;
-			end if;
+				-- no jump or branch so pc is incremented
+				if I_jump = '0' and I_branch = '0' then
+					O_pc_updated <= std_logic_vector(unsigned(pc) + 4); -- pc + 4
+					pc <= std_logic_vector(unsigned(pc) + 4);
+				-- jump or branch so pc is set to the branch or jump address
+				else
+					O_pc_updated <= I_pc_branch;
+					pc <= I_pc_branch;
+				end if;
+
+		-- Halfway through stage time (1cc) check if data can be read from cache, if so pass onto next stage
+		elsif I_clk'event and I_clk = '0' then
+				if I_waitrequest = '0' then
+					--Pass through the retrieved instruction
+					O_instruction <= I_mem_instruction;
+					O_memread <= '0';
+				end if;
 		end if;
 	end process;
 	end arch;

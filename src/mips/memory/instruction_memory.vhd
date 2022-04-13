@@ -44,7 +44,6 @@ BEGIN
         ram_block(address+1) <= writedata(15 downto 8);
         ram_block(address+2) <= writedata(23 downto 16);
         ram_block(address+3) <= writedata(31 downto 24);
-
 			END IF;
 		read_address_reg <= address;
 		END IF;
@@ -60,15 +59,14 @@ BEGIN
 	waitreq_w_proc: PROCESS (memwrite)
 	BEGIN
 		IF(memwrite'event AND memwrite = '1')THEN
-			write_waitreq_reg <= '0' after mem_delay, '1' after mem_delay + clock_period;
-
+		write_waitreq_reg <= '0', '1' after clock_period;
 		END IF;
 	END PROCESS;
 
 	waitreq_r_proc: PROCESS (memread)
 	BEGIN
 		IF(memread'event AND memread = '1')THEN
-			read_waitreq_reg <= '0' after mem_delay, '1' after mem_delay + clock_period;
+			read_waitreq_reg <= '0', '1' after clock_period;
 		END IF;
 	END PROCESS;
 	waitrequest <= write_waitreq_reg and read_waitreq_reg;
