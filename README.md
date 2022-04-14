@@ -21,7 +21,7 @@ The VHDL source code for the fetch component implementation is available here: [
 ## **Testbenches**
 
 * **Fetch**
-The VHDL source code for the fetch component test bench implementation is available here: [fetch_tb.vhd](src/mips/fetch/fetch_tb.vhd).
+The VHDL source code for the fetch component test bench implementation is available here: [fetch_tb.vhd](src/mips/fetch/fetch_tb.vhd).  
 The TCL script to run the fetch test bench is available here: [fetch_tb.tcl](src/mips/fetch/fetch_tb.tcl).
 * **Decode**
 The VHDL source code for the fetch component test bench implementation is available here: [fetch_tb.vhd](src/mips/fetch/fetch_tb.vhd).
