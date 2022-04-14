@@ -104,7 +104,6 @@ port(
 	I_mem_read: in std_logic; 					-- indicates if a value must be read from memory at calculated address
 	I_mem_write: in std_logic; 					-- indicates if value in I_rt_data must be written in memory at calculated address
 	I_reg_write: in std_logic; 					-- indicates if value calculated in ALU must be written to destination register
-	I_mem_to_reg: in std_logic; 					-- indicates if value loaded from memory must be writte to destination register
 
 	-- OUTPUTS
 	O_alu_result: out std_logic_vector (31 downto 0);
@@ -119,7 +118,6 @@ port(
 	O_mem_read: out std_logic;
 	O_mem_write: out std_logic;
 	O_reg_write: out std_logic;
-	O_mem_to_reg: out std_logic;
 
 	-- forwarding
 	I_ex_data: in std_logic_vector (31 downto 0);
@@ -156,8 +154,7 @@ signal I_branch: std_logic;
 signal I_jump: std_logic; 						
 signal I_mem_read: std_logic; 					
 signal I_mem_write: std_logic; 					
-signal I_reg_write: std_logic; 					
-signal I_mem_to_reg: std_logic; 					
+signal I_reg_write: std_logic; 						
 
 -- Execute Outputs
 signal O_alu_result: std_logic_vector (31 downto 0);
@@ -171,7 +168,6 @@ signal O_jump: std_logic;
 signal O_mem_read: std_logic;
 signal O_mem_write: std_logic;
 signal O_reg_write: std_logic;
-signal O_mem_to_reg: std_logic;
 signal O_stall: std_logic;
 
 -- Forwarding Signals
@@ -267,7 +263,6 @@ port map(
 	I_mem_read => I_mem_read,		
 	I_mem_write => I_mem_write, 					
 	I_reg_write => I_reg_write,				
-	I_mem_to_reg => I_mem_to_reg,	
 
 	-- forwarding
 	I_ex_data => I_ex_data,
@@ -287,8 +282,7 @@ port map(
 	O_jump => O_jump,
 	O_mem_read => O_mem_read,
 	O_mem_write => O_mem_write,
-	O_reg_write => O_reg_write,
-	O_mem_to_reg => O_mem_to_reg
+	O_reg_write => O_reg_write
 );
 
 				
@@ -343,8 +337,9 @@ begin
 	I_jump <= '0';
 	I_mem_read <= '0';		
 	I_mem_write <= '0'; 					
-	I_reg_write <= '1';				
-	I_mem_to_reg <= '0';	
+	I_reg_write <= '1';
+
+
 
 	-- forwarding
 	I_ex_data <= (others=>'0');
@@ -392,8 +387,9 @@ begin
 	I_jump <= '0';
 	I_mem_read <= '0';		
 	I_mem_write <= '0'; 					
-	I_reg_write <= '1';				
-	I_mem_to_reg <= '0';	
+	I_reg_write <= '1';
+
+
 
 	-- forwarding
 	I_ex_data <= (others=>'0');
@@ -438,8 +434,9 @@ begin
 	I_jump <= '0';
 	I_mem_read <= '0';		
 	I_mem_write <= '0'; 					
-	I_reg_write <= '0';				
-	I_mem_to_reg <= '0';	
+	I_reg_write <= '0';
+
+
 
 	-- forwarding
 	I_ex_data <= (others=>'0');
@@ -468,8 +465,10 @@ begin
 	I_jump <= '0';
 	I_mem_read <= '0';		
 	I_mem_write <= '0'; 					
-	I_reg_write <= '1';				
-	I_mem_to_reg <= '0';	
+	I_reg_write <= '1';
+
+
+
 
 	-- forwarding
 	I_ex_data <= (others=>'0');
@@ -500,8 +499,10 @@ begin
 	I_jump <= '0';
 	I_mem_read <= '0';		
 	I_mem_write <= '0'; 					
-	I_reg_write <= '1';				
-	I_mem_to_reg <= '0';	
+	I_reg_write <= '1';
+
+
+
 
 	-- forwarding
 	I_ex_data <= (others=>'0');
@@ -546,8 +547,9 @@ begin
 	I_jump <= '0';
 	I_mem_read <= '0';		
 	I_mem_write <= '0'; 					
-	I_reg_write <= '0';				
-	I_mem_to_reg <= '0';	
+	I_reg_write <= '0';
+
+
 
 	-- forwarding
 	I_ex_data <= (others=>'0');
@@ -578,8 +580,9 @@ begin
 	I_jump <= '0';
 	I_mem_read <= '0';		
 	I_mem_write <= '0'; 					
-	I_reg_write <= '1';				
-	I_mem_to_reg <= '0';	
+	I_reg_write <= '1';
+
+
 
 	-- forwarding
 	I_ex_data <= (others=>'0');
@@ -608,8 +611,9 @@ begin
 	I_jump <= '0';
 	I_mem_read <= '0';		
 	I_mem_write <= '0'; 					
-	I_reg_write <= '1';				
-	I_mem_to_reg <= '0';	
+	I_reg_write <= '1';
+
+
 
 	-- forwarding
 	I_ex_data <= (others=>'0');
@@ -662,8 +666,9 @@ begin
 	I_jump <= '0';
 	I_mem_read <= '0';		
 	I_mem_write <= '0'; 					
-	I_reg_write <= '1';				
-	I_mem_to_reg <= '0';	
+	I_reg_write <= '1';
+
+
 
 	-- forwarding
 	I_ex_data <= (others=>'0');
@@ -694,8 +699,9 @@ begin
 	I_jump <= '0';
 	I_mem_read <= '0';		
 	I_mem_write <= '0'; 					
-	I_reg_write <= '1';				
-	I_mem_to_reg <= '0';	
+	I_reg_write <= '1';
+
+
 
 	-- forwarding
 	I_ex_data <= (others=>'0');
@@ -740,8 +746,8 @@ begin
 	I_jump <= '0';
 	I_mem_read <= '0';		
 	I_mem_write <= '0'; 					
-	I_reg_write <= '1';				
-	I_mem_to_reg <= '0';	
+	I_reg_write <= '1';
+	
 
 	-- forwarding
 	I_ex_data <= (others=>'0');
@@ -786,8 +792,9 @@ begin
 	I_jump <= '0';
 	I_mem_read <= '0';		
 	I_mem_write <= '0'; 					
-	I_reg_write <= '1';				
-	I_mem_to_reg <= '0';	
+	I_reg_write <= '1';
+
+	
 
 	-- forwarding
 	I_ex_data <= (others=>'0');
@@ -831,8 +838,9 @@ begin
 	I_jump <= '0';
 	I_mem_read <= '0';		
 	I_mem_write <= '0'; 					
-	I_reg_write <= '1';				
-	I_mem_to_reg <= '0';	
+	I_reg_write <= '1';
+
+	
 
 	-- forwarding
 	I_ex_data <= (others=>'0');
@@ -877,8 +885,9 @@ begin
 	I_jump <= '0';
 	I_mem_read <= '0';		
 	I_mem_write <= '0'; 					
-	I_reg_write <= '1';				
-	I_mem_to_reg <= '0';	
+	I_reg_write <= '1';
+
+	
 
 	-- forwarding
 	I_ex_data <= (others=>'0');
@@ -922,8 +931,9 @@ begin
 	I_jump <= '0';
 	I_mem_read <= '0';		
 	I_mem_write <= '0'; 					
-	I_reg_write <= '1';				
-	I_mem_to_reg <= '0';	
+	I_reg_write <= '1';
+
+	
 
 	-- forwarding
 	I_ex_data <= (others=>'0');
@@ -967,8 +977,9 @@ begin
 	I_jump <= '0';
 	I_mem_read <= '0';		
 	I_mem_write <= '0'; 					
-	I_reg_write <= '1';				
-	I_mem_to_reg <= '0';	
+	I_reg_write <= '1';
+
+	
 
 	-- forwarding
 	I_ex_data <= (others=>'0');
@@ -1012,8 +1023,9 @@ begin
 	I_jump <= '0';
 	I_mem_read <= '0';		
 	I_mem_write <= '0'; 					
-	I_reg_write <= '1';				
-	I_mem_to_reg <= '0';	
+	I_reg_write <= '1';
+
+	
 
 	-- forwarding
 	I_ex_data <= (others=>'0');
@@ -1042,8 +1054,9 @@ begin
 	I_jump <= '0';
 	I_mem_read <= '0';		
 	I_mem_write <= '0'; 					
-	I_reg_write <= '1';				
-	I_mem_to_reg <= '0';	
+	I_reg_write <= '1';
+
+	
 
 	-- forwarding
 	I_ex_data <= (others=>'0');
@@ -1087,9 +1100,9 @@ begin
 	I_jump <= '1';
 	I_mem_read <= '0';		
 	I_mem_write <= '0'; 					
-	I_reg_write <= '0';				
-	I_mem_to_reg <= '0';	
+	I_reg_write <= '0';
 
+	
 	-- forwarding
 	I_ex_data <= (others=>'0');
 	I_mem_data <= (others=>'0');
@@ -1133,8 +1146,9 @@ begin
 	I_jump <= '0';
 	I_mem_read <= '0';		
 	I_mem_write <= '0'; 					
-	I_reg_write <= '1';				
-	I_mem_to_reg <= '0';	
+	I_reg_write <= '1';
+
+	
 
 	-- forwarding
 	I_ex_data <= (others=>'0');
@@ -1179,8 +1193,9 @@ begin
 	I_jump <= '0';
 	I_mem_read <= '0';		
 	I_mem_write <= '0'; 					
-	I_reg_write <= '1';				
-	I_mem_to_reg <= '0';	
+	I_reg_write <= '1';
+
+	
 
 	-- forwarding
 	I_ex_data <= (others=>'0');
@@ -1220,8 +1235,9 @@ begin
 	I_jump <= '0';
 	I_mem_read <= '0';		
 	I_mem_write <= '0'; 					
-	I_reg_write <= '1';				
-	I_mem_to_reg <= '0';	
+	I_reg_write <= '1';
+
+	
 
 	-- forwarding
 	I_ex_data <= (others=>'0');
@@ -1266,8 +1282,9 @@ begin
 	I_jump <= '0';
 	I_mem_read <= '0';		
 	I_mem_write <= '0'; 					
-	I_reg_write <= '1';				
-	I_mem_to_reg <= '0';	
+	I_reg_write <= '1';
+
+	
 
 	-- forwarding
 	I_ex_data <= (others=>'0');
@@ -1312,8 +1329,9 @@ begin
 	I_jump <= '0';
 	I_mem_read <= '0';		
 	I_mem_write <= '0'; 					
-	I_reg_write <= '1';				
-	I_mem_to_reg <= '0';	
+	I_reg_write <= '1';
+
+	
 
 	-- forwarding
 	I_ex_data <= (others=>'0');
@@ -1358,8 +1376,9 @@ begin
 	I_jump <= '0';
 	I_mem_read <= '0';		
 	I_mem_write <= '0'; 					
-	I_reg_write <= '1';				
-	I_mem_to_reg <= '0';	
+	I_reg_write <= '1';
+
+	
 
 	-- forwarding
 	I_ex_data <= (others=>'0');
@@ -1405,7 +1424,6 @@ begin
 	I_mem_read <= '1';		
 	I_mem_write <= '0'; 					
 	I_reg_write <= '1';				
-	I_mem_to_reg <= '1';	
 
 	-- forwarding
 	I_ex_data <= (others=>'0');
@@ -1449,8 +1467,9 @@ begin
 	I_jump <= '0';
 	I_mem_read <= '0';		
 	I_mem_write <= '1'; 					
-	I_reg_write <= '0';				
-	I_mem_to_reg <= '0';	
+	I_reg_write <= '0';
+
+	
 
 	-- forwarding
 	I_ex_data <= (others=>'0');
@@ -1497,8 +1516,7 @@ begin
 	I_jump <= '0';
 	I_mem_read <= '0';		
 	I_mem_write <= '0'; 					
-	I_reg_write <= '0';				
-	I_mem_to_reg <= '0';	
+	I_reg_write <= '0';
 
 	-- forwarding
 	I_ex_data <= (others=>'0');
@@ -1507,8 +1525,8 @@ begin
 	I_forward_rt <= FORWARDING_NONE;
 
   	wait for CLK_PERIOD;
-	assert O_branch = '1' report "Test 23.a.i: Unsuccessful" severity error;
-  	assert O_updated_next_pc = BEQ_TAKEN_PC_RESULT report "Test 23.a.ii: Unsuccessful" severity error;
+	assert O_branch = '1' report "Test 23.1 branch: Unsuccessful" severity error;
+  	assert O_updated_next_pc = BEQ_TAKEN_PC_RESULT report "Test 23.1 pc: Unsuccessful" severity error;
 
   ----------------------------------------------------------------------------------
   -- RESET
@@ -1542,8 +1560,7 @@ begin
 	I_jump <= '0';
 	I_mem_read <= '0';		
 	I_mem_write <= '0'; 					
-	I_reg_write <= '0';				
-	I_mem_to_reg <= '0';	
+	I_reg_write <= '0';
 
 	-- forwarding
 	I_ex_data <= (others=>'0');
@@ -1552,8 +1569,8 @@ begin
 	I_forward_rt <= FORWARDING_NONE;
 
   	wait for CLK_PERIOD;
-	assert O_branch = '0' report "Test 23.b.i: Unsuccessful" severity error;
-  	assert O_updated_next_pc = BEQ_NOT_TAKEN_PC_RESULT report "Test 23.b.ii: Unsuccessful" severity error;
+	assert O_branch = '0' report "Test 23.2 branch: Unsuccessful" severity error;
+  	assert O_updated_next_pc = BEQ_NOT_TAKEN_PC_RESULT report "Test 23.2 pc: Unsuccessful" severity error;
   
   ----------------------------------------------------------------------------------
   -- RESET
@@ -1591,8 +1608,7 @@ begin
 	I_jump <= '0';
 	I_mem_read <= '0';		
 	I_mem_write <= '0'; 					
-	I_reg_write <= '0';				
-	I_mem_to_reg <= '0';	
+	I_reg_write <= '0';
 
 	-- forwarding
 	I_ex_data <= (others=>'0');
@@ -1601,8 +1617,8 @@ begin
 	I_forward_rt <= FORWARDING_NONE;
 
   	wait for CLK_PERIOD;
-	assert O_branch = '1' report "Test 24.a.i: Unsuccessful" severity error;
-  	assert O_updated_next_pc = BNE_TAKEN_PC_RESULT report "Test 24.a.ii: Unsuccessful" severity error;
+	assert O_branch = '1' report "Test 24.1 branch: Unsuccessful" severity error;
+  	assert O_updated_next_pc = BNE_TAKEN_PC_RESULT report "Test 24 pc: Unsuccessful" severity error;
 
   ----------------------------------------------------------------------------------
   -- RESET
@@ -1636,8 +1652,7 @@ begin
 	I_jump <= '0';
 	I_mem_read <= '0';		
 	I_mem_write <= '0'; 					
-	I_reg_write <= '0';				
-	I_mem_to_reg <= '0';	
+	I_reg_write <= '0';
 
 	-- forwarding
 	I_ex_data <= (others=>'0');
@@ -1646,8 +1661,8 @@ begin
 	I_forward_rt <= FORWARDING_NONE;
 
   	wait for CLK_PERIOD;
-	assert O_branch = '0' report "Test 24.b.i: Unsuccessful" severity error;
-  	assert O_updated_next_pc = BNE_NOT_TAKEN_PC_RESULT report "Test 24.b.ii: Unsuccessful" severity error;
+	assert O_branch = '0' report "Test 24.2 branch: Unsuccessful" severity error;
+  	assert O_updated_next_pc = BNE_NOT_TAKEN_PC_RESULT report "Test 24.2 pc Unsuccessful" severity error;
 
   ----------------------------------------------------------------------------------
   -- RESET
@@ -1680,8 +1695,7 @@ begin
 	I_jump <= '1';
 	I_mem_read <= '0';		
 	I_mem_write <= '0'; 					
-	I_reg_write <= '0';				
-	I_mem_to_reg <= '0';	
+	I_reg_write <= '0';
 
 	-- forwarding
 	I_ex_data <= (others=>'0');
@@ -1726,8 +1740,7 @@ begin
 	I_jump <= '1';
 	I_mem_read <= '0';		
 	I_mem_write <= '0'; 					
-	I_reg_write <= '0';				
-	I_mem_to_reg <= '0';	
+	I_reg_write <= '0';
 
 	-- forwarding
 	I_ex_data <= (others=>'0');
@@ -1773,8 +1786,7 @@ begin
 	I_jump <= '0';
 	I_mem_read <= '0';		
 	I_mem_write <= '0'; 					
-	I_reg_write <= '1';				
-	I_mem_to_reg <= '0';	
+	I_reg_write <= '1';
 
 	-- forwarding
 	I_ex_data <= DATA_8;
@@ -1814,8 +1826,7 @@ begin
 	I_jump <= '0';
 	I_mem_read <= '0';		
 	I_mem_write <= '0'; 					
-	I_reg_write <= '1';				
-	I_mem_to_reg <= '0';	
+	I_reg_write <= '1';
 
 	-- forwarding
 	I_ex_data <= DATA_4;
@@ -1834,7 +1845,6 @@ begin
   	wait for CLK_PERIOD;
   	I_reset <= '0';
   	wait for CLK_PERIOD;
-
 
   ----------------------------------------------------------------------------------
   -- TEST 28: Forwarding from MEM
@@ -1861,9 +1871,9 @@ begin
 	I_jump <= '0';
 	I_mem_read <= '0';		
 	I_mem_write <= '0'; 					
-	I_reg_write <= '1';				
-	I_mem_to_reg <= '0';	
+	I_reg_write <= '1';
 
+	
 	-- forwarding
 	I_ex_data <= (others=>'0');
 	I_mem_data <= DATA_8;
@@ -1902,8 +1912,7 @@ begin
 	I_jump <= '0';
 	I_mem_read <= '0';		
 	I_mem_write <= '0'; 					
-	I_reg_write <= '1';				
-	I_mem_to_reg <= '0';	
+	I_reg_write <= '1';
 
 	-- forwarding
 	I_ex_data <= (others=>'0');
@@ -1949,8 +1958,7 @@ begin
 	I_jump <= '0';
 	I_mem_read <= '0';		
 	I_mem_write <= '0'; 					
-	I_reg_write <= '0';				
-	I_mem_to_reg <= '0';	
+	I_reg_write <= '0';
 
 	-- forwarding
 	I_ex_data <= (others=>'0');
