@@ -24,7 +24,7 @@ The VHDL source code for the instruction memory component implementation is avai
 * **Data Memory**  
 The VHDL source code for the data memory component implementation is available here: [data_memory.vhd](src/mips/memory/data_memory.vhd).
 
-## **Testbenches**
+## **Test-benches**
 
 * **Fetch**  
 The VHDL source code for the fetch stage component test bench implementation is available here: [fetch_tb.vhd](src/mips/fetch/fetch_tb.vhd).  
