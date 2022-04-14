@@ -1979,6 +1979,74 @@ report "Test 29: Unsuccessful" severity error;
   	I_reset <= '0';
   	wait for CLK_PERIOD;
 
+  ----------------------------------------------------------------------------------
+  -- TEST 30: Flush after ranch taken
+  ----------------------------------------------------------------------------------
+  	report "----- Test 30: Flush after Branch Taken -----";
+
+	-- instruction signals
+	I_rs <= RS;
+	I_rt <= RT;
+	I_rd <= "00000";
+	I_shamt <= SHAMT;
+	I_imm_ZE <= IMM_4;
+	I_imm_SE <= IMM_4;
+	I_addr <= ADDRESS;
+	I_opcode <= BEQ_OPCODE;
+	I_funct <= "000000";
+
+	I_rs_data <= DATA_4;
+	I_rt_data <= DATA_4;
+	I_next_pc <= NEXT_PC_VALUE;
+
+	-- control signals
+	I_rd <= "00000";
+	I_branch <= '0';
+	I_jump <= '0';
+	I_mem_read <= '0';		
+	I_mem_write <= '0'; 					
+	I_reg_write <= '0';
+
+	-- forwarding
+	I_ex_data <= (others=>'0');
+	I_mem_data <= (others=>'0');
+	I_forward_rs <= FORWARDING_NONE;
+	I_forward_rt <= FORWARDING_NONE;
+
+  	wait for CLK_PERIOD;
+	assert O_branch = '1' report "Test 30 branch: Unsuccessful" severity error;
+  	assert O_updated_next_pc = BEQ_TAKEN_PC_RESULT report "Test 30 pc: Unsuccessful" severity error;
+
+	-- instruction signals
+	I_rs <= RS;
+	I_rt <= RT;
+	I_rd <= RD;
+	I_shamt <= SHAMT;
+	I_imm_ZE <= IMM_8;
+	I_imm_SE <= IMM_8;
+	I_addr <= ADDRESS;
+	I_opcode <= R_OPCODE;
+	I_funct <= ADD_FUNCT;
+	
+	I_rs_data <= DATA_8;
+	I_rt_data <= DATA_4;
+	I_next_pc <= NEXT_PC_VALUE;
+
+	-- control signals
+	I_branch <= '0';
+	I_jump <= '0';
+	I_mem_read <= '0';		
+	I_mem_write <= '0'; 					
+	I_reg_write <= '1';
+
+	-- forwarding
+	I_ex_data <= (others=>'0');
+	I_mem_data <= (others=>'0');
+	I_forward_rs <= FORWARDING_NONE;
+	I_forward_rt <= FORWARDING_NONE;
+	
+  	wait for CLK_PERIOD;
+  	assert O_stall = '1' report "Test 30 stall: Unsuccessful" severity error;
 	
   report "----- Confirming all tests have ran -----";
   wait;
