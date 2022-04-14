@@ -15,6 +15,8 @@ The VHDL source code for the fetch component implementation is available here: [
 * The VHDL source code for the memory component implementation is available here: [memory.vhd](src/mips/memory_access/memory.vhd).
 * **Write-Back**
 * The VHDL source code for the write-back component implementation is available here: [writeback.vhd](src/mips/writeback/writeback.vhd).
+* * **Forwarding Unit**
+* The VHDL source code for the forwarding unit component implementation is available here: [forwarding_unit.vhd](src/mips/forwarding/forwarding_unit.vhd).
 
 ## **Testbenches**
 
