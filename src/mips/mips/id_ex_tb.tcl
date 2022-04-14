@@ -12,7 +12,6 @@ proc AddWaves {} {
 	add wave -position end  sim:/id_ex_tb/RF_I_en
 	add wave -position end  sim:/id_ex_tb/RF_O_datas
 	add wave -position end  sim:/id_ex_tb/RF_O_datat
-	add wave -position end  sim:/id_ex_tb/ID_I_en
 	add wave -position end  sim:/id_ex_tb/ID_O_next_pc
 	add wave -position end  sim:/id_ex_tb/ID_O_rs
 	add wave -position end  sim:/id_ex_tb/ID_O_rt
@@ -27,9 +26,7 @@ proc AddWaves {} {
 	add wave -position end  sim:/id_ex_tb/ID_O_jump
 	add wave -position end  sim:/id_ex_tb/ID_O_mem_read
 	add wave -position end  sim:/id_ex_tb/ID_O_mem_write
-	add wave -position end  sim:/id_ex_tb/ID_O_mem_to_reg
 	add wave -position end  sim:/id_ex_tb/ID_O_addr
-	add wave -position end  sim:/id_ex_tb/EX_I_en
 	add wave -position end  sim:/id_ex_tb/EX_O_alu_result
 	add wave -position end  sim:/id_ex_tb/EX_O_updated_next_pc
 	add wave -position end  sim:/id_ex_tb/EX_O_rt_data
@@ -40,7 +37,6 @@ proc AddWaves {} {
 	add wave -position end  sim:/id_ex_tb/EX_O_mem_read
 	add wave -position end  sim:/id_ex_tb/EX_O_mem_write
 	add wave -position end  sim:/id_ex_tb/EX_O_reg_write
-	add wave -position end  sim:/id_ex_tb/EX_O_mem_to_reg
 	add wave -position end  sim:/id_ex_tb/F_O_dataInst
 	add wave -position end  sim:/id_ex_tb/F_O_pc
 	add wave -position end  sim:/id_ex_tb/MEM_O_rd

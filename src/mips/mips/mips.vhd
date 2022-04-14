@@ -109,7 +109,6 @@ port (
     	O_jump: out STD_LOGIC;
     	O_mem_read: out STD_LOGIC;
     	O_mem_write: out STD_LOGIC;
-    	O_mem_to_reg: out STD_LOGIC;
     	O_addr: out std_logic_vector (25 downto 0);
 	O_stall: out std_logic
 );
@@ -139,7 +138,6 @@ port(
 	I_mem_read: in std_logic; 					
 	I_mem_write: in std_logic; 					
 	I_reg_write: in std_logic; 					
-	I_mem_to_reg: in std_logic; 
 
 	-- from register file
 	I_rs_data: in std_logic_vector (31 downto 0);
@@ -167,8 +165,7 @@ port(
 	O_jump: out std_logic;
 	O_mem_read: out std_logic;
 	O_mem_write: out std_logic;
-	O_reg_write: out std_logic;
-	O_mem_to_reg: out std_logic
+	O_reg_write: out std_logic
 );
 end component;
 
@@ -236,7 +233,6 @@ signal ID_O_branch: std_logic;
 signal ID_O_jump: std_logic;
 signal ID_O_mem_read: std_logic;
 signal ID_O_mem_write: std_logic;
-signal ID_O_mem_to_reg: std_logic;
 signal ID_O_addr: std_logic_vector (25 downto 0);
 signal ID_O_stall: std_logic;
 
@@ -251,7 +247,6 @@ signal EX_O_jump: std_logic;
 signal EX_O_mem_read: std_logic;
 signal EX_O_mem_write: std_logic;
 signal EX_O_reg_write: std_logic;
-signal EX_O_mem_to_reg: std_logic;
 
 -- MEMORY
 signal MEM_O_rd: std_logic_vector (4 downto 0); -- TODO: replace when memory added
@@ -373,7 +368,6 @@ port map(
 	O_jump => ID_O_jump,
 	O_mem_read => ID_O_mem_read,
 	O_mem_write => ID_O_mem_write,
-	O_mem_to_reg => ID_O_mem_to_reg,
 	O_regdWe => ID_O_regDwe,
 	O_addr => ID_O_addr,
 	O_stall => ID_O_stall
@@ -408,7 +402,6 @@ port map(
 	I_mem_read => ID_O_mem_read,		
 	I_mem_write => ID_O_mem_write, 					
 	I_reg_write => ID_O_regDwe,				
-	I_mem_to_reg => ID_O_mem_to_reg,	
 
 	-- forwarding
 	-- from execution stage
@@ -431,8 +424,7 @@ port map(
 	O_jump => EX_O_jump,
 	O_mem_read => EX_O_mem_read,
 	O_mem_write => EX_O_mem_write,
-	O_reg_write => EX_O_reg_write,
-	O_mem_to_reg => EX_O_mem_to_reg
+	O_reg_write => EX_O_reg_write
 );
 
 fwd: forwarding_unit

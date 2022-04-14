@@ -136,7 +136,6 @@ port (
     	O_jump: out STD_LOGIC;
     	O_mem_read: out STD_LOGIC;
     	O_mem_write: out STD_LOGIC;
-    	O_mem_to_reg: out STD_LOGIC;
     	O_addr: out STD_LOGIC_VECTOR (25 downto 0);
 	O_stall: out STD_LOGIC
 );
@@ -167,7 +166,6 @@ port(
 	I_mem_read: in std_logic; 					
 	I_mem_write: in std_logic; 					
 	I_reg_write: in std_logic; 					
-	I_mem_to_reg: in std_logic; 
 
 	-- from register file
 	I_rs_data: in std_logic_vector (31 downto 0);
@@ -195,8 +193,7 @@ port(
 	O_jump: out std_logic;
 	O_mem_read: out std_logic;
 	O_mem_write: out std_logic;
-	O_reg_write: out std_logic;
-	O_mem_to_reg: out std_logic
+	O_reg_write: out std_logic
 );
 end component;
 
@@ -266,7 +263,6 @@ signal ID_O_branch: std_logic;
 signal ID_O_jump: std_logic;
 signal ID_O_mem_read: std_logic;
 signal ID_O_mem_write: std_logic;
-signal ID_O_mem_to_reg: std_logic;
 signal ID_O_addr: std_logic_vector (25 downto 0);
 signal ID_O_stall: std_logic := '0';
 
@@ -284,8 +280,6 @@ signal EX_O_jump: std_logic;
 signal EX_O_mem_read: std_logic;
 signal EX_O_mem_write: std_logic;
 signal EX_O_reg_write: std_logic;
-signal EX_O_mem_to_reg: std_logic;
-
 
 -- FETCH
 signal F_O_dataInst : std_logic_vector (31 downto 0); -- from fetch to id
@@ -403,7 +397,6 @@ port map(
 	I_mem_read => ID_O_mem_read,		
 	I_mem_write => ID_O_mem_write, 					
 	I_reg_write => ID_O_regDwe,				
-	I_mem_to_reg => ID_O_mem_to_reg,	
 
 	-- forwarding
 	I_ex_data => EX_O_alu_result,
@@ -424,8 +417,7 @@ port map(
 	O_jump => EX_O_jump,
 	O_mem_read => EX_O_mem_read,
 	O_mem_write => EX_O_mem_write,
-	O_reg_write => EX_O_reg_write,
-	O_mem_to_reg => EX_O_mem_to_reg
+	O_reg_write => EX_O_reg_write
 );
 
 id: decode 
@@ -460,7 +452,6 @@ port map(
 	O_jump => ID_O_jump,
 	O_mem_read => ID_O_mem_read,
 	O_mem_write => ID_O_mem_write,
-	O_mem_to_reg => ID_O_mem_to_reg,
 	O_regdWe => ID_O_regDwe,
 	O_addr => ID_O_addr,
 	O_stall => ID_O_stall
@@ -591,7 +582,6 @@ begin
 	RF_I_en <= '1';
 	FWD_I_en <= '0';
 	F_O_PC <= NEXT_PC;
-	F_O_dataInst <= R_OPCODE & R1 & R2 & R3 & SHAMT & ADD_FUNCT; -- add r1 and r2, store in r3
 
 	wait for CLK_PERIOD;
 	wait for CLK_PERIOD;
@@ -1064,7 +1054,6 @@ begin
   	wait for CLK_PERIOD;
   	assert EX_O_updated_next_pc = BEQ_TAKEN_PC_RESULT report "Test 23.a: Unsuccessful" severity error;
 
-	
 	--- BEQ NOT TAKEN -----
 	ID_I_en <= '1';
 	EX_I_en <= '1';
@@ -1078,6 +1067,7 @@ begin
   	wait for CLK_PERIOD;
   	wait for CLK_PERIOD;
   	assert EX_O_updated_next_pc = BEQ_NOT_TAKEN_PC_RESULT report "Test 23.b: Unsuccessful" severity error;
+	
 
   ----------------------------------------------------------------------------------
   -- TEST 24: BNE
@@ -1098,6 +1088,7 @@ begin
   	wait for CLK_PERIOD;
   	wait for CLK_PERIOD;
   	assert EX_O_updated_next_pc = BNE_TAKEN_PC_RESULT report "Test 24.a: Unsuccessful" severity error;
+	
 
 	
 	--- BNE NOT TAKEN -----
@@ -1113,6 +1104,7 @@ begin
   	wait for CLK_PERIOD;
   	wait for CLK_PERIOD;
   	assert EX_O_updated_next_pc = BNE_NOT_TAKEN_PC_RESULT report "Test 24.b: Unsuccessful" severity error;
+	
 
   ----------------------------------------------------------------------------------
   -- TEST 25: J
@@ -1131,6 +1123,7 @@ begin
 
   	wait for CLK_PERIOD;
   	assert EX_O_updated_next_pc = J_PC_RESULT report "Test 25: Unsuccessful" severity error;
+	
 
   ----------------------------------------------------------------------------------
   -- TEST 26: JAL
@@ -1293,6 +1286,33 @@ begin
 
 	wait for CLK_PERIOD;
 
+  ----------------------------------------------------------------------------------
+  -- TEST 31: Instruction Flush
+  ----------------------------------------------------------------------------------
+	report "----- Test 31: Instruction Flush -----";
+	wait for CLK_PERIOD;
+
+	ID_I_en <= '1';
+	EX_I_en <= '1';
+	RF_I_en <= '1';
+	FWD_I_en <= '0';
+	RF_I_rs <= (others=>'0');
+	RF_I_rt <= (others=>'0');
+
+	F_O_PC <= NEXT_PC;
+	-- jump instruction
+	F_O_dataInst <= J_OPCODE & ADDRESS; 
+  	wait for CLK_PERIOD;
+	-- add instruction (expected to be flushed)
+	RF_I_rs <= R3;
+	RF_I_rt <= R1;
+	F_O_dataInst <= R_OPCODE & R3 & R1 & R4 & SHAMT & ADD_FUNCT;
+  	wait for CLK_PERIOD;
+  	assert EX_O_updated_next_pc = J_PC_RESULT report "Test 31: Unsuccessful" severity error;
+	
+	-- next instruction flushed --> stall
+  	wait for CLK_PERIOD;
+	assert EX_O_stall = '1' report "Test 31 stall: Unsuccessful" severity error;
   report "----- Confirming all tests have ran -----";
   wait;
 

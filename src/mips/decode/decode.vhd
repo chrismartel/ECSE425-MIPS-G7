@@ -33,7 +33,6 @@ Entity decode is
 		O_jump: out STD_LOGIC;
 		O_mem_read: out STD_LOGIC;
 		O_mem_write: out STD_LOGIC;
-		O_mem_to_reg: out STD_LOGIC;
 		O_addr: out STD_LOGIC_VECTOR (25 downto 0);
 		O_stall: out STD_LOGIC
 		);
@@ -120,7 +119,6 @@ id_process: process (I_clk, I_reset)
 		O_jump <= '0';
 		O_mem_read <= '0';
 		O_mem_write <= '0';
-		O_mem_to_reg <= '0';
 		O_addr <= (others => '0');
 		O_stall <= '0';
 	 elsif I_clk'event and I_clk = '1' then
@@ -136,7 +134,6 @@ id_process: process (I_clk, I_reset)
   		        	O_jump <= '0';
   		        	O_mem_read <= '0';
   		        	O_mem_write <= '0';
-  		        	O_mem_to_reg <= '0';
   		        	O_rs <= I_dataInst(25 downto 21);
   		        	O_rt <= I_dataInst(20 downto 16);
   		        	O_rd <= I_dataInst(15 downto 11);	
@@ -148,7 +145,6 @@ id_process: process (I_clk, I_reset)
   		        	O_jump <= '0';
   		        	O_mem_read <= '0';
   		        	O_mem_write <= '0';
-  		        	O_mem_to_reg <= '0';
   		        	O_rs <= I_dataInst(25 downto 21);
   		        	O_rt <= I_dataInst(20 downto 16);
   		        	O_rd <= I_dataInst(15 downto 11);
@@ -160,7 +156,6 @@ id_process: process (I_clk, I_reset)
   		        	O_jump <= '0';
   		        	O_mem_read <= '0';
   		        	O_mem_write <= '0';
-  		        	O_mem_to_reg <= '0';
   		        	O_rs <= I_dataInst(25 downto 21);
   		        	O_rt <= I_dataInst(20 downto 16);
   		        	O_rd <= I_dataInst(15 downto 11);
@@ -172,7 +167,6 @@ id_process: process (I_clk, I_reset)
   		        	O_jump <= '0';
   		        	O_mem_read <= '0';
   		        	O_mem_write <= '0';
-  		        	O_mem_to_reg <= '0';
   		        	O_rs <= I_dataInst(25 downto 21);
   		        	O_rt <= I_dataInst(20 downto 16);
   		        	O_rd <= I_dataInst(15 downto 11);
@@ -184,7 +178,6 @@ id_process: process (I_clk, I_reset)
   		        	O_jump <= '0';
   		        	O_mem_read <= '0';
   		        	O_mem_write <= '0';
-  		        	O_mem_to_reg <= '0';
   		        	O_rs <= I_dataInst(25 downto 21);
   		        	O_rt <= I_dataInst(20 downto 16);
   		        	O_rd <= I_dataInst(15 downto 11);
@@ -199,7 +192,6 @@ id_process: process (I_clk, I_reset)
   		        	O_jump <= '0';
   		        	O_mem_read <= '0';
   		        	O_mem_write <= '0';
-  		        	O_mem_to_reg <= '0';
   		        	O_rs <= I_dataInst(25 downto 21);
   		        	O_rt <= I_dataInst(20 downto 16);
   		        	O_rd <= I_dataInst(15 downto 11);
@@ -211,7 +203,6 @@ id_process: process (I_clk, I_reset)
   		        	O_jump <= '0';
   		        	O_mem_read <= '0';
   		        	O_mem_write <= '0';
-  		        	O_mem_to_reg <= '0';
   		        	O_rs <= I_dataInst(25 downto 21);
   		        	O_rt <= I_dataInst(20 downto 16);
   		        	O_rd <= I_dataInst(15 downto 11);
@@ -223,7 +214,6 @@ id_process: process (I_clk, I_reset)
   		        	O_jump <= '0';
   		        	O_mem_read <= '0';
   		        	O_mem_write <= '0';
-  		        	O_mem_to_reg <= '0';
   		        	O_rs <= I_dataInst(25 downto 21);
   		        	O_rt <= I_dataInst(20 downto 16);
   		        	O_rd <= I_dataInst(15 downto 11);
@@ -235,7 +225,6 @@ id_process: process (I_clk, I_reset)
   		        	O_jump <= '0';
   		        	O_mem_read <= '0';
   		        	O_mem_write <= '0';
-  		        	O_mem_to_reg <= '0';
   		        	O_rs <= I_dataInst(25 downto 21);
   		        	O_rt <= I_dataInst(20 downto 16);
   		        	O_rd <= I_dataInst(15 downto 11);
@@ -250,7 +239,6 @@ id_process: process (I_clk, I_reset)
   		        	O_jump <= '0';
   		        	O_mem_read <= '0';
   		        	O_mem_write <= '0';
-  		        	O_mem_to_reg <= '0';  
   		        	O_rs <= I_dataInst(25 downto 21);
   		        	O_rt <= I_dataInst(20 downto 16);
   		        	O_rd <= I_dataInst(15 downto 11);
@@ -263,7 +251,6 @@ id_process: process (I_clk, I_reset)
   		        	O_jump <= '0';
   		        	O_mem_read <= '0';
   		        	O_mem_write <= '0';
-  		        	O_mem_to_reg <= '0';
   		        	O_rs <= I_dataInst(25 downto 21);
   		        	O_rt <= I_dataInst(20 downto 16);
   		        	O_rd <= I_dataInst(15 downto 11);
@@ -277,8 +264,7 @@ id_process: process (I_clk, I_reset)
   		        	O_branch <= '0';
   		        	O_jump <= '0';
   		        	O_mem_read <= '0';
-  		        	O_mem_write <= '0';
-  		        	O_mem_to_reg <= '0';  
+  		        	O_mem_write <= '0';  
   		        	O_rs <= I_dataInst(25 downto 21);
   		        	O_rt <= I_dataInst(20 downto 16);
   		        	O_rd <= I_dataInst(15 downto 11);
@@ -291,7 +277,6 @@ id_process: process (I_clk, I_reset)
   		        	O_jump <= '0';
   		        	O_mem_read <= '0';
   		        	O_mem_write <= '0';
-  		        	O_mem_to_reg <= '0';
   		        	O_rs <= I_dataInst(25 downto 21);
   		        	O_rt <= I_dataInst(20 downto 16);
   		        	O_rd <= I_dataInst(15 downto 11);
@@ -304,7 +289,6 @@ id_process: process (I_clk, I_reset)
   		        	O_jump <= '0';
   		        	O_mem_read <= '0';
   		        	O_mem_write <= '0';
-  		        	O_mem_to_reg <= '0';
   		        	O_rs <= I_dataInst(25 downto 21);
   		        	O_rt <= I_dataInst(20 downto 16);
   		        	O_rd <= I_dataInst(15 downto 11);
@@ -319,7 +303,6 @@ id_process: process (I_clk, I_reset)
   		        	O_jump <= '0';
   		        	O_mem_read <= '0';
   		        	O_mem_write <= '0';
-  		        	O_mem_to_reg <= '0';
   		        	O_rs <= I_dataInst(25 downto 21);
   		        	O_rt <= I_dataInst(20 downto 16);
   		        	O_rd <= I_dataInst(15 downto 11);
@@ -421,8 +404,7 @@ id_process: process (I_clk, I_reset)
 				O_branch <= '0';
 				O_jump <= '0';
 				O_mem_read <= '0';
-				O_mem_write <= '0';
-				O_mem_to_reg <= '0';					
+				O_mem_write <= '0';				
 				O_rs <= I_dataInst(25 downto 21);
 				O_rd <= I_dataInst(20 downto 16);
 				if I_dataInst(15) = '1' then
@@ -440,7 +422,6 @@ id_process: process (I_clk, I_reset)
 				O_jump <= '0';
 				O_mem_read <= '0';
 				O_mem_write <= '0';
-				O_mem_to_reg <= '0';
 				O_rs <= I_dataInst(25 downto 21);
 				O_rd <= I_dataInst(20 downto 16);
 
@@ -462,7 +443,6 @@ id_process: process (I_clk, I_reset)
 				O_jump <= '0';
 				O_mem_read <= '0';
 				O_mem_write <= '0';
-				O_mem_to_reg <= '0';
 				O_rs <= I_dataInst(25 downto 21);
 				O_rd <= I_dataInst(20 downto 16);
 				if I_dataInst(15) = '1' then
@@ -481,7 +461,6 @@ id_process: process (I_clk, I_reset)
 				O_jump <= '0';
 				O_mem_read <= '0';
 				O_mem_write <= '0';
-				O_mem_to_reg <= '0';
 				O_rs <= I_dataInst(25 downto 21);
 				O_rd <= I_dataInst(20 downto 16);
 				if I_dataInst(15) = '1' then
@@ -499,7 +478,6 @@ id_process: process (I_clk, I_reset)
 				O_jump <= '0';
 				O_mem_read <= '0';
 				O_mem_write <= '0';
-				O_mem_to_reg <= '0';
 				O_rs <= I_dataInst(25 downto 21);
 				O_rd <= I_dataInst(20 downto 16);
 				if I_dataInst(15) = '1' then
@@ -520,7 +498,6 @@ id_process: process (I_clk, I_reset)
 				O_jump <= '0';
 				O_mem_read <= '0';
 				O_mem_write <= '0';
-				O_mem_to_reg <= '0';
 				O_rs <= I_dataInst(25 downto 21);
 				O_rd <= I_dataInst(20 downto 16);
 				if I_dataInst(15) = '1' then
@@ -539,7 +516,6 @@ id_process: process (I_clk, I_reset)
 				O_jump <= '0';
 				O_mem_read <= '1';
 				O_mem_write <= '0';
-				O_mem_to_reg <= '1';
  				O_rs <= I_dataInst(25 downto 21);
 				O_rd <= I_dataInst(20 downto 16);
 				if I_dataInst(15) = '1' then
@@ -559,7 +535,7 @@ id_process: process (I_clk, I_reset)
 				O_jump <= '0';
 				O_mem_read <= '0';
 				O_mem_write <= '0';
-				O_mem_to_reg <= '0';				 
+								 
 				O_rs <= I_dataInst(25 downto 21);
 				O_rt <= I_dataInst(20 downto 16);
 				if I_dataInst(15) = '1' then
@@ -577,7 +553,7 @@ id_process: process (I_clk, I_reset)
 				O_jump <= '0';
 				O_mem_read <= '0';
 				O_mem_write <= '0';
-				O_mem_to_reg <= '0';
+				
 				O_rs <= I_dataInst(25 downto 21);
 				O_rt <= I_dataInst(20 downto 16);
 				if I_dataInst(15) = '1' then
@@ -595,7 +571,6 @@ id_process: process (I_clk, I_reset)
 				O_jump <= '1';
 				O_mem_read <= '0';
 				O_mem_write <= '0';
-				O_mem_to_reg <= '0';
 				O_addr <= I_dataInst(25 downto 0);
 	
         	      	when JAL_OPCODE=>
@@ -604,7 +579,6 @@ id_process: process (I_clk, I_reset)
 				O_jump <= '1';
 				O_mem_read <= '0';
 				O_mem_write <= '0';
-				O_mem_to_reg <= '0';
 				O_addr <= I_dataInst(25 downto 0);
   	               	when others =>
         	        end case;

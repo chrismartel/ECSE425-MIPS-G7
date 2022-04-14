@@ -130,10 +130,10 @@ architecture arch of execute is
 	constant FORWARDING_MEM : std_logic_vector (1 downto 0):= "10";
 
 -- declare signals here
-	signal high_register : std_logic_vector (31 downto 0);
-	signal low_register : std_logic_vector (31 downto 0);
+	signal high_register : std_logic_vector (31 downto 0) := (others=>'0');
+	signal low_register : std_logic_vector (31 downto 0) := (others=>'0');
 	
-	signal flush : std_logic;	-- indicates if the current instruction must be flushed or not
+	signal flush : std_logic := '0';	-- indicates if the current instruction must be flushed or not
 	
 begin
 
