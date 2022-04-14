@@ -9,4 +9,10 @@ VHDL implementation of a simplified 5-stage MIPS Processor with integrated forwa
 * **Memory**
 * **Write-Back**
 
+## **Testbenches**
 
+* **Fetch**
+* **Decode**
+* **Execute**
+* **Memory**
+* **Write-Back**
