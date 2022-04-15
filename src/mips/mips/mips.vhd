@@ -9,7 +9,7 @@ use ieee.numeric_std.all;
 entity mips is 
 generic(
 	RAM_SIZE : INTEGER := 32768;
-	CLK_PERIOD : time := 10 ns
+	CLK_PERIOD : time := 1 ns
 );
 port (
 	I_clk: in std_logic;		-- synchronous active-high clock
@@ -220,12 +220,7 @@ port(
 	
 	-- Outputs to writeback
 	O_alu_result: out std_logic_vector(31 downto 0);
-	O_stall: out std_logic;
-	
-	-- Outputs for forwarding
-	O_forward_rd: out std_logic_vector (4 downto 0);
-	O_forward_mem_reg_write: out std_logic
-
+	O_stall: out std_logic
 );
 end component;
 
