@@ -68,6 +68,7 @@ begin
     variable instruction : std_logic_vector(31 downto 0);
     variable count : INTEGER Range 0 to 31 := 0;
   begin
+    wait until rising_edge(clk);
     -- Load from text file
     file_open(read_file, "C:\Users\Bruno\IdeaProjects\ECSE425-MIPS-G7\src\mips\memory\source.txt", read_mode);
     file_open(write_file, "C:\Users\Bruno\IdeaProjects\ECSE425-MIPS-G7\src\mips\memory\target.txt", write_mode);
@@ -82,33 +83,32 @@ begin
       address <= count;
       memwrite <= '1';
       wait until falling_edge(waitrequest);
-      memwrite <= '0';
-      wait for clk_period;
       count := count + 4;
     end loop;
     file_close(read_file);
     file_close(write_file);
+    memwrite <= '0';
     -- TEST CASES:
     report "Starting Tests" ;
     -- TEST 1: read data
     -- addess is still at LSB of last loaded instruction
     wait for clk_period;
-    wait for clk_period;
+    wait until rising_edge(clk);
     memread <= '1';
-    wait until rising_edge(waitrequest);
+    wait until falling_edge(waitrequest);
     assert readdata = instruction report "write unsuccessful" severity error;
     -- TEST 2 : write then read
     memread <= '0';
-    wait for clk_period;
     address <= 0;
     writedata <= X"ffffffff";
     memwrite <= '1';
-    wait until rising_edge(waitrequest);
+    wait until falling_edge(waitrequest);
     memwrite <= '0';
-    wait for clk_period;
     memread <= '1';
-    wait until rising_edge(waitrequest);
+    wait until falling_edge(waitrequest);
     assert readdata = x"ffffffff" report "write unsuccessful" severity error;
+    memread <= '0';
+    memwrite <= '0';
     wait;
   end process;
 
