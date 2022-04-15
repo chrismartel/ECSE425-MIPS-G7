@@ -10,7 +10,7 @@ entity Fetch_tb is
 end Fetch_tb;
 
 architecture behavior of Fetch_tb is
-constant clk_period : time := 10 ns;
+constant clk_period : time := 1 ns;
 
 component fetch is
 	port (
