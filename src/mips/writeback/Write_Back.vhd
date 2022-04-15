@@ -13,6 +13,7 @@ port (I_clk: in std_logic;
 	I_branch: in std_logic;
 	I_en : in std_logic;
 	I_reset : in std_logic;
+	I_stall: in std_logic;
 	
 	O_we : out std_logic;
 	O_rd: out std_logic_vector (4 downto 0);
@@ -25,11 +26,11 @@ architecture write_back_arch of write_back is
 begin
 	process(I_clk, I_reset)
 		begin
-			if ((I_reset or I_jump or I_branch) = '1') then
+			if ((I_reset or I_jump or I_branch or I_stall) = '1') then
 				O_rd <= "XXXXX";
 				O_mux <= "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
 				O_we <= '0';
-			elsif falling_edge(I_clk) then
+			elsif falling_edge(I_clk) then -- write data to registers on falling edge of clock
 				if (I_en = '1') then
 					--mux for choosing input from ALU or MEM
 					if ((I_regDwe and I_mem_read) = '0') then
