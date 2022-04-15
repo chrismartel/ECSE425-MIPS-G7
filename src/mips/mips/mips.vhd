@@ -229,6 +229,25 @@ port(
 );
 end component;
 
+-- WRITE-BACK COMPONENT
+component write_back is
+port (I_clk: in std_logic;
+	I_regDwe : in std_logic;
+	I_mem_read : in std_logic;
+	I_alu : in std_logic_vector (31 downto 0);
+	I_mem: in std_logic_vector (31 downto 0);
+	I_rd: in std_logic_vector (4 downto 0);
+	I_jump : in std_logic;
+	I_branch: in std_logic;
+	I_en : in std_logic;
+	I_reset : in std_logic;
+	I_stall: in std_logic;
+	
+	O_we : out std_logic;
+	O_rd: out std_logic_vector (4 downto 0);
+	O_mux : out std_logic_vector (31 downto 0)
+  );
+end component;
 
 -- FORWARDING UNIT COMPONENT 
 component forwarding_unit is
@@ -533,6 +552,26 @@ port map(
 	O_alu_result => MEM_O_alu_result,
 	O_stall => MEM_O_stall
 );
+
+wb: write_back
+port map(
+	I_clk => I_clk,
+	I_reset => I_reset,
+	I_en => I_en,
+	
+	I_regDwe => MEM_O_reg_write,
+	I_mem_read => MEM_O_mem_read,
+	I_alu => MEM_O_alu_result,
+	I_mem => (others=>'0'), -- TODO connect with output of data instruction
+	I_rd => MEM_O_rd,
+	I_jump => MEM_O_jump,
+	I_branch => MEM_O_branch,
+	I_stall => MEM_O_stall,
+	
+	O_we => WB_O_we,
+	O_rd => WB_O_rd,
+	O_mux => WB_O_datad
+  );
 
 fwd: forwarding_unit
 port map(
