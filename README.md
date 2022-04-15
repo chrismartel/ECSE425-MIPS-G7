@@ -37,11 +37,11 @@ The TCL script to run the decode stage test bench is available here: [decode_tb.
 The VHDL source code for the execute stage component test bench implementation is available here: [execute_tb.vhd](src/mips/ex/execute_tb.vhd).  
 The TCL script to run the execute stage test bench is available here: [execute_tb.tcl](src/mips/ex/execute_tb.tcl).
 * **Memory**  
-The VHDL source code for the memory stage component test bench implementation is available here: [memory_tb.vhd](src/mips/memory_access/memory.vhd).  
-The TCL script to run the memory stage test bench is available here: [memory_tb.tcl](src/mips/memory_access/memory.tcl).
+The VHDL source code for the memory stage component test bench implementation is available here: [memory_tb.vhd](src/mips/memory_access/memory_tb.vhd).  
+The TCL script to run the memory stage test bench is available here: [memorytest.tcl](src/mips/memory_access/memorytest.tcl).
 * **Write-Back**  
-The VHDL source code for the writeback stage component test bench implementation is available here: [writeback_tb.vhd](src/mips/writeback/writeback_tb.vhd).  
-The TCL script to run the writeback stage test bench is available here: [writeback_tb.tcl](src/mips/writeback/writeback_tb.tcl).
+The VHDL source code for the writeback stage component test bench implementation is available here: [write_back_tb.vhd](src/mips/writeback/write_back_tb.vhd).  
+The TCL script to run the writeback stage test bench is available here: [write_back_tb.tcl](src/mips/writeback/write_back_tb.tcl).
 
 ### **Memory**  
 * **Instruction Memory**  
