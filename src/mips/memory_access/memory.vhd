@@ -1,3 +1,7 @@
+-- ECSE425 W2022
+-- Final Project, Group 07
+-- Memory Access Stage
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -20,12 +24,10 @@ port(
 	I_mem_read: in std_logic; 					-- indicates if a value must be read from memory at calculated address
 	I_mem_write: in std_logic; 					-- indicates if value in I_rt_data must be written in memory at calculated address
 	I_reg_write: in std_logic; 					-- indicates if value calculated in ALU must be written to destination register
-	I_mem_to_reg: in std_logic; 					-- indicates if value loaded from memory must be written to destination register
 	
 	-- instruction: in std_logic_vector (31 downto 0); -- instruction opcode
 	I_rt_data: in std_logic_vector (31 downto 0); -- the data that needs to be written
 	I_alu_result: in std_logic_vector (31 downto 0); -- connected to alu_result in execute, holds address to send data to. If not a load/store, simply passes data forward
-	I_updated_next_pc: in std_logic_vector (31 downto 0);
 	I_stall: in std_logic;
 	
 	
@@ -44,10 +46,8 @@ port(
 	O_mem_read: out std_logic; 					-- indicates if a value must be read from memory at calculated address
 	O_mem_write: out std_logic; 					-- indicates if value in I_rt_data must be written in memory at calculated address
 	O_reg_write: out std_logic; 					-- indicates if value calculated in ALU must be written to destination register
-	O_mem_to_reg: out std_logic; 					-- indicates if value loaded from memory must be written to destination register
 	
 	O_alu_result: out std_logic_vector(31 downto 0);
-	O_updated_next_pc: out std_logic_vector(31 downto 0);
 	O_stall: out std_logic;
 	
 	O_forward_rd: out std_logic_vector (4 downto 0);
@@ -78,7 +78,6 @@ begin
 			O_mem_read <= '0';
 			O_mem_write <= '0';
 			O_reg_write <= '0';
-			O_mem_to_reg <= '0';
 			O_alu_result <= (others =>'0');
 			O_updated_next_pc <= (others =>'0');
 			O_stall <= '0';
@@ -106,7 +105,6 @@ begin
 					O_branch <= I_branch;
 					O_reg_write <= I_reg_write;
 					O_forward_mem_reg_write <= I_reg_write;
-					O_mem_to_reg <= I_mem_to_reg;
 					O_jump <= I_jump;
 
 					O_updated_next_pc <= I_updated_next_pc;

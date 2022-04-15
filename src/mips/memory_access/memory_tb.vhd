@@ -30,12 +30,9 @@ architecture behavior of memory_tb is
 			I_mem_read: in std_logic; 					-- indicates if a value must be read from memory at calculated address
 			I_mem_write: in std_logic; 					-- indicates if value in I_rt_data must be written in memory at calculated address
 			I_reg_write: in std_logic; 					-- indicates if value calculated in ALU must be written to destination register
-			I_mem_to_reg: in std_logic; 					-- indicates if value loaded from memory must be written to destination register
-			
 
 			I_rt_data: in std_logic_vector (31 downto 0); -- the data that needs to be written
 			I_alu_result: in std_logic_vector (31 downto 0); -- connected to alu_result in execute, holds address to send data to. If not a load/store, simply passes data forward
-			I_updated_next_pc: in std_logic_vector (31 downto 0);
 			I_stall: in std_logic;
 			
 			
@@ -54,10 +51,8 @@ architecture behavior of memory_tb is
 			O_mem_read: out std_logic; 					-- indicates if a value must be read from memory at calculated address
 			O_mem_write: out std_logic; 					-- indicates if value in I_rt_data must be written in memory at calculated address
 			O_reg_write: out std_logic; 					-- indicates if value calculated in ALU must be written to destination register
-			O_mem_to_reg: out std_logic; 					-- indicates if value loaded from memory must be written to destination register
-
+			
 			O_alu_result: out std_logic_vector(31 downto 0);
-			O_updated_next_pc: out std_logic_vector(31 downto 0);
 			O_stall: out std_logic;
 			
 			O_forward_rd: out std_logic_vector (4 downto 0);
@@ -99,11 +94,9 @@ architecture behavior of memory_tb is
 	signal I_mem_read: std_logic;
 	signal I_mem_write: std_logic;
 	signal I_reg_write: std_logic;
-	signal I_mem_to_reg: std_logic;
 	
 	signal I_rt_data: std_logic_vector (31 downto 0); 
 	signal I_alu_result: std_logic_vector (31 downto 0);
-	signal I_updated_next_pc: std_logic_vector (31 downto 0);
 	signal I_stall: std_logic;
 	
 	
@@ -122,10 +115,8 @@ architecture behavior of memory_tb is
 	signal O_mem_read: std_logic;
 	signal O_mem_write: std_logic;
 	signal O_reg_write: std_logic;
-	signal O_mem_to_reg: std_logic;
 	
 	signal O_alu_result: std_logic_vector(31 downto 0);
-	signal O_updated_next_pc: std_logic_vector(31 downto 0);
 	signal O_stall: std_logic;
 	
 	signal O_forward_rd: std_logic_vector (4 downto 0);
@@ -144,11 +135,9 @@ begin
 		I_mem_read => I_mem_read,
 		I_mem_write => I_mem_write,
 		I_reg_write => I_reg_write,
-		I_mem_to_reg => I_mem_to_reg,
 		I_rt_data => I_rt_data,
 		I_branch => I_branch,
 		I_alu_result => I_alu_result,
-		I_updated_next_pc => I_updated_next_pc,
 		I_stall => I_stall,
 		data_address => data_address,
 		data_memread => data_memread,
@@ -162,9 +151,7 @@ begin
 		O_mem_read => O_mem_read,
 		O_mem_write => O_mem_write,
 		O_reg_write => O_reg_write,
-		O_mem_to_reg => O_mem_to_reg,
 		O_alu_result => O_alu_result,
-		O_updated_next_pc => O_updated_next_pc,
 		O_stall => O_stall,
 		O_forward_rd => O_forward_rd,
 		O_forward_mem_reg_write => O_forward_mem_reg_write
@@ -203,10 +190,8 @@ I_mem_read <= '0';
 I_jump <= '0';
 I_rd <= "00111";
 I_reg_write <= '0';
-I_mem_to_reg <= '0';
 
 I_rt_data <= X"10101010";
-I_updated_next_pc <= X"00000000";
 I_stall <= '0';
 
 wait for clk_period;
@@ -222,7 +207,6 @@ assert O_jump = '0' report "Test case 1 failed : O_jump" severity error;
 assert O_mem_read = '0' report "Test case 1 failed : O_mem_read" severity error;
 assert O_mem_write = '1' report "Test case 1 failed : O_mem_write" severity error;
 assert O_reg_write = '0' report "Test case 1 failed : O_reg_write" severity error;
-assert O_mem_to_reg = '0' report "Test case 1 failed : O_mem_to_reg" severity error;
 assert O_stall = '0' report "Test case 1 failed : O_stall" severity error;
 
 
@@ -237,10 +221,8 @@ I_mem_read <= '1';
 I_jump <= '0';
 I_rd <= "00111";
 I_reg_write <= '1';
-I_mem_to_reg <= '1';
 
 I_rt_data <= X"11111111";
-I_updated_next_pc <= X"00000000";
 I_stall <= '0';
 
 -- wait until memory done
@@ -257,7 +239,6 @@ assert O_jump = '0' report "Test case 2 failed : O_jump" severity error;
 assert O_mem_read = '1' report "Test case 2 failed : O_mem_read" severity error;
 assert O_mem_write = '0' report "Test case 2 failed : O_mem_write" severity error;
 assert O_reg_write = '1' report "Test case 2 failed : O_reg_write" severity error;
-assert O_mem_to_reg = '1' report "Test case 2 failed : O_mem_to_reg" severity error;
 assert O_stall = '0' report "Test case 2 failed : O_stall" severity error;
 
 -- wait for clk_period/2;
@@ -271,9 +252,7 @@ I_mem_read <= '0';
 I_jump <= '0';
 I_rd <= "01000";
 I_reg_write <= '1';
-I_mem_to_reg <= '0';
 
-I_updated_next_pc <= X"00000000";
 I_stall <= '0';
 
 wait for clk_period;
@@ -291,10 +270,8 @@ assert O_jump = '0' report "Test case 3 failed : O_jump" severity error;
 assert O_mem_read = '0' report "Test case 3 failed : O_mem_read" severity error;
 assert O_mem_write = '0' report "Test case 3 failed : O_mem_write" severity error;
 assert O_reg_write = '1' report "Test case 3 failed : O_reg_write" severity error;
-assert O_mem_to_reg = '0' report "Test case 3 failed : O_mem_to_reg" severity error;
 assert O_stall = '0' report "Test case 3 failed : O_stall" severity error;
 assert O_alu_result = x"00000000" report "Test case 3 failed : O_alu_result" severity error;
-assert O_updated_next_pc = x"00000000" report "Test case 3 failed : O_updated_next_pc" severity error;
 
 
 -- TEST 4: two consecutive writes
@@ -308,10 +285,8 @@ I_mem_read <= '0';
 I_jump <= '0';
 I_rd <= "00111";
 I_reg_write <= '0';
-I_mem_to_reg <= '0';
 
 I_rt_data <= X"ABCDABCD";
-I_updated_next_pc <= X"00000000";
 I_stall <= '0';
 
 wait for clk_period;
@@ -325,10 +300,8 @@ I_mem_read <= '0';
 I_jump <= '0';
 I_rd <= "00111";
 I_reg_write <= '0';
-I_mem_to_reg <= '0';
 
 I_rt_data <= X"EFEFEFEF";
-I_updated_next_pc <= X"00000000";
 I_stall <= '0';
 
 wait for clk_period;
@@ -344,10 +317,8 @@ I_mem_read <= '1';
 I_jump <= '0';
 I_rd <= "00111";
 I_reg_write <= '1';
-I_mem_to_reg <= '1';
 
 I_rt_data <= X"11111111";
-I_updated_next_pc <= X"00000000";
 I_stall <= '0';
 
 wait for clk_period;
@@ -362,10 +333,8 @@ I_mem_read <= '1';
 I_jump <= '0';
 I_rd <= "00111";
 I_reg_write <= '1';
-I_mem_to_reg <= '1';
 
 I_rt_data <= X"11111111";
-I_updated_next_pc <= X"00000000";
 I_stall <= '0';
 
 wait for clk_period;
@@ -387,10 +356,8 @@ I_mem_read <= '1';
 I_jump <= '0';
 I_rd <= "00111";
 I_reg_write <= '1';
-I_mem_to_reg <= '1';
 
 I_rt_data <= X"11111111";
-I_updated_next_pc <= X"00000000";
 I_stall <= '0';
 
 wait for clk_period;
@@ -404,10 +371,8 @@ I_mem_read <= '1';
 I_jump <= '0';
 I_rd <= "00111";
 I_reg_write <= '1';
-I_mem_to_reg <= '1';
 
 I_rt_data <= X"11111111";
-I_updated_next_pc <= X"00000000";
 I_stall <= '0';
 
 wait for clk_period;
