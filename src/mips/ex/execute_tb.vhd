@@ -120,8 +120,10 @@ port(
 	O_reg_write: out std_logic;
 
 	-- forwarding
-	I_ex_data: in std_logic_vector (31 downto 0);
-	I_mem_data: in std_logic_vector (31 downto 0);
+	I_fwd_ex_alu_result: in std_logic_vector (31 downto 0);
+	I_fwd_mem_read_data: in std_logic_vector (31 downto 0);
+	I_fwd_mem_alu_result: in std_logic_vector (31 downto 0);
+	I_fwd_mem_read: in std_logic;
 
 	I_forward_rs: in std_logic_vector (1 downto 0);
 	I_forward_rt: in std_logic_vector (1 downto 0)
@@ -171,8 +173,10 @@ signal O_reg_write: std_logic;
 signal O_stall: std_logic;
 
 -- Forwarding Signals
-signal I_ex_data: std_logic_vector (31 downto 0);
-signal I_mem_data: std_logic_vector (31 downto 0);
+signal I_fwd_ex_alu_result: std_logic_vector (31 downto 0);
+signal I_fwd_mem_read_data: std_logic_vector (31 downto 0);
+signal I_fwd_mem_alu_result: std_logic_vector (31 downto 0);
+signal I_fwd_mem_read: std_logic;
 
 signal I_forward_rs: std_logic_vector (1 downto 0);
 signal I_forward_rt: std_logic_vector (1 downto 0);
@@ -265,8 +269,10 @@ port map(
 	I_reg_write => I_reg_write,				
 
 	-- forwarding
-	I_ex_data => I_ex_data,
-	I_mem_data => I_mem_data,
+	I_fwd_ex_alu_result => I_fwd_ex_alu_result,
+	I_fwd_mem_read_data => I_fwd_mem_read_data,
+	I_fwd_mem_alu_result => I_fwd_mem_alu_result,
+	I_fwd_mem_read => I_fwd_mem_read,
 	I_forward_rs => I_forward_rs,
 	I_forward_rt => I_forward_rt,	
 
@@ -342,8 +348,8 @@ begin
 
 
 	-- forwarding
-	I_ex_data <= (others=>'X');
-	I_mem_data <= (others=>'X');
+	I_fwd_ex_alu_result <= (others=>'X');
+	I_fwd_mem_read_data <= (others=>'X');
 	I_forward_rs <= FORWARDING_NONE;
 	I_forward_rt <= FORWARDING_NONE;
 	
@@ -392,8 +398,8 @@ begin
 
 
 	-- forwarding
-	I_ex_data <= (others=>'X');
-	I_mem_data <= (others=>'X');
+	I_fwd_ex_alu_result <= (others=>'X');
+	I_fwd_mem_read_data <= (others=>'X');
 	I_forward_rs <= FORWARDING_NONE;
 	I_forward_rt <= FORWARDING_NONE;	
 
@@ -439,8 +445,8 @@ begin
 
 
 	-- forwarding
-	I_ex_data <= (others=>'X');
-	I_mem_data <= (others=>'X');
+	I_fwd_ex_alu_result <= (others=>'X');
+	I_fwd_mem_read_data <= (others=>'X');
 	I_forward_rs <= FORWARDING_NONE;
 	I_forward_rt <= FORWARDING_NONE;
 
@@ -471,8 +477,8 @@ begin
 
 
 	-- forwarding
-	I_ex_data <= (others=>'X');
-	I_mem_data <= (others=>'X');
+	I_fwd_ex_alu_result <= (others=>'X');
+	I_fwd_mem_read_data <= (others=>'X');
 	I_forward_rs <= FORWARDING_NONE;
 	I_forward_rt <= FORWARDING_NONE;
 
@@ -505,8 +511,8 @@ begin
 
 
 	-- forwarding
-	I_ex_data <= (others=>'X');
-	I_mem_data <= (others=>'X');
+	I_fwd_ex_alu_result <= (others=>'X');
+	I_fwd_mem_read_data <= (others=>'X');
 	I_forward_rs <= FORWARDING_NONE;
 	I_forward_rt <= FORWARDING_NONE;
 
@@ -552,8 +558,8 @@ begin
 
 
 	-- forwarding
-	I_ex_data <= (others=>'X');
-	I_mem_data <= (others=>'X');
+	I_fwd_ex_alu_result <= (others=>'X');
+	I_fwd_mem_read_data <= (others=>'X');
 	I_forward_rs <= FORWARDING_NONE;
 	I_forward_rt <= FORWARDING_NONE;
 
@@ -585,8 +591,8 @@ begin
 
 
 	-- forwarding
-	I_ex_data <= (others=>'X');
-	I_mem_data <= (others=>'X');
+	I_fwd_ex_alu_result <= (others=>'X');
+	I_fwd_mem_read_data <= (others=>'X');
 	I_forward_rs <= FORWARDING_NONE;
 	I_forward_rt <= FORWARDING_NONE;
 
@@ -616,8 +622,8 @@ begin
 
 
 	-- forwarding
-	I_ex_data <= (others=>'X');
-	I_mem_data <= (others=>'X');
+	I_fwd_ex_alu_result <= (others=>'X');
+	I_fwd_mem_read_data <= (others=>'X');
 	I_forward_rs <= FORWARDING_NONE;
 	I_forward_rt <= FORWARDING_NONE;
 
@@ -671,8 +677,8 @@ begin
 
 
 	-- forwarding
-	I_ex_data <= (others=>'X');
-	I_mem_data <= (others=>'X');
+	I_fwd_ex_alu_result <= (others=>'X');
+	I_fwd_mem_read_data <= (others=>'X');
 	I_forward_rs <= FORWARDING_NONE;
 	I_forward_rt <= FORWARDING_NONE;
 
@@ -704,8 +710,8 @@ begin
 
 
 	-- forwarding
-	I_ex_data <= (others=>'X');
-	I_mem_data <= (others=>'X');
+	I_fwd_ex_alu_result <= (others=>'X');
+	I_fwd_mem_read_data <= (others=>'X');
 	I_forward_rs <= FORWARDING_NONE;
 	I_forward_rt <= FORWARDING_NONE;
 
@@ -750,8 +756,8 @@ begin
 	
 
 	-- forwarding
-	I_ex_data <= (others=>'X');
-	I_mem_data <= (others=>'X');
+	I_fwd_ex_alu_result <= (others=>'X');
+	I_fwd_mem_read_data <= (others=>'X');
 	I_forward_rs <= FORWARDING_NONE;
 	I_forward_rt <= FORWARDING_NONE;
 
@@ -797,8 +803,8 @@ begin
 	
 
 	-- forwarding
-	I_ex_data <= (others=>'X');
-	I_mem_data <= (others=>'X');
+	I_fwd_ex_alu_result <= (others=>'X');
+	I_fwd_mem_read_data <= (others=>'X');
 	I_forward_rs <= FORWARDING_NONE;
 	I_forward_rt <= FORWARDING_NONE;
 
@@ -843,8 +849,8 @@ begin
 	
 
 	-- forwarding
-	I_ex_data <= (others=>'X');
-	I_mem_data <= (others=>'X');
+	I_fwd_ex_alu_result <= (others=>'X');
+	I_fwd_mem_read_data <= (others=>'X');
 	I_forward_rs <= FORWARDING_NONE;
 	I_forward_rt <= FORWARDING_NONE;
 
@@ -890,8 +896,8 @@ begin
 	
 
 	-- forwarding
-	I_ex_data <= (others=>'X');
-	I_mem_data <= (others=>'X');
+	I_fwd_ex_alu_result <= (others=>'X');
+	I_fwd_mem_read_data <= (others=>'X');
 	I_forward_rs <= FORWARDING_NONE;
 	I_forward_rt <= FORWARDING_NONE;
 
@@ -936,8 +942,8 @@ begin
 	
 
 	-- forwarding
-	I_ex_data <= (others=>'X');
-	I_mem_data <= (others=>'X');
+	I_fwd_ex_alu_result <= (others=>'X');
+	I_fwd_mem_read_data <= (others=>'X');
 	I_forward_rs <= FORWARDING_NONE;
 	I_forward_rt <= FORWARDING_NONE;
 
@@ -982,8 +988,8 @@ begin
 	
 
 	-- forwarding
-	I_ex_data <= (others=>'X');
-	I_mem_data <= (others=>'X');
+	I_fwd_ex_alu_result <= (others=>'X');
+	I_fwd_mem_read_data <= (others=>'X');
 	I_forward_rs <= FORWARDING_NONE;
 	I_forward_rt <= FORWARDING_NONE;
 
@@ -1028,8 +1034,8 @@ begin
 	
 
 	-- forwarding
-	I_ex_data <= (others=>'X');
-	I_mem_data <= (others=>'X');
+	I_fwd_ex_alu_result <= (others=>'X');
+	I_fwd_mem_read_data <= (others=>'X');
 	I_forward_rs <= FORWARDING_NONE;
 	I_forward_rt <= FORWARDING_NONE;
 
@@ -1059,8 +1065,8 @@ begin
 	
 
 	-- forwarding
-	I_ex_data <= (others=>'X');
-	I_mem_data <= (others=>'X');
+	I_fwd_ex_alu_result <= (others=>'X');
+	I_fwd_mem_read_data <= (others=>'X');
 	I_forward_rs <= FORWARDING_NONE;
 	I_forward_rt <= FORWARDING_NONE;
 
@@ -1104,8 +1110,8 @@ begin
 
 	
 	-- forwarding
-	I_ex_data <= (others=>'X');
-	I_mem_data <= (others=>'X');
+	I_fwd_ex_alu_result <= (others=>'X');
+	I_fwd_mem_read_data <= (others=>'X');
 	I_forward_rs <= FORWARDING_NONE;
 	I_forward_rt <= FORWARDING_NONE;
 
@@ -1151,8 +1157,8 @@ begin
 	
 
 	-- forwarding
-	I_ex_data <= (others=>'X');
-	I_mem_data <= (others=>'X');
+	I_fwd_ex_alu_result <= (others=>'X');
+	I_fwd_mem_read_data <= (others=>'X');
 	I_forward_rs <= FORWARDING_NONE;
 	I_forward_rt <= FORWARDING_NONE;
 
@@ -1198,8 +1204,8 @@ begin
 	
 
 	-- forwarding
-	I_ex_data <= (others=>'X');
-	I_mem_data <= (others=>'X');
+	I_fwd_ex_alu_result <= (others=>'X');
+	I_fwd_mem_read_data <= (others=>'X');
 	I_forward_rs <= FORWARDING_NONE;
 	I_forward_rt <= FORWARDING_NONE;
 
@@ -1240,8 +1246,8 @@ begin
 	
 
 	-- forwarding
-	I_ex_data <= (others=>'X');
-	I_mem_data <= (others=>'X');
+	I_fwd_ex_alu_result <= (others=>'X');
+	I_fwd_mem_read_data <= (others=>'X');
 	I_forward_rs <= FORWARDING_NONE;
 	I_forward_rt <= FORWARDING_NONE;
 
@@ -1287,8 +1293,8 @@ begin
 	
 
 	-- forwarding
-	I_ex_data <= (others=>'X');
-	I_mem_data <= (others=>'X');
+	I_fwd_ex_alu_result <= (others=>'X');
+	I_fwd_mem_read_data <= (others=>'X');
 	I_forward_rs <= FORWARDING_NONE;
 	I_forward_rt <= FORWARDING_NONE;
 
@@ -1334,8 +1340,8 @@ begin
 	
 
 	-- forwarding
-	I_ex_data <= (others=>'X');
-	I_mem_data <= (others=>'X');
+	I_fwd_ex_alu_result <= (others=>'X');
+	I_fwd_mem_read_data <= (others=>'X');
 	I_forward_rs <= FORWARDING_NONE;
 	I_forward_rt <= FORWARDING_NONE;
 
@@ -1381,8 +1387,8 @@ begin
 	
 
 	-- forwarding
-	I_ex_data <= (others=>'X');
-	I_mem_data <= (others=>'X');
+	I_fwd_ex_alu_result <= (others=>'X');
+	I_fwd_mem_read_data <= (others=>'X');
 	I_forward_rs <= FORWARDING_NONE;
 	I_forward_rt <= FORWARDING_NONE;
 
@@ -1426,8 +1432,8 @@ begin
 	I_reg_write <= '1';				
 
 	-- forwarding
-	I_ex_data <= (others=>'X');
-	I_mem_data <= (others=>'X');
+	I_fwd_ex_alu_result <= (others=>'X');
+	I_fwd_mem_read_data <= (others=>'X');
 	I_forward_rs <= FORWARDING_NONE;
 	I_forward_rt <= FORWARDING_NONE;
 
@@ -1472,8 +1478,8 @@ begin
 	
 
 	-- forwarding
-	I_ex_data <= (others=>'X');
-	I_mem_data <= (others=>'X');
+	I_fwd_ex_alu_result <= (others=>'X');
+	I_fwd_mem_read_data <= (others=>'X');
 	I_forward_rs <= FORWARDING_NONE;
 	I_forward_rt <= FORWARDING_NONE;
 
@@ -1519,8 +1525,8 @@ begin
 	I_reg_write <= '0';
 
 	-- forwarding
-	I_ex_data <= (others=>'X');
-	I_mem_data <= (others=>'X');
+	I_fwd_ex_alu_result <= (others=>'X');
+	I_fwd_mem_read_data <= (others=>'X');
 	I_forward_rs <= FORWARDING_NONE;
 	I_forward_rt <= FORWARDING_NONE;
 
@@ -1563,8 +1569,8 @@ begin
 	I_reg_write <= '0';
 
 	-- forwarding
-	I_ex_data <= (others=>'X');
-	I_mem_data <= (others=>'X');
+	I_fwd_ex_alu_result <= (others=>'X');
+	I_fwd_mem_read_data <= (others=>'X');
 	I_forward_rs <= FORWARDING_NONE;
 	I_forward_rt <= FORWARDING_NONE;
 
@@ -1611,8 +1617,8 @@ begin
 	I_reg_write <= '0';
 
 	-- forwarding
-	I_ex_data <= (others=>'X');
-	I_mem_data <= (others=>'X');
+	I_fwd_ex_alu_result <= (others=>'X');
+	I_fwd_mem_read_data <= (others=>'X');
 	I_forward_rs <= FORWARDING_NONE;
 	I_forward_rt <= FORWARDING_NONE;
 
@@ -1655,8 +1661,8 @@ begin
 	I_reg_write <= '0';
 
 	-- forwarding
-	I_ex_data <= (others=>'X');
-	I_mem_data <= (others=>'X');
+	I_fwd_ex_alu_result <= (others=>'X');
+	I_fwd_mem_read_data <= (others=>'X');
 	I_forward_rs <= FORWARDING_NONE;
 	I_forward_rt <= FORWARDING_NONE;
 
@@ -1698,8 +1704,8 @@ begin
 	I_reg_write <= '0';
 
 	-- forwarding
-	I_ex_data <= (others=>'X');
-	I_mem_data <= (others=>'X');
+	I_fwd_ex_alu_result <= (others=>'X');
+	I_fwd_mem_read_data <= (others=>'X');
 	I_forward_rs <= FORWARDING_NONE;
 	I_forward_rt <= FORWARDING_NONE;
 
@@ -1743,8 +1749,8 @@ begin
 	I_reg_write <= '0';
 
 	-- forwarding
-	I_ex_data <= (others=>'X');
-	I_mem_data <= (others=>'X');
+	I_fwd_ex_alu_result <= (others=>'X');
+	I_fwd_mem_read_data <= (others=>'X');
 	I_forward_rs <= FORWARDING_NONE;
 	I_forward_rt <= FORWARDING_NONE;
 
@@ -1789,8 +1795,8 @@ begin
 	I_reg_write <= '1';
 
 	-- forwarding
-	I_ex_data <= DATA_8;
-	I_mem_data <= (others=>'X');
+	I_fwd_ex_alu_result <= DATA_8;
+	I_fwd_mem_read_data <= (others=>'X');
 	I_forward_rs <= FORWARDING_EX;
 	I_forward_rt <= FORWARDING_NONE;
 	
@@ -1829,8 +1835,8 @@ begin
 	I_reg_write <= '1';
 
 	-- forwarding
-	I_ex_data <= DATA_4;
-	I_mem_data <= (others=>'X');
+	I_fwd_ex_alu_result <= DATA_4;
+	I_fwd_mem_read_data <= (others=>'X');
 	I_forward_rs <= FORWARDING_NONE;
 	I_forward_rt <= FORWARDING_EX;
 	
@@ -1875,13 +1881,49 @@ begin
 
 	
 	-- forwarding
-	I_ex_data <= (others=>'X');
-	I_mem_data <= DATA_8;
+	I_fwd_ex_alu_result <= (others=>'X');
+	I_fwd_mem_read_data <= DATA_8;
+	I_fwd_mem_alu_result <= (others=>'X');
+	I_fwd_mem_read <= '1';
 	I_forward_rs <= FORWARDING_MEM;
 	I_forward_rt <= FORWARDING_NONE;
 	
   	wait for CLK_PERIOD;
-  	assert O_alu_result = ADD_RESULT report "Test 28: Unsuccessful" severity error;
+  	assert O_alu_result = ADD_RESULT report "Test 28 fwd rs from mem read: Unsuccessful" severity error;
+
+	-- instruction signals
+	I_rs <= RS;
+	I_rt <= RT;
+	I_rd <= RD;
+	I_shamt <= SHAMT;
+	I_imm_ZE <= IMM_8;
+	I_imm_SE <= IMM_8;
+	I_addr <= ADDRESS;
+	I_opcode <= R_OPCODE;
+	I_funct <= ADD_FUNCT;
+
+	I_rs_data <= (others=>'X');
+	I_rt_data <= DATA_4;
+	I_next_pc <= NEXT_PC_VALUE;
+
+	-- control signals
+	I_branch <= '0';
+	I_jump <= '0';
+	I_mem_read <= '0';		
+	I_mem_write <= '0'; 					
+	I_reg_write <= '1';
+
+	
+	-- forwarding
+	I_fwd_ex_alu_result <= (others=>'X');
+	I_fwd_mem_read_data <= (others=>'X');
+	I_fwd_mem_alu_result <= DATA_8;
+	I_fwd_mem_read <= '0';
+	I_forward_rs <= FORWARDING_MEM;
+	I_forward_rt <= FORWARDING_NONE;
+	
+  	wait for CLK_PERIOD;
+  	assert O_alu_result = ADD_RESULT report "Test 28 fwd rs from mem alu: Unsuccessful" severity error;
 
   ----------------------------------------------------------------------------------
   -- RESET
@@ -1915,14 +1957,47 @@ begin
 	I_reg_write <= '1';
 
 	-- forwarding
-	I_ex_data <= (others=>'X');
-	I_mem_data <= DATA_4;
+	I_fwd_ex_alu_result <= (others=>'X');
+	I_fwd_mem_read_data <= DATA_4;
+	I_fwd_mem_read <= '1';
 	I_forward_rs <= FORWARDING_NONE;
 	I_forward_rt <= FORWARDING_MEM;
 	
   	wait for CLK_PERIOD;
-  	assert O_alu_result = ADD_RESULT report "Test 28: Unsuccessful" severity error;
+  	assert O_alu_result = ADD_RESULT report "Test 28 fwd rt from mem read: Unsuccessful" severity error;
 
+
+	-- instruction signals
+	I_rs <= RS;
+	I_rt <= RT;
+	I_rd <= RD;
+	I_shamt <= SHAMT;
+	I_imm_ZE <= IMM_8;
+	I_imm_SE <= IMM_8;
+	I_addr <= ADDRESS;
+	I_opcode <= R_OPCODE;
+	I_funct <= ADD_FUNCT;
+
+	I_rs_data <= DATA_8;
+	I_rt_data <= (others=>'X');
+	I_next_pc <= NEXT_PC_VALUE;
+
+	-- control signals
+	I_branch <= '0';
+	I_jump <= '0';
+	I_mem_read <= '0';		
+	I_mem_write <= '0'; 					
+	I_reg_write <= '1';
+
+	-- forwarding
+	I_fwd_ex_alu_result <= DATA_4;
+	I_fwd_mem_read_data <= (others=>'X');
+	I_fwd_mem_read <= '0';
+	I_forward_rs <= FORWARDING_NONE;
+	I_forward_rt <= FORWARDING_MEM;
+	
+  	wait for CLK_PERIOD;
+  	assert O_alu_result = ADD_RESULT report "Test 28 fwd rt from mem alu: Unsuccessful" severity error;
 
   ----------------------------------------------------------------------------------
   -- RESET
@@ -1961,8 +2036,8 @@ begin
 	I_reg_write <= '0';
 
 	-- forwarding
-	I_ex_data <= (others=>'X');
-	I_mem_data <= (others=>'X');
+	I_fwd_ex_alu_result <= (others=>'X');
+	I_fwd_mem_read_data <= (others=>'X');
 	I_forward_rs <= FORWARDING_NONE;
 	I_forward_rt <= FORWARDING_NONE;
 	
@@ -2008,8 +2083,8 @@ report "Test 29: Unsuccessful" severity error;
 	I_reg_write <= '0';
 
 	-- forwarding
-	I_ex_data <= (others=>'X');
-	I_mem_data <= (others=>'X');
+	I_fwd_ex_alu_result <= (others=>'X');
+	I_fwd_mem_read_data <= (others=>'X');
 	I_forward_rs <= FORWARDING_NONE;
 	I_forward_rt <= FORWARDING_NONE;
 
@@ -2040,8 +2115,8 @@ report "Test 29: Unsuccessful" severity error;
 	I_reg_write <= '1';
 
 	-- forwarding
-	I_ex_data <= (others=>'X');
-	I_mem_data <= (others=>'X');
+	I_fwd_ex_alu_result <= (others=>'X');
+	I_fwd_mem_read_data <= (others=>'X');
 	I_forward_rs <= FORWARDING_NONE;
 	I_forward_rt <= FORWARDING_NONE;
 	
