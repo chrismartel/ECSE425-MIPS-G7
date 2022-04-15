@@ -15,7 +15,7 @@ The VHDL source code for the execute stage component implementation is available
 * **Memory**  
 The VHDL source code for the memory stage component implementation is available here: [memory.vhd](src/mips/memory_access/memory.vhd).
 * **Write-Back**  
-The VHDL source code for the write-back stage component implementation is available here: [writeback.vhd](src/mips/writeback/writeback.vhd).
+The VHDL source code for the write-back stage component implementation is available here: [write_back.vhd](src/mips/writeback/write_back.vhd).
 * **Forwarding Unit**  
 The VHDL source code for the forwarding unit component implementation is available here: [forwarding_unit.vhd](src/mips/forwarding/forwarding_unit.vhd).  
 
