@@ -1,3 +1,7 @@
+-- ECSE425 W2022
+-- Final Project, Group 07
+-- Instruction Memory
+
 --Adapted from memory.vhd from Project 2
 LIBRARY ieee;
 USE ieee.std_logic_1164.all;
