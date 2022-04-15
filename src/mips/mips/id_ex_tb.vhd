@@ -173,8 +173,10 @@ port(
 	I_next_pc: in std_logic_vector (31 downto 0); 
 
 	-- forwarding
-	I_ex_data: in std_logic_vector (31 downto 0);
-	I_mem_data: in std_logic_vector (31 downto 0);
+	I_fwd_ex_alu_result: in std_logic_vector (31 downto 0);
+	I_fwd_mem_read_data: in std_logic_vector (31 downto 0);
+	I_fwd_mem_alu_result: in std_logic_vector (31 downto 0);
+	I_fwd_mem_read: in std_logic;
 	
 	-- from forwarding unit
 	I_forward_rs: in std_logic_vector (1 downto 0);
@@ -286,9 +288,12 @@ signal F_O_dataInst : std_logic_vector (31 downto 0); -- from fetch to id
 signal F_O_pc: std_logic_vector (31 downto 0); -- from fetch to id
 
 -- MEMORY
-signal MEM_O_rd: std_logic_vector (4 downto 0); -- TODO: replace when memory added
-signal MEM_O_reg_write: std_logic; -- TODO: replace when memory added
-signal MEM_O_result: std_logic_vector (31 downto 0); -- TODO: replace when memory added
+-- mock memory signals
+signal MEM_O_rd: std_logic_vector (4 downto 0);
+signal MEM_O_reg_write: std_logic; 
+signal MEM_O_alu_result: std_logic_vector (31 downto 0);
+signal MEM_O_read_data: std_logic_vector (31 downto 0);
+signal MEM_O_mem_read: std_logic;
 
 -- WRITE BACK
 
@@ -398,8 +403,10 @@ port map(
 	I_reg_write => ID_O_regDwe,				
 
 	-- forwarding
-	I_ex_data => EX_O_alu_result,
-	I_mem_data => MEM_O_result, 
+	I_fwd_ex_alu_result => EX_O_alu_result,
+	I_fwd_mem_read_data => MEM_O_read_data, 
+	I_fwd_mem_alu_result => MEM_O_alu_result, 
+	I_fwd_mem_read => MEM_O_mem_read,
 	I_forward_rs => FWD_O_forward_rs,
 	I_forward_rt => FWD_O_forward_rt,	
 
@@ -1229,6 +1236,53 @@ begin
 	-- next instruction flushed --> stall
   	wait for CLK_PERIOD;
 	assert EX_O_stall = '1' report "Test 31 stall: Unsuccessful" severity error;
+
+  ----------------------------------------------------------------------------------
+  -- TEST 32: Stall and Resume
+  ----------------------------------------------------------------------------------
+  	report "----- Test 32: Stall & Resume -----";
+
+  	wait for CLK_PERIOD;
+	I_fwd_en <= '1';
+
+	-- Load R1 in R3
+	RF_I_rs <= R1;
+	F_O_PC <= NEXT_PC;
+	F_O_dataInst <= LW_OPCODE & R1 & R3 & IMM_0;
+  	wait for CLK_PERIOD;
+
+	-- Add R1 + R3 in R4 --> Creates stall due to data hazard in R3
+	RF_I_rs <= R1;
+	RF_I_rt <= R3;
+	F_O_dataInst <= R_OPCODE & R1 & R3 & R4 & SHAMT & ADD_FUNCT; -- add r1 and r3, store in r4
+	wait for CLK_PERIOD;
+	
+	-- should not be able to forward at this point
+	assert FWD_O_forward_rs = FORWARDING_NONE report "Test 32 fwd rs none: Unsuccessful" severity error;
+	assert FWD_O_forward_rt = FORWARDING_NONE report "Test 32 fwd rt none: Unsuccessful" severity error;
+	
+	wait for CLK_PERIOD;
+
+	-- mock memory outputs
+	MEM_O_read_data <= DATA_8; 
+	MEM_O_mem_read <= '1';
+	MEM_O_rd <= R3;
+	MEM_O_reg_write <= '1';
+	
+	-- should be able to forward rs from memory
+	assert FWD_O_forward_rs = FORWARDING_NONE report "Test 32 fwd rs none: Unsuccessful" severity error;
+	assert FWD_O_forward_rt = FORWARDING_MEM report "Test 32 fwd rt from mem: Unsuccessful" severity error; -- should be able to fwd from mem
+
+	-- Ex should stall
+	assert EX_O_stall = '1' report "Test 32 stall: Unsuccessful" severity error;
+	wait for CLK_PERIOD;
+
+	-- Ex should resume with addition since no more stall
+	assert EX_O_stall = '0' report "Test 32 no stall: Unsuccessful" severity error;
+	assert EX_O_alu_result = std_logic_vector(to_signed(12,32)) report "Test 32 no stall: Unsuccessful" severity error;
+
+	wait for CLK_PERIOD;
+
   report "----- Confirming all tests have ran -----";
   wait;
 

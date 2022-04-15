@@ -43,7 +43,9 @@ proc AddWaves {} {
 	add wave -position end  sim:/id_ex_tb/F_O_pc
 	add wave -position end  sim:/id_ex_tb/MEM_O_rd
 	add wave -position end  sim:/id_ex_tb/MEM_O_reg_write
-	add wave -position end  sim:/id_ex_tb/MEM_O_result
+	add wave -position end  sim:/id_ex_tb/MEM_O_alu_result
+	add wave -position end  sim:/id_ex_tb/MEM_O_read_data
+	add wave -position end  sim:/id_ex_tb/MEM_O_mem_read
 	add wave -position end  sim:/id_ex_tb/FWD_O_forward_rs
 	add wave -position end  sim:/id_ex_tb/FWD_O_forward_rt
 }
