@@ -1,5 +1,3 @@
-
---https://domipheus.com/blog/designing-a-cpu-in-vhdl-part-2-xilinx-ise-suite-register-file-testing/
 library ieee; -- allows use of the std_logic_vector type
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all; -- needed if you are using unsigned numbers
@@ -32,7 +30,7 @@ architecture Behavioral of regs is
 
 	process(I_clk, I_reset)
 	begin
-	if I_reset'event and I_reset='1' then
+	if I_reset='1' then
 		for i in 0 to 31 loop
 			regs(i) <= (others => '0');
 		end loop;
