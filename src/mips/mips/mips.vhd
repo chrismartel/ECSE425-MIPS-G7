@@ -1,3 +1,7 @@
+-- ECSE425 W2022
+-- Final Project, Group 07
+-- Simplified MIPS Pipelined Processor
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -151,8 +155,10 @@ port(
 	I_next_pc: in std_logic_vector (31 downto 0); 
 
 	-- forwarding
-	I_ex_data: in std_logic_vector (31 downto 0);
-	I_mem_data: in std_logic_vector (31 downto 0);
+	I_fwd_ex_alu_result: in std_logic_vector (31 downto 0);
+	I_fwd_mem_alu_result: in std_logic_vector (31 downto 0);
+	I_fwd_mem_read_data: in std_logic_vector (31 downto 0);
+	I_fwd_mem_read: in std_logic;
 	
 	-- from forwarding unit
 	I_forward_rs: in std_logic_vector (1 downto 0);
@@ -183,7 +189,6 @@ port(
 	I_reset : in std_logic;
 	I_en : in std_logic;
 	
-	
 	-- Control Signals Inputs
 	I_rd: in std_logic_vector (4 downto 0);
 	I_branch: in std_logic;
@@ -197,14 +202,13 @@ port(
 	I_alu_result: in std_logic_vector (31 downto 0);
 	I_stall: in std_logic;
 	
-	
 	-- data_memory relevant signals
-	data_address: out integer range 0 to ram_size-1;
-	data_memread: out std_logic;
-	data_waitrequest: in std_logic;
-	data_writedata: out std_logic_vector(31 downto 0);
-	data_memwrite: out std_logic;
-	data_readdata: in std_logic_vector(31 downto 0);
+	I_data_waitrequest: in std_logic;
+	O_data_address: out integer range 0 to RAM_SIZE-1;
+	O_data_memread: out std_logic;
+	O_data_writedata: out std_logic_vector(31 downto 0);
+	O_data_memwrite: out std_logic;
+	-- data_readdata: in std_logic_vector(31 downto 0);
 	
 	-- Control Signals Outputs
 	O_rd: out std_logic_vector (4 downto 0);
@@ -222,7 +226,7 @@ port(
 	O_forward_rd: out std_logic_vector (4 downto 0);
 	O_forward_mem_reg_write: out std_logic
 
-};
+);
 end component;
 
 
@@ -254,11 +258,6 @@ end component;
 --------------------------------------------------------------------
 
 -- NOTE: only list the outputs of each component as intermediate signals to avoid duplicates
-
--- GLOBAL
---signal GLOBAL_I_reset : std_logic := '0'; -- asynchronous reset
---signal GLOBAL_I_clk : std_logic := '0'; -- synchronous clock
---signal MIPS_I_en : std_logic := '0'; -- use this signal to enable the MIPS processor
 
 -- INSTRUCTION MEMORY
 signal INSTR_MEM_O_readdata: std_logic_vector (31 downto 0);
@@ -305,19 +304,18 @@ signal EX_O_mem_write: std_logic;
 signal EX_O_reg_write: std_logic;
 
 -- MEMORY ACCESS
-signal MEM_O_data_address: integer range 0 to ram_size-1;
+signal MEM_O_data_address: integer range 0 to RAM_SIZE-1;
 signal MEM_O_data_memread: std_logic;
 signal MEM_O_data_writedata: std_logic_vector(31 downto 0);
-signal MEM_O_memwrite: std_logic;
+signal MEM_O_data_memwrite: std_logic;
 signal MEM_O_rd: std_logic_vector (4 downto 0);
 signal MEM_O_branch: std_logic;
+signal MEM_O_jump: std_logic;
 signal MEM_O_mem_read: std_logic;
 signal MEM_O_mem_write: std_logic;
 signal MEM_O_reg_write: std_logic;
 signal MEM_O_alu_result: std_logic_vector(31 downto 0);
 signal MEM_O_stall: std_logic;
-
--- signal MEM_O_result: std_logic_vector (31 downto 0); -- TODO: figure out what to do with this
 
 -- WRITE BACK
 signal WB_O_rd :  std_logic_vector (4 downto 0); -- from wb to rf
@@ -471,9 +469,13 @@ port map(
 
 	-- forwarding
 	-- from execution stage
-	I_ex_data => EX_O_alu_result,
+	I_fwd_ex_alu_result => EX_O_alu_result,
+
 	-- from memory stage
-	I_mem_data => MEM_O_result, 
+	I_fwd_mem_alu_result => MEM_O_alu_result,
+	I_fwd_mem_read_data => (others=>'X'), -- TODO connect with data memory output
+	I_fwd_mem_read => MEM_O_mem_read, 
+
 	-- from forwarding unit
 	I_forward_rs => FWD_O_forward_rs,
 	I_forward_rt => FWD_O_forward_rt,	
@@ -497,9 +499,9 @@ ma: memory
 port map(
 	-- inputs
 	-- global inputs
-	I_clk => GLOBAL_I_clk,
-	I_reset => GLOBAL_I_reset,
-	I_en => MIPS_I_en,
+	I_clk => I_clk,
+	I_reset => I_reset,
+	I_en => I_en,
 	-- EX stage inputs
 	I_rd => EX_O_rd,
 	I_jump => EX_O_jump,
@@ -512,12 +514,13 @@ port map(
 	I_stall => EX_O_stall,
 	-- TODO: wire these to data_memory component
 	-- data_memory connections I/O
-	data_address => data_address,
-	data_memread => data_memread,
-	data_waitrequest => data_waitrequest,
-	data_writedata => data_writedata,
-	data_memwrite => data_memwrite,
-	data_readdata => data_readdata,
+	O_data_address => MEM_O_data_address,
+	O_data_memread => MEM_O_data_memread,
+	I_data_waitrequest => '1', -- TODO: figure put what to do with this signal
+	O_data_writedata => MEM_O_data_writedata,
+	O_data_memwrite => MEM_O_data_memwrite,
+	-- I_data_readdata => (others->'0')
+
 	-- outputs
 	-- control outputs
 	O_rd => MEM_O_rd,
@@ -528,10 +531,7 @@ port map(
 	O_reg_write => MEM_O_reg_write,
 	-- "passing forward" outputs
 	O_alu_result => MEM_O_alu_result,
-	O_stall => MEM_O_stall,
-	-- NOTE: these seem to be taken care of by forwarding unit but are not there
-	O_forward_rd => MEM_O_forward_rd,
-	O_forward_mem_reg_write => MEM_O_forward_mem_reg_write
+	O_stall => MEM_O_stall
 );
 
 fwd: forwarding_unit
