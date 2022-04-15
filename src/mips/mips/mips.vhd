@@ -116,9 +116,7 @@ port (
     	O_mem_read: out STD_LOGIC;
     	O_mem_write: out STD_LOGIC;
     	O_addr: out std_logic_vector (25 downto 0);
-	O_stall: out std_logic;
-	O_stalled_instruction: out std_logic_vector (31 downto 0);
-	O_stalled_pc: out std_logic_vector (31 downto 0)
+	O_stall: out std_logic
 );
 end component;
 
@@ -227,14 +225,6 @@ signal RF_O_datas :  std_logic_vector (31 downto 0); -- rf to ex
 signal RF_O_datat :  std_logic_vector (31 downto 0); -- rf to ex
 
 -- DECODE SIGNALS
-
--- Inputs
-signal ID_I_dataInst: std_logic_vector (31 downto 0); 	-- the input instruction to the decode stage. 
-							-- Can come either from fetch or from stalled instruction.
-
-signal ID_I_pc: std_logic_vector (31 downto 0); 	-- the input pc to the decode stage. 
-							-- Can come either from fetch or from stalled instruction.
--- Outputs
 signal ID_O_next_pc: std_logic_vector (31 downto 0);
 signal ID_O_rs : std_logic_vector (4 downto 0);
 signal ID_O_rt : std_logic_vector (4 downto 0);
@@ -251,8 +241,6 @@ signal ID_O_mem_read: std_logic;
 signal ID_O_mem_write: std_logic;
 signal ID_O_addr: std_logic_vector (25 downto 0);
 signal ID_O_stall: std_logic;
-signal ID_O_stalled_instruction: std_logic_vector (31 downto 0);
-signal ID_O_stalled_pc: std_logic_vector (31 downto 0);
 
 -- EXECUTE SIGNALS		
 signal EX_O_alu_result: std_logic_vector (31 downto 0);
@@ -360,8 +348,8 @@ port map(
        	I_en => I_en,
 
 	-- from fetch component
-    	I_dataInst => ID_I_dataInst,
-	I_pc => ID_I_pc,
+    	I_dataInst => F_O_instruction,
+	I_pc => F_O_updated_pc,
 
 	-- forwarding
 	I_fwd_en => FWD_I_en,
@@ -388,9 +376,7 @@ port map(
 	O_mem_write => ID_O_mem_write,
 	O_regdWe => ID_O_regDwe,
 	O_addr => ID_O_addr,
-	O_stall => ID_O_stall,
-	O_stalled_instruction => ID_O_stalled_instruction,
-	O_stalled_pc => ID_O_stalled_pc
+	O_stall => ID_O_stall
 );
 
 ex: execute 
@@ -466,24 +452,4 @@ port map(
 	O_forward_rs => FWD_O_forward_rs,
 	O_forward_rt => FWD_O_forward_rt
 );
-
--- Process indicating to decode which instruction to take.
--- When a stall occurs, the decode stage takes the stalled instruction
--- and stalled pc  as input. 
--- Otherwise, the decode stage takes the instruction and pc from the fetch stage.
-decode_instruction_choice: process(I_clk, I_reset)
-begin
-	if I_reset'event and I_reset = '1' then
-	elsif I_clk'event and I_clk = '1' then
-		if I_en = '1' then
-			if ID_O_stall = '1' then
-				ID_I_dataInst <= ID_O_stalled_instruction;
-				ID_I_pc <= ID_O_stalled_pc;
-			else
-				ID_I_dataInst <= F_O_instruction;
-				ID_I_pc <= F_O_updated_pc;
-			end if;
-		end if;
-	end if;
-end process;
 end behaviour;
