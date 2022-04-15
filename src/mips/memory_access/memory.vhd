@@ -79,7 +79,6 @@ begin
 			O_mem_write <= '0';
 			O_reg_write <= '0';
 			O_alu_result <= (others =>'0');
-			O_updated_next_pc <= (others =>'0');
 			O_stall <= '0';
 			O_forward_rd <= (others =>'0');
 			O_forward_mem_reg_write <= '0';
@@ -107,7 +106,6 @@ begin
 					O_forward_mem_reg_write <= I_reg_write;
 					O_jump <= I_jump;
 
-					O_updated_next_pc <= I_updated_next_pc;
 					
 					
 					-- check if I_mem_read is high, and performs a read operation
