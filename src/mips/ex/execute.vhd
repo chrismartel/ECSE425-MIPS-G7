@@ -130,8 +130,8 @@ architecture arch of execute is
 	constant FORWARDING_MEM : std_logic_vector (1 downto 0):= "10";
 
 -- declare signals here
-	signal high_register : std_logic_vector (31 downto 0) := (others=>'0');
-	signal low_register : std_logic_vector (31 downto 0) := (others=>'0');
+	signal high_register : std_logic_vector (31 downto 0) := (others=>'X');
+	signal low_register : std_logic_vector (31 downto 0) := (others=>'X');
 	
 	signal flush : std_logic := '0';	-- indicates if the current instruction must be flushed or not
 	
@@ -143,14 +143,14 @@ begin
 	begin
 		-- asynchronous I_reset active high
 		if I_reset'event and I_reset = '1' then
-			O_alu_result <= (others=>'0');
-			O_updated_next_pc <= (others=>'0');
-			O_rt_data <= (others=>'0');
-			high_register <= (others=>'0');
-			low_register <= (others=>'0');
+			O_alu_result <= (others=>'X');
+			O_updated_next_pc <= (others=>'X');
+			O_rt_data <= (others=>'X');
+			high_register <= (others=>'X');
+			low_register <= (others=>'X');
 	
 			
-			O_rd <= (others=>'0');
+			O_rd <= (others=>'X');
 			O_mem_read <= '0';
 			O_mem_write <= '0';
 			O_reg_write <= '0';
