@@ -359,8 +359,8 @@ port map(
 	I_address => F_O_instruction_address,
 	I_memread => F_O_memread,
 
-	I_memwrite => '0', --TODO Bruno: what goes here?
-	I_writedata => (others=>'0'), -- TODO Bruno: what goes here?
+	I_memwrite => '0', --TODO 
+	I_writedata => (others=>'0'), -- TODO
 	
 	-- Outputs
 	-- to fetch component
@@ -383,6 +383,7 @@ port map(
 	I_branch => EX_O_branch,
 	I_pc_branch => EX_O_updated_next_pc,
 
+	-- TODO: clean up signals we dont need
 	-- from intrusction memory
 	I_mem_instruction => INSTR_MEM_O_readdata,
 	I_waitrequest => INSTR_MEM_O_waitrequest,
@@ -407,9 +408,9 @@ port map(
        	I_rt => F_O_instruction(20 downto 16), -- extract rt operand from instruction
 
 	-- from write-back component
-	I_dataD => (others=>'0'), -- TODO Luke connect WB_O_datad signal here
-       	I_rd => (others=>'0'), -- TODO Luke connect WB_O_rd signal here
-       	I_we => '0', -- TODO Luke connect WB_O_we signal here
+	I_dataD => WB_O_datad, 
+       	I_rd => WB_O_rd,
+       	I_we => WB_O_we,
 
 	-- Outputs
 	-- to execute component
@@ -531,6 +532,7 @@ port map(
 	I_branch => EX_O_branch,
 	I_alu_result => EX_O_alu_result,
 	I_stall => EX_O_stall,
+
 	-- TODO: wire these to data_memory component
 	-- data_memory connections I/O
 	O_data_address => MEM_O_data_address,
@@ -538,7 +540,6 @@ port map(
 	I_data_waitrequest => '1', -- TODO: figure put what to do with this signal
 	O_data_writedata => MEM_O_data_writedata,
 	O_data_memwrite => MEM_O_data_memwrite,
-	-- I_data_readdata => (others->'0')
 
 	-- outputs
 	-- control outputs
