@@ -11,6 +11,8 @@ port (I_clk: in std_logic;
 	I_rd: in std_logic_vector (4 downto 0);
 	I_jump : in std_logic;
 	I_branch: in std_logic;
+	I_en : in std_logic;
+	I_reset : in std_logic;
 	
 	O_we : out std_logic;
 	O_rd: out std_logic_vector (4 downto 0);
@@ -21,14 +23,14 @@ end write_back;
 architecture write_back_arch of write_back is
 	
 begin
-	process(I_clk)
+	process(I_clk, I_reset)
 		begin
-			if rising_edge(I_clk) then
-				if ((I_jump or I_branch) = '1') then
-					O_rd <= "XXXXX";
-					O_mux <= "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
-					O_we <= '0';
-				else
+			if (I_reset = '0') or ((I_jump or I_branch) = '1') then
+				O_rd <= "XXXXX";
+				O_mux <= "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
+				O_we <= '0';
+			elsif falling_edge(I_clk) then
+				if (I_en = '1') then
 					--mux for choosing input from ALU or MEM
 					if ((I_regDwe and I_mem_read) = '0') then
 						O_mux <= I_alu;
