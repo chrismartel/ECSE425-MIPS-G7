@@ -1,3 +1,7 @@
+-- ECSE425 W2022
+-- Final Project, Group 07
+-- Execute Stage
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -36,8 +40,10 @@ port(
 	I_reg_write: in std_logic; 					-- indicates if value calculated in ALU must be written to destination register
 
 	-- Forwarding Unit Inputs
-	I_ex_data: in std_logic_vector(31 downto 0); 	-- current output data of ex stage
-	I_mem_data: in std_logic_vector(31 downto 0); 		-- current output data of mem stage
+	I_fwd_ex_alu_result: in std_logic_vector(31 downto 0); 	-- current output data of ex stage
+	I_fwd_mem_read_data: in std_logic_vector(31 downto 0); 	-- current output data read from mem stage
+	I_fwd_mem_alu_result: in std_logic_vector(31 downto 0); -- current alu result at mem stage
+	I_fwd_mem_read: in std_logic; 				-- if '1' take mem stage read data, if '0' take mem alu result
 	
 	-- forwarding control bits
 	-- FORWARDING_NONE: take input from ID stage
@@ -130,8 +136,8 @@ architecture arch of execute is
 	constant FORWARDING_MEM : std_logic_vector (1 downto 0):= "10";
 
 -- declare signals here
-	signal high_register : std_logic_vector (31 downto 0) := (others=>'0');
-	signal low_register : std_logic_vector (31 downto 0) := (others=>'0');
+	signal high_register : std_logic_vector (31 downto 0) := (others=>'X');
+	signal low_register : std_logic_vector (31 downto 0) := (others=>'X');
 	
 	signal flush : std_logic := '0';	-- indicates if the current instruction must be flushed or not
 	
@@ -143,14 +149,14 @@ begin
 	begin
 		-- asynchronous I_reset active high
 		if I_reset'event and I_reset = '1' then
-			O_alu_result <= (others=>'0');
-			O_updated_next_pc <= (others=>'0');
-			O_rt_data <= (others=>'0');
-			high_register <= (others=>'0');
-			low_register <= (others=>'0');
+			O_alu_result <= (others=>'X');
+			O_updated_next_pc <= (others=>'X');
+			O_rt_data <= (others=>'X');
+			high_register <= (others=>'X');
+			low_register <= (others=>'X');
 	
 			
-			O_rd <= (others=>'0');
+			O_rd <= (others=>'X');
 			O_mem_read <= '0';
 			O_mem_write <= '0';
 			O_reg_write <= '0';
@@ -192,33 +198,65 @@ begin
 						if I_forward_rs = FORWARDING_NONE and I_forward_rt = FORWARDING_NONE then
 							O_alu_result <= std_logic_vector(signed(I_rs_data) + signed(I_rt_data));
 						elsif I_forward_rs = FORWARDING_NONE and I_forward_rt = FORWARDING_EX then
-							O_alu_result <= std_logic_vector(signed(I_rs_data) + signed(I_ex_data));
+							O_alu_result <= std_logic_vector(signed(I_rs_data) + signed(I_fwd_ex_alu_result));
 						elsif I_forward_rs = FORWARDING_NONE and I_forward_rt = FORWARDING_MEM then
-							O_alu_result <= std_logic_vector(signed(I_rs_data) + signed(I_mem_data));
+							if I_fwd_mem_read = '1' then
+								O_alu_result <= std_logic_vector(signed(I_rs_data) + signed(I_fwd_mem_read_data));
+							else
+								O_alu_result <= std_logic_vector(signed(I_rs_data) + signed(I_fwd_mem_alu_result));
+							end if;
 						elsif I_forward_rs = FORWARDING_EX and I_forward_rt = FORWARDING_NONE then
-							O_alu_result <= std_logic_vector(signed(I_ex_data) + signed(I_rt_data));
+							O_alu_result <= std_logic_vector(signed(I_fwd_ex_alu_result) + signed(I_rt_data));
 						elsif I_forward_rs = FORWARDING_EX and I_forward_rt = FORWARDING_MEM then
-							O_alu_result <= std_logic_vector(signed(I_ex_data) + signed(I_mem_data));
+							if I_fwd_mem_read = '1' then
+								O_alu_result <= std_logic_vector(signed(I_fwd_ex_alu_result) + signed(I_fwd_mem_read_data));
+							else
+								O_alu_result <= std_logic_vector(signed(I_fwd_ex_alu_result) + signed(I_fwd_mem_alu_result));
+							end if;
 						elsif I_forward_rs = FORWARDING_MEM and I_forward_rt = FORWARDING_NONE then
-							O_alu_result <= std_logic_vector(signed(I_mem_data) + signed(I_rt_data));
+							if I_fwd_mem_read = '1' then
+								O_alu_result <= std_logic_vector(signed(I_fwd_mem_read_data) + signed(I_rt_data));
+							else
+								O_alu_result <= std_logic_vector(signed(I_fwd_mem_alu_result) + signed(I_rt_data));
+							end if;
 						elsif I_forward_rs = FORWARDING_MEM and I_forward_rt = FORWARDING_EX then
-							O_alu_result <= std_logic_vector(signed(I_mem_data) + signed(I_ex_data));
+							if I_fwd_mem_read = '1' then
+								O_alu_result <= std_logic_vector(signed(I_fwd_mem_read_data) + signed(I_fwd_ex_alu_result));
+							else
+								O_alu_result <= std_logic_vector(signed(I_fwd_mem_alu_result) + signed(I_fwd_ex_alu_result));
+							end if;
                     				end if;
 						when SUB_FUNCT =>
 						if I_forward_rs = FORWARDING_NONE and I_forward_rt = FORWARDING_NONE then
 							O_alu_result <= std_logic_vector(signed(I_rs_data) - signed(I_rt_data));
 						elsif I_forward_rs = FORWARDING_NONE and I_forward_rt = FORWARDING_EX then
-							O_alu_result <= std_logic_vector(signed(I_rs_data) - signed(I_ex_data));
+							O_alu_result <= std_logic_vector(signed(I_rs_data) - signed(I_fwd_ex_alu_result));
 						elsif I_forward_rs = FORWARDING_NONE and I_forward_rt = FORWARDING_MEM then
-							O_alu_result <= std_logic_vector(signed(I_rs_data) - signed(I_mem_data));
+							if I_fwd_mem_read = '1' then
+								O_alu_result <= std_logic_vector(signed(I_rs_data) - signed(I_fwd_mem_read_data));
+							else
+								O_alu_result <= std_logic_vector(signed(I_rs_data) - signed(I_fwd_mem_alu_result));
+							end if;
 						elsif I_forward_rs = FORWARDING_EX and I_forward_rt = FORWARDING_NONE then
-							O_alu_result <= std_logic_vector(signed(I_ex_data) - signed(I_rt_data));
+							O_alu_result <= std_logic_vector(signed(I_fwd_ex_alu_result) - signed(I_rt_data));
 						elsif I_forward_rs = FORWARDING_EX and I_forward_rt = FORWARDING_MEM then
-							O_alu_result <= std_logic_vector(signed(I_ex_data) - signed(I_mem_data));
+							if I_fwd_mem_read = '1' then
+								O_alu_result <= std_logic_vector(signed(I_fwd_ex_alu_result) - signed(I_fwd_mem_read_data));
+							else
+								O_alu_result <= std_logic_vector(signed(I_fwd_ex_alu_result) - signed(I_fwd_mem_alu_result));
+							end if;
 						elsif I_forward_rs = FORWARDING_MEM and I_forward_rt = FORWARDING_NONE then
-							O_alu_result <= std_logic_vector(signed(I_mem_data) - signed(I_rt_data));
+							if I_fwd_mem_read = '1' then
+								O_alu_result <= std_logic_vector(signed(I_fwd_mem_read_data) - signed(I_rt_data));
+							else
+								O_alu_result <= std_logic_vector(signed(I_fwd_mem_alu_result) - signed(I_rt_data));
+							end if;
 						elsif I_forward_rs = FORWARDING_MEM and I_forward_rt = FORWARDING_EX then
-							O_alu_result <= std_logic_vector(signed(I_mem_data) - signed(I_ex_data));
+							if I_fwd_mem_read = '1' then
+								O_alu_result <= std_logic_vector(signed(I_fwd_mem_read_data) - signed(I_fwd_ex_alu_result));
+							else
+								O_alu_result <= std_logic_vector(signed(I_fwd_mem_alu_result) - signed(I_fwd_ex_alu_result));
+							end if;
                     				end if;
 						flush <= '0';
 
@@ -227,23 +265,43 @@ begin
                                         		low_register <= std_logic_vector(resize(signed(I_rs_data) * signed(I_rt_data),64)(31 downto 0));
                                         		high_register <= std_logic_vector(resize(signed(I_rs_data) * signed(I_rt_data),64)(63 downto 32));						
                                     		elsif I_forward_rs = FORWARDING_NONE and I_forward_rt = FORWARDING_EX then
-                                        		low_register <= std_logic_vector(resize(signed(I_rs_data) * signed(I_ex_data),64)(31 downto 0));
-                                        		high_register <= std_logic_vector(resize(signed(I_rs_data) * signed(I_ex_data),64)(63 downto 32));	
+                                        		low_register <= std_logic_vector(resize(signed(I_rs_data) * signed(I_fwd_ex_alu_result),64)(31 downto 0));
+                                        		high_register <= std_logic_vector(resize(signed(I_rs_data) * signed(I_fwd_ex_alu_result),64)(63 downto 32));	
                                    		 elsif I_forward_rs = FORWARDING_NONE and I_forward_rt = FORWARDING_MEM then
-                                        		low_register <= std_logic_vector(resize(signed(I_rs_data) * signed(I_mem_data),64)(31 downto 0));
-                                        		high_register <= std_logic_vector(resize(signed(I_rs_data) * signed(I_mem_data),64)(63 downto 32));	
+							if I_fwd_mem_read = '1' then
+                                        			low_register <= std_logic_vector(resize(signed(I_rs_data) * signed(I_fwd_mem_read_data),64)(31 downto 0));
+                                        			high_register <= std_logic_vector(resize(signed(I_rs_data) * signed(I_fwd_mem_read_data),64)(63 downto 32));	
+							else
+                                        			low_register <= std_logic_vector(resize(signed(I_rs_data) * signed(I_fwd_mem_alu_result),64)(31 downto 0));
+                                        			high_register <= std_logic_vector(resize(signed(I_rs_data) * signed(I_fwd_mem_alu_result),64)(63 downto 32));	
+							end if;
                                     		elsif I_forward_rs = FORWARDING_EX and I_forward_rt = FORWARDING_NONE then
-                                        		low_register <= std_logic_vector(resize(signed(I_ex_data) * signed(I_rt_data),64)(31 downto 0));
-                                        		high_register <= std_logic_vector(resize(signed(I_ex_data) * signed(I_rt_data),64)(63 downto 32));	
+                                        		low_register <= std_logic_vector(resize(signed(I_fwd_ex_alu_result) * signed(I_rt_data),64)(31 downto 0));
+                                        		high_register <= std_logic_vector(resize(signed(I_fwd_ex_alu_result) * signed(I_rt_data),64)(63 downto 32));	
                                     		elsif I_forward_rs = FORWARDING_EX and I_forward_rt = FORWARDING_MEM then
-                                        		low_register <= std_logic_vector(resize(signed(I_ex_data) * signed(I_mem_data),64)(31 downto 0));
-                                        		high_register <= std_logic_vector(resize(signed(I_ex_data) * signed(I_mem_data),64)(63 downto 32));	
+							if I_fwd_mem_read = '1' then
+                                        			low_register <= std_logic_vector(resize(signed(I_fwd_ex_alu_result) * signed(I_fwd_mem_read_data),64)(31 downto 0));
+                                        			high_register <= std_logic_vector(resize(signed(I_fwd_ex_alu_result) * signed(I_fwd_mem_read_data),64)(63 downto 32));	
+							else
+                                        			low_register <= std_logic_vector(resize(signed(I_fwd_ex_alu_result) * signed(I_fwd_mem_alu_result),64)(31 downto 0));
+                                        			high_register <= std_logic_vector(resize(signed(I_fwd_ex_alu_result) * signed(I_fwd_mem_alu_result),64)(63 downto 32));	
+							end if;
                                     		elsif I_forward_rs = FORWARDING_MEM and I_forward_rt = FORWARDING_NONE then
-                                        		low_register <= std_logic_vector(resize(signed(I_mem_data) * signed(I_rt_data),64)(31 downto 0));
-                                        		high_register <= std_logic_vector(resize(signed(I_mem_data) * signed(I_rt_data),64)(63 downto 32));	
+							if I_fwd_mem_read = '1' then
+                                        			low_register <= std_logic_vector(resize(signed(I_fwd_mem_read_data) * signed(I_rt_data),64)(31 downto 0));
+                                        			high_register <= std_logic_vector(resize(signed(I_fwd_mem_read_data) * signed(I_rt_data),64)(63 downto 32));	
+							else
+                                        			low_register <= std_logic_vector(resize(signed(I_fwd_mem_alu_result) * signed(I_rt_data),64)(31 downto 0));
+                                        			high_register <= std_logic_vector(resize(signed(I_fwd_mem_alu_result) * signed(I_rt_data),64)(63 downto 32));	
+							end if;
                                     		elsif I_forward_rs = FORWARDING_MEM and I_forward_rt = FORWARDING_EX then
-                                        		low_register <= std_logic_vector(resize(signed(I_mem_data) * signed(I_ex_data),64)(31 downto 0));
-                                        		high_register <= std_logic_vector(resize(signed(I_mem_data) * signed(I_ex_data),64)(63 downto 32));	
+							if I_fwd_mem_read = '1' then
+                                        			low_register <= std_logic_vector(resize(signed(I_fwd_mem_read_data) * signed(I_fwd_ex_alu_result),64)(31 downto 0));
+                                        			high_register <= std_logic_vector(resize(signed(I_fwd_mem_read_data) * signed(I_fwd_ex_alu_result),64)(63 downto 32));	
+							else
+                                        			low_register <= std_logic_vector(resize(signed(I_fwd_mem_alu_result) * signed(I_fwd_ex_alu_result),64)(31 downto 0));
+                                        			high_register <= std_logic_vector(resize(signed(I_fwd_mem_alu_result) * signed(I_fwd_ex_alu_result),64)(63 downto 32));	
+							end if;
                                     		end if;
 						flush <= '0';
 
@@ -252,23 +310,43 @@ begin
           		              			low_register <= std_logic_vector(signed(I_rs_data) / signed(I_rt_data));
           		              			high_register <= std_logic_vector(signed(I_rs_data) mod signed(I_rt_data));					
                                     		elsif I_forward_rs = FORWARDING_NONE and I_forward_rt = FORWARDING_EX then
-          		              			low_register <= std_logic_vector(signed(I_rs_data) / signed(I_ex_data));
-          		              			high_register <= std_logic_vector(signed(I_rs_data) mod signed(I_ex_data));
+          		              			low_register <= std_logic_vector(signed(I_rs_data) / signed(I_fwd_ex_alu_result));
+          		              			high_register <= std_logic_vector(signed(I_rs_data) mod signed(I_fwd_ex_alu_result));
                                    		 elsif I_forward_rs = FORWARDING_NONE and I_forward_rt = FORWARDING_MEM then
-          		              			low_register <= std_logic_vector(signed(I_rs_data) / signed(I_mem_data));
-          		              			high_register <= std_logic_vector(signed(I_rs_data) mod signed(I_mem_data));	
+							if I_fwd_mem_read = '1' then
+          		              				low_register <= std_logic_vector(signed(I_rs_data) / signed(I_fwd_mem_read_data));
+          		              				high_register <= std_logic_vector(signed(I_rs_data) mod signed(I_fwd_mem_read_data));	
+							else
+          		              				low_register <= std_logic_vector(signed(I_rs_data) / signed(I_fwd_mem_alu_result));
+          		              				high_register <= std_logic_vector(signed(I_rs_data) mod signed(I_fwd_mem_alu_result));	
+							end if;
                                     		elsif I_forward_rs = FORWARDING_EX and I_forward_rt = FORWARDING_NONE then
-          		              			low_register <= std_logic_vector(signed(I_ex_data) / signed(I_rt_data));
-          		              			high_register <= std_logic_vector(signed(I_ex_data) mod signed(I_rt_data));	
+          		              			low_register <= std_logic_vector(signed(I_fwd_ex_alu_result) / signed(I_rt_data));
+          		              			high_register <= std_logic_vector(signed(I_fwd_ex_alu_result) mod signed(I_rt_data));	
                                     		elsif I_forward_rs = FORWARDING_EX and I_forward_rt = FORWARDING_MEM then
-          		              			low_register <= std_logic_vector(signed(I_ex_data) / signed(I_mem_data));
-          		              			high_register <= std_logic_vector(signed(I_ex_data) mod signed(I_mem_data));
+							if I_fwd_mem_read = '1' then
+          		              				low_register <= std_logic_vector(signed(I_fwd_ex_alu_result) / signed(I_fwd_mem_read_data));
+          		              				high_register <= std_logic_vector(signed(I_fwd_ex_alu_result) mod signed(I_fwd_mem_read_data));
+							else
+          		              				low_register <= std_logic_vector(signed(I_fwd_ex_alu_result) / signed(I_fwd_mem_alu_result));
+          		              				high_register <= std_logic_vector(signed(I_fwd_ex_alu_result) mod signed(I_fwd_mem_alu_result));
+							end if;
                                     		elsif I_forward_rs = FORWARDING_MEM and I_forward_rt = FORWARDING_NONE then
-          		              			low_register <= std_logic_vector(signed(I_mem_data) / signed(I_rt_data));
-          		              			high_register <= std_logic_vector(signed(I_mem_data) mod signed(I_rt_data));
+							if I_fwd_mem_read = '1' then
+          		              				low_register <= std_logic_vector(signed(I_fwd_mem_read_data) / signed(I_rt_data));
+          		              				high_register <= std_logic_vector(signed(I_fwd_mem_read_data) mod signed(I_rt_data));
+							else
+          		              				low_register <= std_logic_vector(signed(I_fwd_mem_alu_result) / signed(I_rt_data));
+          		              				high_register <= std_logic_vector(signed(I_fwd_mem_alu_result) mod signed(I_rt_data));
+							end if;
                                     		elsif I_forward_rs = FORWARDING_MEM and I_forward_rt = FORWARDING_EX then
-          		              			low_register <= std_logic_vector(signed(I_mem_data) / signed(I_ex_data));
-          		              			high_register <= std_logic_vector(signed(I_mem_data) mod signed(I_ex_data));
+							if I_fwd_mem_read = '1' then
+          		              				low_register <= std_logic_vector(signed(I_fwd_mem_read_data) / signed(I_fwd_ex_alu_result));
+          		              				high_register <= std_logic_vector(signed(I_fwd_mem_read_data) mod signed(I_fwd_ex_alu_result));
+							else
+          		              				low_register <= std_logic_vector(signed(I_fwd_mem_alu_result) / signed(I_fwd_ex_alu_result));
+          		              				high_register <= std_logic_vector(signed(I_fwd_mem_alu_result) mod signed(I_fwd_ex_alu_result));
+							end if;
                                     		end if;
                         			flush <= '0';
 
@@ -280,41 +358,73 @@ begin
   	                          				O_alu_result <= std_logic_vector(to_signed(0,32));
         	                			end if;
 						elsif I_forward_rs = FORWARDING_NONE and I_forward_rt = FORWARDING_EX then
-  		                      			if signed(I_rs_data) < signed(I_ex_data) then
+  		                      			if signed(I_rs_data) < signed(I_fwd_ex_alu_result) then
   	                          				O_alu_result <= std_logic_vector(to_signed(1,32));
         	                			else
   	                          				O_alu_result <= std_logic_vector(to_signed(0,32));
         	                			end if;
 						elsif I_forward_rs = FORWARDING_NONE and I_forward_rt = FORWARDING_MEM then
-  		                      			if signed(I_rs_data) < signed(I_mem_data) then
-  	                          				O_alu_result <= std_logic_vector(to_signed(1,32));
-        	                			else
-  	                          				O_alu_result <= std_logic_vector(to_signed(0,32));
-        	                			end if;
+							if I_fwd_mem_read = '1' then
+	  		                      			if signed(I_rs_data) < signed(I_fwd_mem_read_data) then
+	  	                          				O_alu_result <= std_logic_vector(to_signed(1,32));
+	        	                			else
+	  	                          				O_alu_result <= std_logic_vector(to_signed(0,32));
+	        	                			end if;
+							else
+	  		                      			if signed(I_rs_data) < signed(I_fwd_mem_alu_result) then
+	  	                          				O_alu_result <= std_logic_vector(to_signed(1,32));
+	        	                			else
+	  	                          				O_alu_result <= std_logic_vector(to_signed(0,32));
+	        	                			end if;
+							end if;
 						elsif I_forward_rs = FORWARDING_EX and I_forward_rt = FORWARDING_NONE then
-  		                      			if signed(I_ex_data) < signed(I_rt_data) then
+  		                      			if signed(I_fwd_ex_alu_result) < signed(I_rt_data) then
   	                          				O_alu_result <= std_logic_vector(to_signed(1,32));
         	                			else
   	                          				O_alu_result <= std_logic_vector(to_signed(0,32));
         	                			end if;
 						elsif I_forward_rs = FORWARDING_EX and I_forward_rt = FORWARDING_MEM then
-  		                      			if signed(I_ex_data) < signed(I_mem_data) then
-  	                          				O_alu_result <= std_logic_vector(to_signed(1,32));
-        	                			else
-  	                          				O_alu_result <= std_logic_vector(to_signed(0,32));
-        	                			end if;
+							if I_fwd_mem_read = '1' then
+	  		                      			if signed(I_fwd_ex_alu_result) < signed(I_fwd_mem_read_data) then
+	  	                          				O_alu_result <= std_logic_vector(to_signed(1,32));
+	        	                			else
+	  	                          				O_alu_result <= std_logic_vector(to_signed(0,32));
+	        	                			end if;
+							else
+	  		                      			if signed(I_fwd_ex_alu_result) < signed(I_fwd_mem_alu_result) then
+	  	                          				O_alu_result <= std_logic_vector(to_signed(1,32));
+	        	                			else
+	  	                          				O_alu_result <= std_logic_vector(to_signed(0,32));
+	        	                			end if;
+							end if;
 						elsif I_forward_rs = FORWARDING_MEM and I_forward_rt = FORWARDING_NONE then
-  		                      			if signed(I_mem_data) < signed(I_rt_data) then
-  	                          				O_alu_result <= std_logic_vector(to_signed(1,32));
-        	                			else
-  	                          				O_alu_result <= std_logic_vector(to_signed(0,32));
-        	                			end if;
+							if I_fwd_mem_read = '1' then
+	  		                      			if signed(I_fwd_mem_read_data) < signed(I_rt_data) then
+	  	                          				O_alu_result <= std_logic_vector(to_signed(1,32));
+	        	                			else
+	  	                          				O_alu_result <= std_logic_vector(to_signed(0,32));
+	        	                			end if;
+							else
+	  		                      			if signed(I_fwd_mem_alu_result) < signed(I_rt_data) then
+	  	                          				O_alu_result <= std_logic_vector(to_signed(1,32));
+	        	                			else
+	  	                          				O_alu_result <= std_logic_vector(to_signed(0,32));
+	        	                			end if;
+							end if;
 						elsif I_forward_rs = FORWARDING_MEM and I_forward_rt = FORWARDING_EX then
-  		                      			if signed(I_mem_data) < signed(I_ex_data) then
-  	                          				O_alu_result <= std_logic_vector(to_signed(1,32));
-        	                			else
-  	                          				O_alu_result <= std_logic_vector(to_signed(0,32));
-        	                			end if;
+							if I_fwd_mem_read = '1' then
+	  		                      			if signed(I_fwd_mem_read_data) < signed(I_fwd_ex_alu_result) then
+	  	                          				O_alu_result <= std_logic_vector(to_signed(1,32));
+	        	                			else
+	  	                          				O_alu_result <= std_logic_vector(to_signed(0,32));
+	        	                			end if;
+							else
+	  		                      			if signed(I_fwd_mem_alu_result) < signed(I_fwd_ex_alu_result) then
+	  	                          				O_alu_result <= std_logic_vector(to_signed(1,32));
+	        	                			else
+	  	                          				O_alu_result <= std_logic_vector(to_signed(0,32));
+	        	                			end if;
+							end if;
                     				end if;
 						flush <= '0';
 
@@ -323,17 +433,33 @@ begin
 						if I_forward_rs = FORWARDING_NONE and I_forward_rt = FORWARDING_NONE then
 							O_alu_result <= I_rs_data and I_rt_data;
 						elsif I_forward_rs = FORWARDING_NONE and I_forward_rt = FORWARDING_EX then
-							O_alu_result <= I_rs_data and I_ex_data;
+							O_alu_result <= I_rs_data and I_fwd_ex_alu_result;
 						elsif I_forward_rs = FORWARDING_NONE and I_forward_rt = FORWARDING_MEM then
-							O_alu_result <= I_rs_data and I_mem_data;
+							if I_fwd_mem_read = '1' then
+								O_alu_result <= I_rs_data and I_fwd_mem_read_data;
+							else
+								O_alu_result <= I_rs_data and I_fwd_mem_alu_result;
+							end if;
 						elsif I_forward_rs = FORWARDING_EX and I_forward_rt = FORWARDING_NONE then
-							O_alu_result <= I_ex_data and I_rt_data;
+							O_alu_result <= I_fwd_ex_alu_result and I_rt_data;
 						elsif I_forward_rs = FORWARDING_EX and I_forward_rt = FORWARDING_MEM then
-							O_alu_result <= I_ex_data and I_mem_data;
+							if I_fwd_mem_read = '1' then
+								O_alu_result <= I_fwd_ex_alu_result and I_fwd_mem_read_data;
+							else
+								O_alu_result <= I_fwd_ex_alu_result and I_fwd_mem_alu_result;
+							end if;
 						elsif I_forward_rs = FORWARDING_MEM and I_forward_rt = FORWARDING_NONE then
-							O_alu_result <= I_mem_data and I_rt_data;
+							if I_fwd_mem_read = '1' then
+								O_alu_result <= I_fwd_mem_read_data and I_rt_data;
+							else
+								O_alu_result <= I_fwd_mem_alu_result and I_rt_data;
+							end if;
 						elsif I_forward_rs = FORWARDING_MEM and I_forward_rt = FORWARDING_EX then
-							O_alu_result <= I_mem_data and I_ex_data;
+							if I_fwd_mem_read = '1' then
+								O_alu_result <= I_fwd_mem_read_data and I_fwd_ex_alu_result;
+							else
+								O_alu_result <= I_fwd_mem_alu_result and I_fwd_ex_alu_result;
+							end if;
                     				end if;
 						flush <= '0';
 
@@ -341,17 +467,33 @@ begin
 						if I_forward_rs = FORWARDING_NONE and I_forward_rt = FORWARDING_NONE then
 							O_alu_result <= I_rs_data or I_rt_data;
 						elsif I_forward_rs = FORWARDING_NONE and I_forward_rt = FORWARDING_EX then
-							O_alu_result <= I_rs_data or I_ex_data;
+							O_alu_result <= I_rs_data or I_fwd_ex_alu_result;
 						elsif I_forward_rs = FORWARDING_NONE and I_forward_rt = FORWARDING_MEM then
-							O_alu_result <= I_rs_data or I_mem_data;
+							if I_fwd_mem_read = '1' then
+								O_alu_result <= I_rs_data or I_fwd_mem_read_data;
+							else
+								O_alu_result <= I_rs_data or I_fwd_mem_alu_result;
+							end if;
 						elsif I_forward_rs = FORWARDING_EX and I_forward_rt = FORWARDING_NONE then
-							O_alu_result <= I_ex_data or I_rt_data;
+							O_alu_result <= I_fwd_ex_alu_result or I_rt_data;
 						elsif I_forward_rs = FORWARDING_EX and I_forward_rt = FORWARDING_MEM then
-							O_alu_result <= I_ex_data or I_mem_data;
+							if I_fwd_mem_read = '1' then
+								O_alu_result <= I_fwd_ex_alu_result or I_fwd_mem_read_data;
+							else
+								O_alu_result <= I_fwd_ex_alu_result or I_fwd_mem_alu_result;
+							end if;
 						elsif I_forward_rs = FORWARDING_MEM and I_forward_rt = FORWARDING_NONE then
-							O_alu_result <= I_mem_data or I_rt_data;
+							if I_fwd_mem_read = '1' then
+								O_alu_result <= I_fwd_mem_read_data or I_rt_data;
+							else
+								O_alu_result <= I_fwd_mem_alu_result or I_rt_data;
+							end if;
 						elsif I_forward_rs = FORWARDING_MEM and I_forward_rt = FORWARDING_EX then
-							O_alu_result <= I_mem_data or I_ex_data;
+							if I_fwd_mem_read = '1' then
+								O_alu_result <= I_fwd_mem_read_data or I_fwd_ex_alu_result;
+							else
+								O_alu_result <= I_fwd_mem_alu_result or I_fwd_ex_alu_result;
+							end if;
                     				end if;
   						flush <= '0';
                       
@@ -359,17 +501,33 @@ begin
 						if I_forward_rs = FORWARDING_NONE and I_forward_rt = FORWARDING_NONE then
 							O_alu_result <= I_rs_data nor I_rt_data;
 						elsif I_forward_rs = FORWARDING_NONE and I_forward_rt = FORWARDING_EX then
-							O_alu_result <= I_rs_data nor I_ex_data;
+							O_alu_result <= I_rs_data nor I_fwd_ex_alu_result;
 						elsif I_forward_rs = FORWARDING_NONE and I_forward_rt = FORWARDING_MEM then
-							O_alu_result <= I_rs_data nor I_mem_data;
+							if I_fwd_mem_read = '1' then
+								O_alu_result <= I_rs_data nor I_fwd_mem_read_data;
+							else
+								O_alu_result <= I_rs_data nor I_fwd_mem_alu_result;
+							end if;
 						elsif I_forward_rs = FORWARDING_EX and I_forward_rt = FORWARDING_NONE then
-							O_alu_result <= I_ex_data nor I_rt_data;
+							O_alu_result <= I_fwd_ex_alu_result nor I_rt_data;
 						elsif I_forward_rs = FORWARDING_EX and I_forward_rt = FORWARDING_MEM then
-							O_alu_result <= I_ex_data nor I_mem_data;
+							if I_fwd_mem_read = '1' then
+								O_alu_result <= I_fwd_ex_alu_result nor I_fwd_mem_read_data;
+							else
+								O_alu_result <= I_fwd_ex_alu_result nor I_fwd_mem_alu_result;
+							end if;
 						elsif I_forward_rs = FORWARDING_MEM and I_forward_rt = FORWARDING_NONE then
-							O_alu_result <= I_mem_data nor I_rt_data;
+							if I_fwd_mem_read = '1' then
+								O_alu_result <= I_fwd_mem_read_data nor I_rt_data;
+							else
+								O_alu_result <= I_fwd_mem_alu_result nor I_rt_data;
+							end if;
 						elsif I_forward_rs = FORWARDING_MEM and I_forward_rt = FORWARDING_EX then
-							O_alu_result <= I_mem_data nor I_ex_data;
+							if I_fwd_mem_read = '1' then
+								O_alu_result <= I_fwd_mem_read_data nor I_fwd_ex_alu_result;
+							else
+								O_alu_result <= I_fwd_mem_alu_result nor I_fwd_ex_alu_result;
+							end if;
                     				end if;
 						flush <= '0';
 
@@ -377,17 +535,33 @@ begin
 						if I_forward_rs = FORWARDING_NONE and I_forward_rt = FORWARDING_NONE then
 							O_alu_result <= I_rs_data xor I_rt_data;
 						elsif I_forward_rs = FORWARDING_NONE and I_forward_rt = FORWARDING_EX then
-							O_alu_result <= I_rs_data xor I_ex_data;
+							O_alu_result <= I_rs_data xor I_fwd_ex_alu_result;
 						elsif I_forward_rs = FORWARDING_NONE and I_forward_rt = FORWARDING_MEM then
-							O_alu_result <= I_rs_data xor I_mem_data;
+							if I_fwd_mem_read = '1' then
+								O_alu_result <= I_rs_data xor I_fwd_mem_read_data;
+							else
+								O_alu_result <= I_rs_data xor I_fwd_mem_alu_result;
+							end if;
 						elsif I_forward_rs = FORWARDING_EX and I_forward_rt = FORWARDING_NONE then
-							O_alu_result <= I_ex_data xor I_rt_data;
+							O_alu_result <= I_fwd_ex_alu_result xor I_rt_data;
 						elsif I_forward_rs = FORWARDING_EX and I_forward_rt = FORWARDING_MEM then
-							O_alu_result <= I_ex_data xor I_mem_data;
+							if I_fwd_mem_read = '1' then
+								O_alu_result <= I_fwd_ex_alu_result xor I_fwd_mem_read_data;
+							else
+								O_alu_result <= I_fwd_ex_alu_result xor I_fwd_mem_alu_result;
+							end if;
 						elsif I_forward_rs = FORWARDING_MEM and I_forward_rt = FORWARDING_NONE then
-							O_alu_result <= I_mem_data xor I_rt_data;
+							if I_fwd_mem_read = '1' then
+								O_alu_result <= I_fwd_mem_read_data xor I_rt_data;
+							else
+								O_alu_result <= I_fwd_mem_alu_result xor I_rt_data;
+							end if;
 						elsif I_forward_rs = FORWARDING_MEM and I_forward_rt = FORWARDING_EX then
-							O_alu_result <= I_mem_data xor I_ex_data;
+							if I_fwd_mem_read = '1' then
+								O_alu_result <= I_fwd_mem_read_data xor I_fwd_ex_alu_result;
+							else
+								O_alu_result <= I_fwd_mem_alu_result xor I_fwd_ex_alu_result;
+							end if;
                     				end if;
 						flush <= '0';
 
@@ -406,9 +580,13 @@ begin
 						when FORWARDING_NONE =>
 							O_alu_result <= std_logic_vector(shift_left(unsigned(I_rt_data), to_integer(unsigned(I_shamt))));
 						when FORWARDING_EX =>
-							O_alu_result <= std_logic_vector(shift_left(unsigned(I_ex_data), to_integer(unsigned(I_shamt))));
+							O_alu_result <= std_logic_vector(shift_left(unsigned(I_fwd_ex_alu_result), to_integer(unsigned(I_shamt))));
 						when FORWARDING_MEM =>
-							O_alu_result <= std_logic_vector(shift_left(unsigned(I_mem_data), to_integer(unsigned(I_shamt))));
+							if I_fwd_mem_read = '1' then
+								O_alu_result <= std_logic_vector(shift_left(unsigned(I_fwd_mem_read_data), to_integer(unsigned(I_shamt))));
+							else
+								O_alu_result <= std_logic_vector(shift_left(unsigned(I_fwd_mem_alu_result), to_integer(unsigned(I_shamt))));
+							end if;
 						when others =>
 						end case;
 						flush <= '0';
@@ -418,9 +596,13 @@ begin
 						when FORWARDING_NONE =>
 							O_alu_result <= std_logic_vector(shift_right(unsigned(I_rt_data), to_integer(unsigned(I_shamt))));
 						when FORWARDING_EX =>
-							O_alu_result <= std_logic_vector(shift_right(unsigned(I_ex_data), to_integer(unsigned(I_shamt))));
+							O_alu_result <= std_logic_vector(shift_right(unsigned(I_fwd_ex_alu_result), to_integer(unsigned(I_shamt))));
 						when FORWARDING_MEM =>
-							O_alu_result <= std_logic_vector(shift_right(unsigned(I_mem_data), to_integer(unsigned(I_shamt))));
+							if I_fwd_mem_read = '1' then
+								O_alu_result <= std_logic_vector(shift_right(unsigned(I_fwd_mem_read_data), to_integer(unsigned(I_shamt))));
+							else
+								O_alu_result <= std_logic_vector(shift_right(unsigned(I_fwd_mem_alu_result), to_integer(unsigned(I_shamt))));
+							end if;
 						when others =>
 						end case;
 						flush <= '0';
@@ -430,9 +612,13 @@ begin
 						when FORWARDING_NONE =>
 	        	                		O_alu_result <= std_logic_vector(shift_right(signed(I_rt_data), to_integer(unsigned(I_shamt))));
 						when FORWARDING_EX =>
-							O_alu_result <= std_logic_vector(shift_right(signed(I_ex_data), to_integer(unsigned(I_shamt))));
+							O_alu_result <= std_logic_vector(shift_right(signed(I_fwd_ex_alu_result), to_integer(unsigned(I_shamt))));
 						when FORWARDING_MEM =>
-							O_alu_result <= std_logic_vector(shift_right(signed(I_mem_data), to_integer(unsigned(I_shamt))));
+							if I_fwd_mem_read = '1' then
+								O_alu_result <= std_logic_vector(shift_right(signed(I_fwd_mem_read_data), to_integer(unsigned(I_shamt))));
+							else
+								O_alu_result <= std_logic_vector(shift_right(signed(I_fwd_mem_alu_result), to_integer(unsigned(I_shamt))));
+							end if;
 						when others =>
 						end case;
 						flush <= '0';
@@ -443,9 +629,13 @@ begin
 						when FORWARDING_NONE =>
 	        	                		O_updated_next_pc <= I_rs_data;
 						when FORWARDING_EX =>
-							O_updated_next_pc <= I_ex_data;
+							O_updated_next_pc <= I_fwd_ex_alu_result;
 						when FORWARDING_MEM =>
-							O_updated_next_pc <= I_mem_data;
+							if I_fwd_mem_read = '1' then
+								O_updated_next_pc <= I_fwd_mem_read_data;
+							else
+								O_updated_next_pc <= I_fwd_mem_alu_result;
+							end if;
 						when others =>
 						end case;
 						flush <= '1';
@@ -461,9 +651,13 @@ begin
 						when FORWARDING_NONE =>
   		                      			O_alu_result <= std_logic_vector(signed(I_rs_data) + signed(I_imm_SE));
 						when FORWARDING_EX =>
-  		                      			O_alu_result <= std_logic_vector(signed(I_ex_data) + signed(I_imm_SE));
+  		                      			O_alu_result <= std_logic_vector(signed(I_fwd_ex_alu_result) + signed(I_imm_SE));
 						when FORWARDING_MEM =>
-  		                      			O_alu_result <= std_logic_vector(signed(I_mem_data) + signed(I_imm_SE));
+							if I_fwd_mem_read = '1' then
+  		                      				O_alu_result <= std_logic_vector(signed(I_fwd_mem_read_data) + signed(I_imm_SE));
+							else
+  		                      				O_alu_result <= std_logic_vector(signed(I_fwd_mem_alu_result) + signed(I_imm_SE));
+							end if;
 						when others =>
 						end case;
 						O_branch <= '0';
@@ -479,17 +673,25 @@ begin
   		                          			O_alu_result <= std_logic_vector(to_signed(0,32));
   		                      			end if;
 						when FORWARDING_EX =>
-  		                      			if signed(I_ex_data) < signed(I_imm_SE) then
+  		                      			if signed(I_fwd_ex_alu_result) < signed(I_imm_SE) then
   		                          			O_alu_result <= std_logic_vector(to_signed(1,32));
   		                      			else
   		                          			O_alu_result <= std_logic_vector(to_signed(0,32));
   		                      			end if;
 						when FORWARDING_MEM =>
-  		                      			if signed(I_mem_data) < signed(I_imm_SE) then
-  		                          			O_alu_result <= std_logic_vector(to_signed(1,32));
-  		                      			else
-  		                          			O_alu_result <= std_logic_vector(to_signed(0,32));
-  		                      			end if;
+							if I_fwd_mem_read = '1' then
+  		                      				if signed(I_fwd_mem_read_data) < signed(I_imm_SE) then
+  		                          				O_alu_result <= std_logic_vector(to_signed(1,32));
+  		                      				else
+  		                          				O_alu_result <= std_logic_vector(to_signed(0,32));
+  		                      				end if;
+							else
+  		                      				if signed(I_fwd_mem_alu_result) < signed(I_imm_SE) then
+  		                          				O_alu_result <= std_logic_vector(to_signed(1,32));
+  		                      				else
+  		                          				O_alu_result <= std_logic_vector(to_signed(0,32));
+  		                      				end if;
+							end if;
 						when others =>
 						end case;
 						O_branch <= '0';
@@ -502,9 +704,13 @@ begin
 						when FORWARDING_NONE =>
   		                      			O_alu_result <= I_rs_data and I_imm_ZE;
 						when FORWARDING_EX =>
-  		                      			O_alu_result <= I_ex_data and I_imm_ZE;
+  		                      			O_alu_result <= I_fwd_ex_alu_result and I_imm_ZE;
 						when FORWARDING_MEM =>
-  		                      			O_alu_result <= I_mem_data and I_imm_ZE;
+							if I_fwd_mem_read = '1' then
+  		                      				O_alu_result <= I_fwd_mem_read_data and I_imm_ZE;
+							else
+  		                      				O_alu_result <= I_fwd_mem_alu_result and I_imm_ZE;
+							end if;
 						when others =>
 						end case;
 						O_branch <= '0';
@@ -516,9 +722,13 @@ begin
 						when FORWARDING_NONE =>
   		                      			O_alu_result <= I_rs_data or I_imm_ZE;
 						when FORWARDING_EX =>
-  		                      			O_alu_result <= I_ex_data or I_imm_ZE;
+  		                      			O_alu_result <= I_fwd_ex_alu_result or I_imm_ZE;
 						when FORWARDING_MEM =>
-  		                      			O_alu_result <= I_mem_data or I_imm_ZE;
+							if I_fwd_mem_read = '1' then
+  		                      				O_alu_result <= I_fwd_mem_read_data or I_imm_ZE;
+							else
+  		                      				O_alu_result <= I_fwd_mem_alu_result or I_imm_ZE;
+							end if;
 						when others =>
 						end case;
 						O_branch <= '0';
@@ -530,9 +740,13 @@ begin
 						when FORWARDING_NONE =>
   		                      			O_alu_result <= I_rs_data xor I_imm_ZE;
 						when FORWARDING_EX =>
-  		                      			O_alu_result <= I_ex_data xor I_imm_ZE;
+  		                      			O_alu_result <= I_fwd_ex_alu_result xor I_imm_ZE;
 						when FORWARDING_MEM =>
-  		                      			O_alu_result <= I_mem_data xor I_imm_ZE;
+							if I_fwd_mem_read = '1' then
+  		                      				O_alu_result <= I_fwd_mem_read_data xor I_imm_ZE;
+							else
+  		                      				O_alu_result <= I_fwd_mem_alu_result xor I_imm_ZE;
+							end if;
 						when others =>
 						end case;
 						O_branch <= '0';
@@ -551,9 +765,13 @@ begin
 						when FORWARDING_NONE =>
   		                      			O_alu_result <= std_logic_vector(signed(I_rs_data) + signed(I_imm_SE));
 						when FORWARDING_EX =>
-  		                      			O_alu_result <= std_logic_vector(signed(I_ex_data) + signed(I_imm_SE));
+  		                      			O_alu_result <= std_logic_vector(signed(I_fwd_ex_alu_result) + signed(I_imm_SE));
 						when FORWARDING_MEM =>
-  		                      			O_alu_result <= std_logic_vector(signed(I_mem_data) + signed(I_imm_SE));
+							if I_fwd_mem_read = '1' then
+								O_alu_result <= std_logic_vector(signed(I_fwd_mem_read_data) + signed(I_imm_SE));
+							else
+								O_alu_result <= std_logic_vector(signed(I_fwd_mem_alu_result) + signed(I_imm_SE));
+							end if;  		              
 						when others =>
 						end case;
 						O_branch <= '0';
@@ -573,7 +791,7 @@ begin
 
         	                			end if;
 						elsif I_forward_rs = FORWARDING_NONE and I_forward_rt = FORWARDING_EX then
-  		                      			if I_rs_data = I_ex_data then
+  		                      			if I_rs_data = I_fwd_ex_alu_result then
   	                          				O_updated_next_pc <= std_logic_vector(signed(I_next_pc) + signed(I_imm_SE(29 downto 0) & "00"));
         	                				O_branch <= '1';
 								flush <= '1';
@@ -584,17 +802,29 @@ begin
 			
         	                			end if;
 						elsif I_forward_rs = FORWARDING_NONE and I_forward_rt = FORWARDING_MEM then
-  		                      			if I_rs_data = I_mem_data then
-  	                          				O_updated_next_pc <= std_logic_vector(signed(I_next_pc) + signed(I_imm_SE(29 downto 0) & "00"));  	                          				
-        	                				O_branch <= '1';
-								flush <= '1';
+							if I_fwd_mem_read = '1' then
+	  		                      			if I_rs_data = I_fwd_mem_read_data then
+	  	                          				O_updated_next_pc <= std_logic_vector(signed(I_next_pc) + signed(I_imm_SE(29 downto 0) & "00"));  	                          				
+	        	                				O_branch <= '1';
+									flush <= '1';
+								else
+									O_updated_next_pc <= I_next_pc;
+	        	                				O_branch <= '0';
+									flush <= '0';
+	        	                			end if;
 							else
-								O_updated_next_pc <= I_next_pc;
-        	                				O_branch <= '0';
-								flush <= '0';
-        	                			end if;
+	  		                      			if I_rs_data = I_fwd_mem_alu_result then
+	  	                          				O_updated_next_pc <= std_logic_vector(signed(I_next_pc) + signed(I_imm_SE(29 downto 0) & "00"));  	                          				
+	        	                				O_branch <= '1';
+									flush <= '1';
+								else
+									O_updated_next_pc <= I_next_pc;
+	        	                				O_branch <= '0';
+									flush <= '0';
+	        	                			end if;
+							end if;
 						elsif I_forward_rs = FORWARDING_EX and I_forward_rt = FORWARDING_NONE then
-  		                      			if I_ex_data = I_rt_data then
+  		                      			if I_fwd_ex_alu_result = I_rt_data then
   	                          				O_updated_next_pc <= std_logic_vector(signed(I_next_pc) + signed(I_imm_SE(29 downto 0) & "00"));
         	                				O_branch <= '1';
 								flush <= '1';
@@ -604,35 +834,71 @@ begin
 								flush <= '0';
         	                			end if;
 						elsif I_forward_rs = FORWARDING_EX and I_forward_rt = FORWARDING_MEM then
-  		                      			if I_ex_data = I_mem_data then
-  	                          				O_updated_next_pc <= std_logic_vector(signed(I_next_pc) + signed(I_imm_SE(29 downto 0) & "00"));
-        	                			    	O_branch <= '1';
-								flush <= '1';
+							if I_fwd_mem_read = '1' then
+	  		                      			if I_fwd_ex_alu_result = I_fwd_mem_read_data then
+	  	                          				O_updated_next_pc <= std_logic_vector(signed(I_next_pc) + signed(I_imm_SE(29 downto 0) & "00"));
+	        	                			    	O_branch <= '1';
+									flush <= '1';
+								else
+	  	                          				O_updated_next_pc <= I_next_pc;
+	        	                				O_branch <= '0';
+									flush <= '0';
+	        	                			end if;
 							else
-  	                          				O_updated_next_pc <= I_next_pc;
-        	                				O_branch <= '0';
-								flush <= '0';
-        	                			end if;
+	  		                      			if I_fwd_ex_alu_result = I_fwd_mem_alu_result then
+	  	                          				O_updated_next_pc <= std_logic_vector(signed(I_next_pc) + signed(I_imm_SE(29 downto 0) & "00"));
+	        	                			    	O_branch <= '1';
+									flush <= '1';
+								else
+	  	                          				O_updated_next_pc <= I_next_pc;
+	        	                				O_branch <= '0';
+									flush <= '0';
+	        	                			end if;
+							end if;
 						elsif I_forward_rs = FORWARDING_MEM and I_forward_rt = FORWARDING_NONE then
-  		                      			if I_mem_data = I_rt_data then
-  	                          				O_updated_next_pc <= std_logic_vector(signed(I_next_pc) + signed(I_imm_SE(29 downto 0) & "00"));
-        	                				O_branch <= '1';
-								flush <= '1';
-        	                			else
-  	                          				O_updated_next_pc <= I_next_pc;
-        	                				O_branch <= '0';
-								flush <= '0';
-        	                			end if;
+							if I_fwd_mem_read = '1' then
+	  		                      			if I_fwd_mem_read_data = I_rt_data then
+	  	                          				O_updated_next_pc <= std_logic_vector(signed(I_next_pc) + signed(I_imm_SE(29 downto 0) & "00"));
+	        	                				O_branch <= '1';
+									flush <= '1';
+	        	                			else
+	  	                          				O_updated_next_pc <= I_next_pc;
+	        	                				O_branch <= '0';
+									flush <= '0';
+	        	                			end if;
+							else
+	  		                      			if I_fwd_mem_alu_result = I_rt_data then
+	  	                          				O_updated_next_pc <= std_logic_vector(signed(I_next_pc) + signed(I_imm_SE(29 downto 0) & "00"));
+	        	                				O_branch <= '1';
+									flush <= '1';
+	        	                			else
+	  	                          				O_updated_next_pc <= I_next_pc;
+	        	                				O_branch <= '0';
+									flush <= '0';
+	        	                			end if;
+							end if;
 						elsif I_forward_rs = FORWARDING_MEM and I_forward_rt = FORWARDING_EX then
-  		                      			if I_mem_data = I_ex_data then
-  	                          				O_updated_next_pc <= std_logic_vector(signed(I_next_pc) + signed(I_imm_SE(29 downto 0) & "00"));
-        	                				O_branch <= '1';
-								flush <= '1';
-        	                			else
-  	                          				O_updated_next_pc <= I_next_pc;
-        	                				O_branch <= '0';
-								flush <= '0';
-        	                			end if;
+							if I_fwd_mem_read = '1' then
+	  		                      			if I_fwd_mem_read_data = I_fwd_ex_alu_result then
+	  	                          				O_updated_next_pc <= std_logic_vector(signed(I_next_pc) + signed(I_imm_SE(29 downto 0) & "00"));
+	        	                				O_branch <= '1';
+									flush <= '1';
+	        	                			else
+	  	                          				O_updated_next_pc <= I_next_pc;
+	        	                				O_branch <= '0';
+									flush <= '0';
+	        	                			end if;
+							else
+	  		                      			if I_fwd_mem_alu_result = I_fwd_ex_alu_result then
+	  	                          				O_updated_next_pc <= std_logic_vector(signed(I_next_pc) + signed(I_imm_SE(29 downto 0) & "00"));
+	        	                				O_branch <= '1';
+									flush <= '1';
+	        	                			else
+	  	                          				O_updated_next_pc <= I_next_pc;
+	        	                				O_branch <= '0';
+									flush <= '0';
+	        	                			end if;
+							end if;
                     				end if;
   	                  		when BNE_OPCODE=>
 						if I_forward_rs = FORWARDING_NONE and I_forward_rt = FORWARDING_NONE then
@@ -656,15 +922,27 @@ begin
 								flush <= '0';
         	                			end if;
 						elsif I_forward_rs = FORWARDING_NONE and I_forward_rt = FORWARDING_MEM then
-  		                      			if I_rs_data /= I_rt_data then
-  	                          				O_updated_next_pc <= std_logic_vector(signed(I_next_pc) + signed(I_imm_SE(29 downto 0) & "00"));
-        	                				O_branch <= '1';
-								flush <= '1';
-        	                			else
-  	                          				O_updated_next_pc <= I_next_pc;
-        	                				O_branch <= '0';
-								flush <= '0';
-        	                			end if;
+							if I_fwd_mem_read = '1' then
+	  		                      			if I_rs_data /= I_rt_data then
+	  	                          				O_updated_next_pc <= std_logic_vector(signed(I_next_pc) + signed(I_imm_SE(29 downto 0) & "00"));
+	        	                				O_branch <= '1';
+									flush <= '1';
+	        	                			else
+	  	                          				O_updated_next_pc <= I_next_pc;
+	        	                				O_branch <= '0';
+									flush <= '0';
+	        	                			end if;
+							else
+	  		                      			if I_rs_data /= I_rt_data then
+	  	                          				O_updated_next_pc <= std_logic_vector(signed(I_next_pc) + signed(I_imm_SE(29 downto 0) & "00"));
+	        	                				O_branch <= '1';
+									flush <= '1';
+	        	                			else
+	  	                          				O_updated_next_pc <= I_next_pc;
+	        	                				O_branch <= '0';
+									flush <= '0';
+	        	                			end if;
+							end if;
 						elsif I_forward_rs = FORWARDING_EX and I_forward_rt = FORWARDING_NONE then
   		                      			if I_rs_data /= I_rt_data then
   	                          				O_updated_next_pc <= std_logic_vector(signed(I_next_pc) + signed(I_imm_SE(29 downto 0) & "00"));
@@ -676,35 +954,71 @@ begin
 								flush <= '0';
         	                			end if;
 						elsif I_forward_rs = FORWARDING_EX and I_forward_rt = FORWARDING_MEM then
-  		                      			if I_rs_data /= I_rt_data then
-  	                          				O_updated_next_pc <= std_logic_vector(signed(I_next_pc) + signed(I_imm_SE(29 downto 0) & "00"));
-        	                				O_branch <= '1';
-								flush <= '1';
-        	                			else
-  	                          				O_updated_next_pc <= I_next_pc;
-        	                				O_branch <= '0';
-								flush <= '0';
-        	                			end if;
+							if I_fwd_mem_read = '1' then
+	  		                      			if I_rs_data /= I_rt_data then
+	  	                          				O_updated_next_pc <= std_logic_vector(signed(I_next_pc) + signed(I_imm_SE(29 downto 0) & "00"));
+	        	                				O_branch <= '1';
+									flush <= '1';
+	        	                			else
+	  	                          				O_updated_next_pc <= I_next_pc;
+	        	                				O_branch <= '0';
+									flush <= '0';
+	        	                			end if;
+							else
+	  		                      			if I_rs_data /= I_rt_data then
+	  	                          				O_updated_next_pc <= std_logic_vector(signed(I_next_pc) + signed(I_imm_SE(29 downto 0) & "00"));
+	        	                				O_branch <= '1';
+									flush <= '1';
+	        	                			else
+	  	                          				O_updated_next_pc <= I_next_pc;
+	        	                				O_branch <= '0';
+									flush <= '0';
+	        	                			end if;
+							end if;
 						elsif I_forward_rs = FORWARDING_MEM and I_forward_rt = FORWARDING_NONE then
-  		                      			if I_rs_data /= I_rt_data then
-  	                          				O_updated_next_pc <= std_logic_vector(signed(I_next_pc) + signed(I_imm_SE(29 downto 0) & "00"));
-        	                				O_branch <= '1';
-								flush <= '1';
-        	                			else
-  	                          				O_updated_next_pc <= I_next_pc;
-        	                				O_branch <= '0';
-								flush <= '0';
-        	                			end if;
+							if I_fwd_mem_read = '1' then
+	  		                      			if I_rs_data /= I_rt_data then
+	  	                          				O_updated_next_pc <= std_logic_vector(signed(I_next_pc) + signed(I_imm_SE(29 downto 0) & "00"));
+	        	                				O_branch <= '1';
+									flush <= '1';
+	        	                			else
+	  	                          				O_updated_next_pc <= I_next_pc;
+	        	                				O_branch <= '0';
+									flush <= '0';
+	        	                			end if;
+							else
+	  		                      			if I_rs_data /= I_rt_data then
+	  	                          				O_updated_next_pc <= std_logic_vector(signed(I_next_pc) + signed(I_imm_SE(29 downto 0) & "00"));
+	        	                				O_branch <= '1';
+									flush <= '1';
+	        	                			else
+	  	                          				O_updated_next_pc <= I_next_pc;
+	        	                				O_branch <= '0';
+									flush <= '0';
+	        	                			end if;
+							end if;
 						elsif I_forward_rs = FORWARDING_MEM and I_forward_rt = FORWARDING_EX then
-  		                      			if I_rs_data /= I_rt_data then
-  	                          				O_updated_next_pc <= std_logic_vector(signed(I_next_pc) + signed(I_imm_SE(29 downto 0) & "00"));
-        	                				O_branch <= '1';
-								flush <= '1';
-        	                			else
-  	                          				O_updated_next_pc <= I_next_pc;
-        	                				O_branch <= '0';
-								flush <= '0';
-        	                			end if;
+							if I_fwd_mem_read = '1' then
+	  		                      			if I_rs_data /= I_rt_data then
+	  	                          				O_updated_next_pc <= std_logic_vector(signed(I_next_pc) + signed(I_imm_SE(29 downto 0) & "00"));
+	        	                				O_branch <= '1';
+									flush <= '1';
+	        	                			else
+	  	                          				O_updated_next_pc <= I_next_pc;
+	        	                				O_branch <= '0';
+									flush <= '0';
+	        	                			end if;
+							else
+	  		                      			if I_rs_data /= I_rt_data then
+	  	                          				O_updated_next_pc <= std_logic_vector(signed(I_next_pc) + signed(I_imm_SE(29 downto 0) & "00"));
+	        	                				O_branch <= '1';
+									flush <= '1';
+	        	                			else
+	  	                          				O_updated_next_pc <= I_next_pc;
+	        	                				O_branch <= '0';
+									flush <= '0';
+	        	                			end if;
+							end if;
                     				end if;
 					when J_OPCODE=>
         	                		O_updated_next_pc <= I_next_pc(31 downto 28) & I_addr & "00";

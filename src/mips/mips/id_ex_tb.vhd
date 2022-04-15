@@ -173,8 +173,10 @@ port(
 	I_next_pc: in std_logic_vector (31 downto 0); 
 
 	-- forwarding
-	I_ex_data: in std_logic_vector (31 downto 0);
-	I_mem_data: in std_logic_vector (31 downto 0);
+	I_fwd_ex_alu_result: in std_logic_vector (31 downto 0);
+	I_fwd_mem_read_data: in std_logic_vector (31 downto 0);
+	I_fwd_mem_alu_result: in std_logic_vector (31 downto 0);
+	I_fwd_mem_read: in std_logic;
 	
 	-- from forwarding unit
 	I_forward_rs: in std_logic_vector (1 downto 0);
@@ -231,6 +233,8 @@ end component;
 -- Synchronoucity Inputs
 signal I_reset : std_logic := '0';
 signal I_clk : std_logic := '0';
+signal I_en : std_logic := '0';
+signal I_fwd_en : std_logic := '0';
 
 -- REGISTER FILE SIGNALS
 -- INPUTS
@@ -239,7 +243,6 @@ signal RF_I_rt :  std_logic_vector (4 downto 0);
 signal RF_I_rd :  std_logic_vector (4 downto 0); -- from wb to rf
 signal RF_I_datad: std_logic_vector (31 downto 0); -- from wb to rf
 signal RF_I_we :  std_logic := '0'; -- from wb to rf
-signal RF_I_en :  std_logic := '0';
 
 -- OUTPUTS
 signal RF_O_datas :  std_logic_vector (31 downto 0); -- rf to ex
@@ -248,7 +251,7 @@ signal RF_O_datat :  std_logic_vector (31 downto 0); -- rf to ex
 -- DECODE SIGNALS
 -- OUTPUTS
 -- from id to ex
-signal ID_I_en : std_logic := '0'; 
+
 signal ID_O_next_pc: std_logic_vector (31 downto 0);
 signal ID_O_rs : std_logic_vector (4 downto 0);
 signal ID_O_rt : std_logic_vector (4 downto 0);
@@ -269,7 +272,6 @@ signal ID_O_stall: std_logic := '0';
 
 -- EXECUTE SIGNALS				
 -- OUTPUTS 
-signal EX_I_en: std_logic := '0';
 signal EX_O_alu_result: std_logic_vector (31 downto 0);
 signal EX_O_updated_next_pc: std_logic_vector (31 downto 0);
 signal EX_O_rt_data: std_logic_vector (31 downto 0);
@@ -286,16 +288,18 @@ signal F_O_dataInst : std_logic_vector (31 downto 0); -- from fetch to id
 signal F_O_pc: std_logic_vector (31 downto 0); -- from fetch to id
 
 -- MEMORY
-signal MEM_O_rd: std_logic_vector (4 downto 0); -- TODO: replace when memory added
-signal MEM_O_reg_write: std_logic; -- TODO: replace when memory added
-signal MEM_O_result: std_logic_vector (31 downto 0); -- TODO: replace when memory added
+-- mock memory signals
+signal MEM_O_rd: std_logic_vector (4 downto 0);
+signal MEM_O_reg_write: std_logic; 
+signal MEM_O_alu_result: std_logic_vector (31 downto 0);
+signal MEM_O_read_data: std_logic_vector (31 downto 0);
+signal MEM_O_mem_read: std_logic;
 
 -- WRITE BACK
 
 
 -- FORWARD UNIT SIGNALS
 -- OUTPUTS
-signal FWD_I_en :  std_logic := '0';
 signal FWD_O_forward_rs: std_logic_vector (1 downto 0);
 signal FWD_O_forward_rt: std_logic_vector (1 downto 0);
 
@@ -375,7 +379,7 @@ port map(
 	-- INPUTS
 	I_clk => I_clk,
 	I_reset => I_reset,
-	I_en => EX_I_en,
+	I_en => I_en,
 
 	I_rs => ID_O_rs,
 	I_rt => ID_O_rt,
@@ -399,8 +403,10 @@ port map(
 	I_reg_write => ID_O_regDwe,				
 
 	-- forwarding
-	I_ex_data => EX_O_alu_result,
-	I_mem_data => MEM_O_result, 
+	I_fwd_ex_alu_result => EX_O_alu_result,
+	I_fwd_mem_read_data => MEM_O_read_data, 
+	I_fwd_mem_alu_result => MEM_O_alu_result, 
+	I_fwd_mem_read => MEM_O_mem_read,
 	I_forward_rs => FWD_O_forward_rs,
 	I_forward_rt => FWD_O_forward_rt,	
 
@@ -427,11 +433,11 @@ port map(
 	I_clk => I_clk,
 	I_reset => I_reset,
     	I_dataInst => F_O_dataInst,
-       	I_en => ID_I_en,
-	I_pc => F_O_PC,
+       	I_en => I_en,
+	I_pc => F_O_pc,
 
 	-- forwarding
-	I_fwd_en => FWD_I_en,
+	I_fwd_en => I_fwd_en,
 	I_id_rd => ID_O_rd,
 	I_id_reg_write => ID_O_regDwe,
 	I_id_mem_read => ID_O_mem_read,
@@ -464,7 +470,7 @@ port map(
 	I_clk => I_clk,
 	I_reset => I_reset,
 	I_dataD => RF_I_datad,
-       	I_en => RF_I_en,
+       	I_en => I_en,
        	I_rs => RF_I_rs,
        	I_rt => RF_I_rt,
        	I_rd => RF_I_rd,
@@ -481,7 +487,7 @@ port map(
 	-- INPUTS
 	I_clk => I_clk,
 	I_reset => I_reset,
-	I_en => FWD_I_en,
+	I_en => I_fwd_en,
 
 	I_id_rd => ID_O_rd,
 	I_ex_rd => EX_O_rd, -- connect: plug mem component
@@ -529,13 +535,13 @@ begin
   ----------------------------------------------------------------------------------
   
   	report "----- Starting tests -----";
+	I_en <= '1';
   ----------------------------------------------------------------------------------
   -- TEST 0: Store data in register file
   ----------------------------------------------------------------------------------
   	report "----- Test 0: Store data in register file -----";
 
 	-- store 4 in R1
-	RF_I_en <= '1';
 	RF_I_we <= '1';
 	RF_I_datad <= DATA_4; --4
 	RF_I_rs <= (others=>'0');
@@ -544,7 +550,6 @@ begin
 	wait for CLK_PERIOD;
 
 	-- store 8 in R2
-	RF_I_en <= '1';
 	RF_I_we <= '1';
 	RF_I_datad <= DATA_8; --4
 	RF_I_rs <= (others=>'0');
@@ -553,7 +558,7 @@ begin
 	wait for CLK_PERIOD;
 	
 	-- store -4 in R4
-	RF_I_en <= '1';
+	I_en <= '1';
 	RF_I_we <= '1';
 	RF_I_datad <= DATA_MINUS_4; --4
 	RF_I_rs <= (others=>'0');
@@ -563,7 +568,7 @@ begin
 
 	-- read value in R1 and R2
 	RF_I_we <= '0';
-	RF_I_en<= '1';
+	I_en<= '1';
 	RF_I_rs <= R1;
 	RF_I_rt <= R2;
 	wait for CLK_PERIOD;
@@ -577,10 +582,7 @@ begin
   ----------------------------------------------------------------------------------
 	report "----- Test 1: ADD Instruction -----";
 
-	ID_I_en <= '1';
-	EX_I_en <= '1';
-	RF_I_en <= '1';
-	FWD_I_en <= '0';
+	I_fwd_en <= '0';
 	F_O_PC <= NEXT_PC;
 
 	wait for CLK_PERIOD;
@@ -592,10 +594,8 @@ begin
   -- TEST 2: SUB
   ----------------------------------------------------------------------------------
   	report "----- Test 2: SUB Instruction -----";
-	ID_I_en <= '1';
-	EX_I_en <= '1';
-	RF_I_en <= '1';
-	FWD_I_en <= '0';
+
+	I_fwd_en <= '0';
 	RF_I_rs <= R2;
 	RF_I_rt <= R1;
 
@@ -614,10 +614,8 @@ begin
 
 	------------ MULT ------------ 
 	wait for CLK_PERIOD;
-	ID_I_en <= '1';
-	EX_I_en <= '1';
-	RF_I_en <= '1';
-	FWD_I_en <= '0';
+
+	I_fwd_en <= '0';
 	RF_I_rs <= R1;
 	RF_I_rt <= R2;
 	
@@ -629,11 +627,9 @@ begin
 	
 	
 	------------ MFLO ------------ 
-  	
-	ID_I_en <= '1';
-	EX_I_en <= '1';
-	RF_I_en <= '1';
-	FWD_I_en <= '0';
+ 
+
+	I_fwd_en <= '0';
 	RF_I_rs <= R1;
 	RF_I_rt <= R2;
 	
@@ -659,10 +655,7 @@ begin
   	report "----- Test 4: DIV Instruction -----";
 	------------ DIV ------------ 
  
-	ID_I_en <= '1';
-	EX_I_en <= '1';
-	RF_I_en <= '1';
-	FWD_I_en <= '0';
+	I_fwd_en <= '0';
 	RF_I_rs <= R2;
 	RF_I_rt <= R1;
 	
@@ -674,10 +667,7 @@ begin
 
 	------------ DIVLO ------------ 
   
-	ID_I_en <= '1';
-	EX_I_en <= '1';
-	RF_I_en <= '1';
-	FWD_I_en <= '0';
+	I_fwd_en <= '0';
 	RF_I_rs <= R2;
 	RF_I_rt <= R1;
 	
@@ -700,10 +690,7 @@ begin
   ----------------------------------------------------------------------------------
   report "----- Test 5: SLT Instruction -----";
 	
-	ID_I_en <= '1';
-	EX_I_en <= '1';
-	RF_I_en <= '1';
-	FWD_I_en <= '0';
+	I_fwd_en <= '0';
 	RF_I_rs <= R2;
 	RF_I_rt <= R1;
 	
@@ -718,10 +705,8 @@ begin
 
 
 	------------ SLT TRUE ------------ 
-	ID_I_en <= '1';
-	EX_I_en <= '1';
-	RF_I_en <= '1';
-	FWD_I_en <= '0';
+
+	I_fwd_en <= '0';
 	RF_I_rs <= R1;
 	RF_I_rt <= R2;
 	
@@ -738,10 +723,7 @@ begin
   ----------------------------------------------------------------------------------
   	report "----- Test 6: AND Instruction -----";
 	
-	ID_I_en <= '1';
-	EX_I_en <= '1';
-	RF_I_en <= '1';
-	FWD_I_en <= '0';
+	I_fwd_en <= '0';
 	RF_I_rs <= R2;
 	RF_I_rt <= R1;
 	
@@ -757,10 +739,8 @@ begin
   -- TEST 7: OR
   ----------------------------------------------------------------------------------
   	report "----- Test 7: OR Instruction -----";
-	ID_I_en <= '1';
-	EX_I_en <= '1';
-	RF_I_en <= '1';
-	FWD_I_en <= '0';
+
+	I_fwd_en <= '0';
 	RF_I_rs <= R2;
 	RF_I_rt <= R1;
 	
@@ -775,10 +755,8 @@ begin
   -- TEST 8: NOR
   ----------------------------------------------------------------------------------
   	report "----- Test 8: NOR Instruction -----";
-	ID_I_en <= '1';
-	EX_I_en <= '1';
-	RF_I_en <= '1';
-	FWD_I_en <= '0';
+
+	I_fwd_en <= '0';
 	RF_I_rs <= R2;
 	RF_I_rt <= R1;
 	
@@ -794,10 +772,7 @@ begin
   ----------------------------------------------------------------------------------
   	report "----- Test 9: XOR Instruction -----";
 	
-	ID_I_en <= '1';
-	EX_I_en <= '1';
-	RF_I_en <= '1';
-	FWD_I_en <= '0';
+	I_fwd_en <= '0';
 	RF_I_rs <= R2;
 	RF_I_rt <= R1;
 	
@@ -812,10 +787,8 @@ begin
   -- TEST 10: SLL
   ----------------------------------------------------------------------------------
   	report "----- Test 12: SLL Instruction -----";
-	ID_I_en <= '1';
-	EX_I_en <= '1';
-	RF_I_en <= '1';
-	FWD_I_en <= '0';
+
+	I_fwd_en <= '0';
 	RF_I_rs <= R1;
 	RF_I_rt <= R2;
 	
@@ -830,10 +803,8 @@ begin
   -- TEST 13: SRL
   ----------------------------------------------------------------------------------
   	report "----- Test 13: SRL Instruction -----";
-	ID_I_en <= '1';
-	EX_I_en <= '1';
-	RF_I_en <= '1';
-	FWD_I_en <= '0';
+
+	I_fwd_en <= '0';
 	RF_I_rs <= R1;
 	RF_I_rt <= R2;
 	
@@ -849,10 +820,8 @@ begin
   	report "----- Test 14: SRA Instruction -----";
 	
 	--- POSITIVE NUMBER -----
-	ID_I_en <= '1';
-	EX_I_en <= '1';
-	RF_I_en <= '1';
-	FWD_I_en <= '0';
+
+	I_fwd_en <= '0';
 	RF_I_rs <= R1;
 	RF_I_rt <= R2;
 	
@@ -864,10 +833,8 @@ begin
 
 
 	--- NEGATIVE NUMBER -----
-	ID_I_en <= '1';
-	EX_I_en <= '1';
-	RF_I_en <= '1';
-	FWD_I_en <= '0';
+
+	I_fwd_en <= '0';
 	RF_I_rs <= R1;
 	RF_I_rt <= R4;
 	
@@ -881,10 +848,8 @@ begin
   -- TEST 15: JR
   ----------------------------------------------------------------------------------
   	report "----- Test 15: JR Instruction -----";
-	ID_I_en <= '1';
-	EX_I_en <= '1';
-	RF_I_en <= '1';
-	FWD_I_en <= '0';
+
+	I_fwd_en <= '0';
 	RF_I_rs <= R2;
 	RF_I_rt <= R1;
 	
@@ -898,10 +863,8 @@ begin
   -- TEST 16: 
   ----------------------------------------------------------------------------------
   report "----- Test 16: ADDI Instruction -----";
-	ID_I_en <= '1';
-	EX_I_en <= '1';
-	RF_I_en <= '1';
-	FWD_I_en <= '0';
+
+	I_fwd_en <= '0';
 	RF_I_rs <= R1;
 	RF_I_rt <= (others=>'0');
 	
@@ -919,10 +882,8 @@ begin
   	report "----- Test 17: SLTI Instruction -----";
 
 	--- SLTI FALSE -----
-	ID_I_en <= '1';
-	EX_I_en <= '1';
-	RF_I_en <= '1';
-	FWD_I_en <= '0';
+
+	I_fwd_en <= '0';
 	RF_I_rs <= R2;
 	RF_I_rt <= (others=>'0');
 	
@@ -934,10 +895,8 @@ begin
 
 
 	--- SLTI TRUE -----
-	ID_I_en <= '1';
-	EX_I_en <= '1';
-	RF_I_en <= '1';
-	FWD_I_en <= '0';
+
+	I_fwd_en <= '0';
 	RF_I_rs <= R1;
 	RF_I_rt <= (others=>'0');
 	
@@ -951,10 +910,8 @@ begin
   -- TEST 18: ORI
   ----------------------------------------------------------------------------------
   	report "----- Test 18: ORI Instruction -----";
-	ID_I_en <= '1';
-	EX_I_en <= '1';
-	RF_I_en <= '1';
-	FWD_I_en <= '0';
+
+	I_fwd_en <= '0';
 	RF_I_rs <= R1;
 	RF_I_rt <= (others=>'0');
 	
@@ -969,10 +926,8 @@ begin
   -- TEST 19: XORI
   ----------------------------------------------------------------------------------
   	report "----- Test 19: XORI Instruction -----";
-	ID_I_en <= '1';
-	EX_I_en <= '1';
-	RF_I_en <= '1';
-	FWD_I_en <= '0';
+
+	I_fwd_en <= '0';
 	RF_I_rs <= R1;
 	RF_I_rt <= (others=>'0');
 	
@@ -986,10 +941,8 @@ begin
   -- TEST 20: LUI
   ----------------------------------------------------------------------------------
   	report "----- Test 20: LUI Instruction -----";
-	ID_I_en <= '1';
-	EX_I_en <= '1';
-	RF_I_en <= '1';
-	FWD_I_en <= '0';
+
+	I_fwd_en <= '0';
 	RF_I_rs <= R1;
 	RF_I_rt <= (others=>'0');
 	
@@ -1004,10 +957,8 @@ begin
   -- TEST 21: LW
   ----------------------------------------------------------------------------------
   report "----- Test 21: LW Instruction -----";
-	ID_I_en <= '1';
-	EX_I_en <= '1';
-	RF_I_en <= '1';
-	FWD_I_en <= '0';
+
+	I_fwd_en <= '0';
 	RF_I_rs <= R1;
 	RF_I_rt <= (others=>'0');
 	
@@ -1022,10 +973,8 @@ begin
   -- TEST 22: SW
   ----------------------------------------------------------------------------------
   	report "----- Test 22: SW Instruction -----";
-	ID_I_en <= '1';
-	EX_I_en <= '1';
-	RF_I_en <= '1';
-	FWD_I_en <= '0';
+
+	I_fwd_en <= '0';
 	RF_I_rs <= R1;
 	RF_I_rt <= (others=>'0');
 	
@@ -1041,10 +990,8 @@ begin
   	report "----- Test 23: BEQ Instruction -----";
 
 	--- BEQ TAKEN -----
-	ID_I_en <= '1';
-	EX_I_en <= '1';
-	RF_I_en <= '1';
-	FWD_I_en <= '0';
+
+	I_fwd_en <= '0';
 	RF_I_rs <= R1;
 	RF_I_rt <= R1;
 	
@@ -1055,10 +1002,8 @@ begin
   	assert EX_O_updated_next_pc = BEQ_TAKEN_PC_RESULT report "Test 23.a: Unsuccessful" severity error;
 
 	--- BEQ NOT TAKEN -----
-	ID_I_en <= '1';
-	EX_I_en <= '1';
-	RF_I_en <= '1';
-	FWD_I_en <= '0';
+
+	I_fwd_en <= '0';
 	RF_I_rs <= R1;
 	RF_I_rt <= R2;
 	
@@ -1076,10 +1021,8 @@ begin
   	report "----- Test 24: BNE Instruction -----";
 
 	--- BNE TAKEN -----
-	ID_I_en <= '1';
-	EX_I_en <= '1';
-	RF_I_en <= '1';
-	FWD_I_en <= '0';
+
+	I_fwd_en <= '0';
 	RF_I_rs <= R1;
 	RF_I_rt <= R2;
 	
@@ -1092,10 +1035,8 @@ begin
 
 	
 	--- BNE NOT TAKEN -----
-	ID_I_en <= '1';
-	EX_I_en <= '1';
-	RF_I_en <= '1';
-	FWD_I_en <= '0';
+
+	I_fwd_en <= '0';
 	RF_I_rs <= R1;
 	RF_I_rt <= R1;
 	
@@ -1110,10 +1051,8 @@ begin
   -- TEST 25: J
   ----------------------------------------------------------------------------------
   	report "----- Test 25: J Instruction -----";
-	ID_I_en <= '1';
-	EX_I_en <= '1';
-	RF_I_en <= '1';
-	FWD_I_en <= '0';
+
+	I_fwd_en <= '0';
 	RF_I_rs <= (others=>'0');
 	RF_I_rt <= (others=>'0');
 
@@ -1129,10 +1068,8 @@ begin
   -- TEST 26: JAL
   ----------------------------------------------------------------------------------
   	report "----- Test 26: JAL Instruction -----";
-	ID_I_en <= '1';
-	EX_I_en <= '1';
-	RF_I_en <= '1';
-	FWD_I_en <= '0';
+
+	I_fwd_en <= '0';
 	RF_I_rs <= (others=>'0');
 	RF_I_rt <= (others=>'0');
 	
@@ -1155,10 +1092,8 @@ begin
   	report "----- Test 27: Forwarding from EX -----";
 
 	--- FWD RS -----
-	ID_I_en <= '1';
-	EX_I_en <= '1';
-	RF_I_en <= '1';
-	FWD_I_en <= '1';
+
+	I_fwd_en <= '1';
 	RF_I_rs <= R1;
 	RF_I_rt <= R2;
 
@@ -1189,10 +1124,7 @@ begin
 	--- FWD RT -----
   	wait for CLK_PERIOD;
 
-	ID_I_en <= '1';
-	EX_I_en <= '1';
-	RF_I_en <= '1';
-	FWD_I_en <= '1';
+	I_fwd_en <= '1';
 	RF_I_rs <= R1;
 	RF_I_rt <= R2;
 
@@ -1224,10 +1156,7 @@ begin
 	--- Hazard RS With Forwarding-----
   	wait for CLK_PERIOD;
 
-	ID_I_en <= '1';
-	EX_I_en <= '1';
-	RF_I_en <= '1';
-	FWD_I_en <= '1';
+	I_fwd_en <= '1';
 	RF_I_rs <= R1;
 
 	-- r1 + r2 --> r3
@@ -1259,10 +1188,7 @@ begin
 	--- Hazard RT With Forwarding-----
   	wait for CLK_PERIOD;
 
-	ID_I_en <= '1';
-	EX_I_en <= '1';
-	RF_I_en <= '1';
-	FWD_I_en <= '1';
+	I_fwd_en <= '1';
 	RF_I_rs <= R1;
 
 	-- r1 + r2 --> r3
@@ -1292,10 +1218,7 @@ begin
 	report "----- Test 31: Instruction Flush -----";
 	wait for CLK_PERIOD;
 
-	ID_I_en <= '1';
-	EX_I_en <= '1';
-	RF_I_en <= '1';
-	FWD_I_en <= '0';
+	I_fwd_en <= '0';
 	RF_I_rs <= (others=>'0');
 	RF_I_rt <= (others=>'0');
 
@@ -1313,9 +1236,55 @@ begin
 	-- next instruction flushed --> stall
   	wait for CLK_PERIOD;
 	assert EX_O_stall = '1' report "Test 31 stall: Unsuccessful" severity error;
+
+  ----------------------------------------------------------------------------------
+  -- TEST 32: Stall and Resume
+  ----------------------------------------------------------------------------------
+  	report "----- Test 32: Stall & Resume -----";
+
+  	wait for CLK_PERIOD;
+	I_fwd_en <= '1';
+
+	-- Load R1 in R3
+	RF_I_rs <= R1;
+	F_O_PC <= NEXT_PC;
+	F_O_dataInst <= LW_OPCODE & R1 & R3 & IMM_0;
+  	wait for CLK_PERIOD;
+
+	-- Add R1 + R3 in R4 --> Creates stall due to data hazard in R3
+	RF_I_rs <= R1;
+	RF_I_rt <= R3;
+	F_O_dataInst <= R_OPCODE & R1 & R3 & R4 & SHAMT & ADD_FUNCT; -- add r1 and r3, store in r4
+	wait for CLK_PERIOD;
+	
+	-- should not be able to forward at this point
+	assert FWD_O_forward_rs = FORWARDING_NONE report "Test 32 fwd rs none: Unsuccessful" severity error;
+	assert FWD_O_forward_rt = FORWARDING_NONE report "Test 32 fwd rt none: Unsuccessful" severity error;
+	
+	wait for CLK_PERIOD;
+
+	-- mock memory outputs
+	MEM_O_read_data <= DATA_8; 
+	MEM_O_mem_read <= '1';
+	MEM_O_rd <= R3;
+	MEM_O_reg_write <= '1';
+	
+	-- should be able to forward rs from memory
+	assert FWD_O_forward_rs = FORWARDING_NONE report "Test 32 fwd rs none: Unsuccessful" severity error;
+	assert FWD_O_forward_rt = FORWARDING_MEM report "Test 32 fwd rt from mem: Unsuccessful" severity error; -- should be able to fwd from mem
+
+	-- Ex should stall
+	assert EX_O_stall = '1' report "Test 32 stall: Unsuccessful" severity error;
+	wait for CLK_PERIOD;
+
+	-- Ex should resume with addition since no more stall
+	assert EX_O_stall = '0' report "Test 32 no stall: Unsuccessful" severity error;
+	assert EX_O_alu_result = std_logic_vector(to_signed(12,32)) report "Test 32 no stall: Unsuccessful" severity error;
+
+	wait for CLK_PERIOD;
+
   report "----- Confirming all tests have ran -----";
   wait;
 
 end process;
-	
 end;

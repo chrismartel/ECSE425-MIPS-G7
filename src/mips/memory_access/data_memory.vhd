@@ -1,8 +1,7 @@
--- ECSE425 W2022
--- Final Project, Group 07
--- Data Memory
-
 --Adapted from memory.vhd from Project 2
+-- NOTE: this is a copy of the proper data_memory.vhd.
+-- It is included here for the sake of simplifying the intermediate testing process
+
 LIBRARY ieee;
 USE ieee.std_logic_1164.all;
 USE ieee.numeric_std.all;
@@ -59,6 +58,23 @@ BEGIN
   readdata(15 downto 8) <= ram_block(read_address_reg+1);
   readdata(23 downto 16) <= ram_block(read_address_reg+2);
   readdata(31 downto 24) <= ram_block(read_address_reg+3);
+
+
+	--The waitrequest signal is used to vary response time in simulation
+	--Read and write should never happen at the same time.
+	--waitreq_w_proc: PROCESS (memwrite)
+	--BEGIN
+	--	IF(memwrite'event AND memwrite = '1')THEN
+	--	write_waitreq_reg <= '0', '1' after clock_period;
+	--	END IF;
+	--END PROCESS;
+
+	--waitreq_r_proc: PROCESS (memread)
+	--BEGIN
+		--IF(memread'event AND memread = '1')THEN
+			--read_waitreq_reg <= '0', '1' after clock_period;
+		--END IF;
+	--END PROCESS;
 	waitrequest <= write_waitreq_reg and read_waitreq_reg;
 
 

@@ -31,8 +31,10 @@ proc AddWaves {} {
     add wave -position end  sim:/execute_tb/O_mem_write
     add wave -position end  sim:/execute_tb/O_reg_write
     add wave -position end  sim:/execute_tb/O_stall
-    add wave -position end  sim:/execute_tb/I_ex_data
-    add wave -position end  sim:/execute_tb/I_mem_data
+    add wave -position end  sim:/execute_tb/I_fwd_ex_alu_result
+    add wave -position end  sim:/execute_tb/I_fwd_mem_read
+    add wave -position end  sim:/execute_tb/I_fwd_mem_read_data
+    add wave -position end  sim:/execute_tb/I_fwd_mem_alu_result
     add wave -position end  sim:/execute_tb/I_forward_rs
     add wave -position end  sim:/execute_tb/I_forward_rt
 }
