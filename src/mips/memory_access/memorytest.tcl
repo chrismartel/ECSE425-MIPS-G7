@@ -1,5 +1,5 @@
 proc AddWaves {} {
-	add wave -position end  sim:/memory_tb/clk
+	add wave -position end  sim:/memory_tb/I_clk
 	add wave -position end  sim:/memory_tb/I_mem_read
 	add wave -position end  sim:/memory_tb/I_mem_write
 	add wave -position end  sim:/memory_tb/I_reg_write

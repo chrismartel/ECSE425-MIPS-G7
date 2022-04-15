@@ -8,8 +8,9 @@ generic(
 );
 
 port(
-	clk : in std_logic;
-	reset : in std_logic;
+	I_clk : in std_logic;
+	I_reset : in std_logic;
+	I_en : in std_logic;
 	
 	
 	-- Control Signals Inputs
@@ -45,7 +46,6 @@ port(
 	O_reg_write: out std_logic; 					-- indicates if value calculated in ALU must be written to destination register
 	O_mem_to_reg: out std_logic; 					-- indicates if value loaded from memory must be written to destination register
 	
-	-- O_mem_data: out std_logic_vector (31 downto 0); -- the data that was retrieved
 	O_alu_result: out std_logic_vector(31 downto 0);
 	O_updated_next_pc: out std_logic_vector(31 downto 0);
 	O_stall: out std_logic;
@@ -75,67 +75,72 @@ begin
 			-- O_mem_data <= (others=>'0');
 			
 			O_rd <= (others=>'0');
+			O_branch <= '0';
+			O_jump <= '0';
 			O_mem_read <= '0';
 			O_mem_write <= '0';
-			O_branch <= '0';
 			O_reg_write <= '0';
 			O_mem_to_reg <= '0';
-			O_jump <= '0';
-			
-			-- instruction <= (others=>'0');
-
+			O_alu_result <= (others =>'0');
+			O_updated_next_pc <= (others =>'0');
 			O_stall <= '0';
+			O_forward_rd <= (others =>'0');
+			O_forward_mem_reg_write <= '0';
 			
 		-- synchronous clock active high
 		elsif clk'event and clk = '1' then
-			
-			-- check opcode
-			
-			-- check for stall
-			if I_stall = '1' then
-				O_stall <= '1';
+			if I_en = '1' then
+				-- check opcode
 				
-			-- no stall - execute
-			else
-				O_stall <= '0';
-				
-				-- pass control signals to next stage
-				O_rd <= I_rd;
-				O_mem_read <= I_mem_read;
-				O_mem_write <= I_mem_write;
-				O_branch <= I_branch;
-				O_reg_write <= I_reg_write;
-				O_mem_to_reg <= I_mem_to_reg;
-				O_jump <= I_jump;
-
-				O_updated_next_pc <= I_updated_next_pc;
-				
-				
-				-- check if I_mem_read is high, and performs a read operation
-				if I_mem_read = '1' then
-					-- fetch data from address I_alu_result
-					data_address <= to_integer(unsigned(std_logic_vector(I_alu_result)));
-					data_memread <= '1';
-					data_memwrite <= '0';
-					-- read data on falling edge
-
-				-- check if I_mem_write is high, and performs a write operation
-				elsif I_mem_write = '1' then
-					-- write I_rt_data to address I_alu_result
-					data_address <= to_integer(unsigned(std_logic_vector(I_alu_result)));
-					data_writedata <= I_rt_data;
-					data_memwrite <= '1';
-					data_memread <= '0';
-
-				-- otherwise, simply passes stuff forward
+				-- check for stall
+				if I_stall = '1' then
+					O_stall <= '1';
+					
+				-- no stall - execute
 				else
-				O_alu_result <= I_alu_result;
-				data_memread <= '0';
-			    data_memwrite <= '0';
-				-- end memread/write check
+					O_stall <= '0';
+					
+					-- pass control signals to next stage
+					O_rd <= I_rd;
+					O_forward_rd <= I_rd;
+					O_mem_read <= I_mem_read;
+					O_mem_write <= I_mem_write;
+					O_branch <= I_branch;
+					O_reg_write <= I_reg_write;
+					O_forward_mem_reg_write <= I_reg_write;
+					O_mem_to_reg <= I_mem_to_reg;
+					O_jump <= I_jump;
+
+					O_updated_next_pc <= I_updated_next_pc;
+					
+					
+					-- check if I_mem_read is high, and performs a read operation
+					if I_mem_read = '1' then
+						-- fetch data from address I_alu_result
+						data_address <= to_integer(unsigned(std_logic_vector(I_alu_result)));
+						data_memread <= '1';
+						data_memwrite <= '0';
+
+					-- check if I_mem_write is high, and performs a write operation
+					elsif I_mem_write = '1' then
+						-- write I_rt_data to address I_alu_result
+						data_address <= to_integer(unsigned(std_logic_vector(I_alu_result)));
+						data_writedata <= I_rt_data;
+						data_memwrite <= '1';
+						data_memread <= '0';
+
+					-- otherwise, simply passes stuff forward
+					else
+					O_alu_result <= I_alu_result;
+					data_memread <= '0';
+					data_memwrite <= '0';
+					-- end memread/write check
+					end if;
+				-- end stall = 1
 				end if;
-			-- end stall = 1
+			-- end I_en = 1
 			end if;
+		-- end clock rising edge
 		end if;
 		
 	end process;

@@ -169,6 +169,60 @@ port(
 );
 end component;
 
+-- MEMORY ACCESS COMPONENT
+
+component memory is
+port(
+	I_clk : in std_logic;
+	I_reset : in std_logic;
+	I_en : in std_logic;
+	
+	
+	-- Control Signals Inputs
+	I_rd: in std_logic_vector (4 downto 0);
+	I_branch: in std_logic;
+	I_jump: in std_logic;
+	I_mem_read: in std_logic;
+	I_mem_write: in std_logic;
+	I_reg_write: in std_logic;
+	I_mem_to_reg: in std_logic;
+	
+	-- EX stage inputs
+	I_rt_data: in std_logic_vector (31 downto 0);
+	I_alu_result: in std_logic_vector (31 downto 0);
+	I_updated_next_pc: in std_logic_vector (31 downto 0);
+	I_stall: in std_logic;
+	
+	
+	-- data_memory relevant signals
+	data_address: out integer range 0 to ram_size-1;
+	data_memread: out std_logic;
+	data_waitrequest: in std_logic;
+	data_writedata: out std_logic_vector(31 downto 0);
+	data_memwrite: out std_logic;
+	data_readdata: in std_logic_vector(31 downto 0);
+	
+	-- Control Signals Outputs
+	O_rd: out std_logic_vector (4 downto 0);
+	O_branch: out std_logic;
+	O_jump: out std_logic;
+	O_mem_read: out std_logic;
+	O_mem_write: out std_logic;
+	O_reg_write: out std_logic;
+	O_mem_to_reg: out std_logic;
+	
+	-- Outputs to writeback
+	O_alu_result: out std_logic_vector(31 downto 0);
+	O_updated_next_pc: out std_logic_vector(31 downto 0);
+	O_stall: out std_logic;
+	
+	-- Outputs for forwarding
+	O_forward_rd: out std_logic_vector (4 downto 0);
+	O_forward_mem_reg_write: out std_logic
+
+};
+end component;
+
 
 -- FORWARDING UNIT COMPONENT 
 component forwarding_unit is
@@ -248,10 +302,22 @@ signal EX_O_mem_read: std_logic;
 signal EX_O_mem_write: std_logic;
 signal EX_O_reg_write: std_logic;
 
--- MEMORY
-signal MEM_O_rd: std_logic_vector (4 downto 0); -- TODO: replace when memory added
-signal MEM_O_reg_write: std_logic; -- TODO: replace when memory added
-signal MEM_O_result: std_logic_vector (31 downto 0); -- TODO: replace when memory added
+-- MEMORY ACCESS
+signal MEM_O_data_address: integer range 0 to ram_size-1;
+signal MEM_O_data_memread: std_logic;
+signal MEM_O_data_writedata: std_logic_vector(31 downto 0);
+signal MEM_O_memwrite: std_logic;
+signal MEM_O_rd: std_logic_vector (4 downto 0);
+signal MEM_O_branch: std_logic;
+signal MEM_O_mem_read: std_logic;
+signal MEM_O_mem_write: std_logic;
+signal MEM_O_reg_write: std_logic;
+signal MEM_O_mem_to_reg: std_logic;
+signal MEM_O_alu_result: std_logic_vector(31 downto 0);
+signal MEM_O_updated_next_pc: std_logic_vector(31 downto 0);
+signal MEM_O_stall: std_logic;
+
+-- signal MEM_O_result: std_logic_vector (31 downto 0); -- TODO: figure out what to do with this
 
 -- WRITE BACK
 signal WB_O_rd :  std_logic_vector (4 downto 0); -- from wb to rf
@@ -425,6 +491,51 @@ port map(
 	O_mem_read => EX_O_mem_read,
 	O_mem_write => EX_O_mem_write,
 	O_reg_write => EX_O_reg_write
+);
+
+ma: memory
+port map(
+	-- inputs
+	-- global inputs
+	I_clk => GLOBAL_I_clk,
+	I_reset => GLOBAL_I_reset,
+	I_en => MIPS_I_en,
+	-- EX stage inputs
+	I_rd => EX_O_rd,
+	I_jump => EX_O_jump,
+	I_mem_read => EX_O_mem_read,
+	I_mem_write => EX_O_mem_write,
+	I_reg_write => EX_O_reg_write,
+	I_mem_to_reg => EX_O_mem_to_reg,
+	I_rt_data => EX_O_rt_data,
+	I_branch => EX_O_branch,
+	I_alu_result => EX_O_alu_result,
+	I_updated_next_pc => EX_O_updated_next_pc,
+	I_stall => EX_O_stall,
+	-- TODO: wire these to data_memory component
+	-- data_memory connections I/O
+	data_address => data_address,
+	data_memread => data_memread,
+	data_waitrequest => data_waitrequest,
+	data_writedata => data_writedata,
+	data_memwrite => data_memwrite,
+	data_readdata => data_readdata,
+	-- outputs
+	-- control outputs
+	O_rd => MEM_O_rd,
+	O_branch => MEM_O_branch,
+	O_jump => MEM_O_jump,
+	O_mem_read => MEM_O_mem_read,
+	O_mem_write => MEM_O_mem_write,
+	O_reg_write => MEM_O_reg_write,
+	O_mem_to_reg => MEM_O_mem_to_reg,
+	-- "passing forward" outputs
+	O_alu_result => MEM_O_alu_result,
+	O_updated_next_pc => MEM_O_updated_next_pc,
+	O_stall => MEM_O_stall,
+	-- NOTE: these seem to be taken care of by forwarding unit but are not there
+	O_forward_rd => MEM_O_forward_rd,
+	O_forward_mem_reg_write => MEM_O_forward_mem_reg_write
 );
 
 fwd: forwarding_unit

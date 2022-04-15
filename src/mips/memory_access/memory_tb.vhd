@@ -15,11 +15,12 @@ architecture behavior of memory_tb is
 
 	component memory is
 		generic(
-			ram_size : INTEGER := 40
+			ram_size : INTEGER := 32768
 		);
 		port (
-			clk : in std_logic;
-			reset : in std_logic;
+			I_clk : in std_logic;
+			I_reset : in std_logic;
+			I_en : in std_logic;
 			
 			
 			-- Control Signals Inputs
@@ -55,8 +56,6 @@ architecture behavior of memory_tb is
 			O_reg_write: out std_logic; 					-- indicates if value calculated in ALU must be written to destination register
 			O_mem_to_reg: out std_logic; 					-- indicates if value loaded from memory must be written to destination register
 
-			-- instruction: out std_logic_vector (31 downto 0); -- instruction opcode
-			-- O_mem_data: out std_logic_vector (31 downto 0); -- the data that was retrieved, or the ALU result that is being passed forward.
 			O_alu_result: out std_logic_vector(31 downto 0);
 			O_updated_next_pc: out std_logic_vector(31 downto 0);
 			O_stall: out std_logic;
@@ -71,7 +70,7 @@ architecture behavior of memory_tb is
 	
 	component data_memory IS
 	GENERIC(
-		ram_size : INTEGER := 40;
+		ram_size : INTEGER := 32768;
 		-- mem_delay : time := 1 ns;
 		clock_period : time := 1 ns
 	);
@@ -86,31 +85,30 @@ architecture behavior of memory_tb is
 	);
 	END component;
 	
-	signal clk : std_logic:='1';
+	signal I_clk : std_logic:='1';
 	constant clk_period : time := 1 ns;
-	-- TODO: add all other signals here
+	signal I_en: std_logic:='1';
 	
-	signal reset : std_logic;
+	signal I_reset : std_logic;
 	
 	
 	-- Control Signals Inputs
-	signal I_rd: std_logic_vector (4 downto 0); 			-- the destination register where to write the instr. result
-	signal I_branch: std_logic; 					-- indicates if its is a branch operation (beq, bne)
-	signal I_jump: std_logic; 						-- indicates if it is a jump instruction (j, jr, jal)
-	signal I_mem_read: std_logic; 					-- indicates if a value must be read from memory at calculated address
-	signal I_mem_write: std_logic; 					-- indicates if value in I_rt_data must be written in memory at calculated address
-	signal I_reg_write: std_logic; 					-- indicates if value calculated in ALU must be written to destination register
-	signal I_mem_to_reg: std_logic; 					-- indicates if value loaded from memory must be written to destination register
+	signal I_rd: std_logic_vector (4 downto 0);
+	signal I_branch: std_logic;
+	signal I_jump: std_logic; 
+	signal I_mem_read: std_logic;
+	signal I_mem_write: std_logic;
+	signal I_reg_write: std_logic;
+	signal I_mem_to_reg: std_logic;
 	
-	-- instruction: in std_logic_vector (31 downto 0); -- instruction opcode
-	signal I_rt_data: std_logic_vector (31 downto 0); -- the data that needs to be written
-	signal I_alu_result: std_logic_vector (31 downto 0); -- connected to alu_result in execute, holds address to send data to. If not a load/store, simply passes data forward
+	signal I_rt_data: std_logic_vector (31 downto 0); 
+	signal I_alu_result: std_logic_vector (31 downto 0);
 	signal I_updated_next_pc: std_logic_vector (31 downto 0);
 	signal I_stall: std_logic;
 	
 	
 	-- data_memory relevant signals
-	signal data_address: integer range 0 to 39;
+	signal data_address: integer range 0 to 32767;
 	signal data_memread: std_logic;
 	signal data_waitrequest: std_logic;
 	signal data_writedata: std_logic_vector(31 downto 0);
@@ -118,16 +116,14 @@ architecture behavior of memory_tb is
 	signal data_readdata: std_logic_vector(31 downto 0);
 	
 	-- Control Signals Outputs
-	signal O_rd: std_logic_vector (4 downto 0); 			-- the destination register where to write the instr. result
-	signal O_branch: std_logic; 					-- indicates if its is a branch operation (beq, bne)
-	signal O_jump: std_logic; 						-- indicates if it is a jump instruction (j, jr, jal)
-	signal O_mem_read: std_logic; 					-- indicates if a value must be read from memory at calculated address
-	signal O_mem_write: std_logic; 					-- indicates if value in I_rt_data must be written in memory at calculated address
-	signal O_reg_write: std_logic; 					-- indicates if value calculated in ALU must be written to destination register
-	signal O_mem_to_reg: std_logic; 					-- indicates if value loaded from memory must be written to destination register
+	signal O_rd: std_logic_vector (4 downto 0);
+	signal O_branch: std_logic;
+	signal O_jump: std_logic;
+	signal O_mem_read: std_logic;
+	signal O_mem_write: std_logic;
+	signal O_reg_write: std_logic;
+	signal O_mem_to_reg: std_logic;
 	
-	-- instruction: out std_logic_vector (31 downto 0); -- instruction opcode
-	-- signal O_mem_data: std_logic_vector (31 downto 0):= x"00000000"; -- the data that was retrieved, or the ALU result that is being passed forward.
 	signal O_alu_result: std_logic_vector(31 downto 0);
 	signal O_updated_next_pc: std_logic_vector(31 downto 0);
 	signal O_stall: std_logic;
@@ -140,8 +136,9 @@ begin
 
 	dut: memory port map (
 		-- TODO: map all signals to component signal
-		clk => clk,
-		reset => reset,
+		I_clk => I_clk,
+		I_reset => I_reset,
+		I_en => I_en,
 		I_rd => I_rd,
 		I_jump => I_jump,
 		I_mem_read => I_mem_read,
@@ -166,7 +163,6 @@ begin
 		O_mem_write => O_mem_write,
 		O_reg_write => O_reg_write,
 		O_mem_to_reg => O_mem_to_reg,
-		-- O_mem_data => O_mem_data,
 		O_alu_result => O_alu_result,
 		O_updated_next_pc => O_updated_next_pc,
 		O_stall => O_stall,
@@ -263,7 +259,6 @@ assert O_mem_write = '0' report "Test case 2 failed : O_mem_write" severity erro
 assert O_reg_write = '1' report "Test case 2 failed : O_reg_write" severity error;
 assert O_mem_to_reg = '1' report "Test case 2 failed : O_mem_to_reg" severity error;
 assert O_stall = '0' report "Test case 2 failed : O_stall" severity error;
--- assert data_readdata = X"00000000" report "Test case 2 failed : data_readdata" severity error;
 
 -- wait for clk_period/2;
 
