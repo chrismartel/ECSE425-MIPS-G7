@@ -7,7 +7,7 @@ VHDL implementation of a simplified 5-stage MIPS Processor with integrated forwa
 * **Fetch**  
 The VHDL source code for the fetch stage component implementation is available here: [fetch.vhd](src/mips/fetch/fetch.vhd).
 * **Register File**  
-The VHDL source code for the register file component implementation is available here: [regs.vhd](src/mips/regster_file/regs.vhd).
+The VHDL source code for the register file component implementation is available here: [regs.vhd](src/mips/register_file/regs.vhd).
 * **Decode**  
 The VHDL source code for the decode stage component implementation is available here: [decode.vhd](src/mips/decode/decode.vhd).
 * **Execute**  
@@ -15,7 +15,7 @@ The VHDL source code for the execute stage component implementation is available
 * **Memory**  
 The VHDL source code for the memory stage component implementation is available here: [memory.vhd](src/mips/memory_access/memory.vhd).
 * **Write-Back**  
-The VHDL source code for the write-back stage component implementation is available here: [writeback.vhd](src/mips/writeback/writeback.vhd).
+The VHDL source code for the write-back stage component implementation is available here: [write_back.vhd](src/mips/writeback/write_back.vhd).
 * **Forwarding Unit**  
 The VHDL source code for the forwarding unit component implementation is available here: [forwarding_unit.vhd](src/mips/forwarding/forwarding_unit.vhd).  
 

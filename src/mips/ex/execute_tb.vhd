@@ -71,7 +71,7 @@ architecture behavior of execute_tb is
 	constant JAL_OPCODE : std_logic_vector (5 downto 0) := "000011"; -- jump and link
     
 -- CLOCK
-	constant CLK_PERIOD : time := 10 ns;
+	constant CLK_PERIOD : time := 1 ns;
 
 -- FORWARDING CODES
 	constant FORWARDING_NONE : std_logic_vector (1 downto 0):= "00";
