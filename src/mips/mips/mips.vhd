@@ -1,3 +1,7 @@
+-- ECSE425 W2022
+-- Final Project, Group 07
+-- Simplified MIPS Pipelined Processor
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
