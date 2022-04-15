@@ -7,6 +7,12 @@ generic(
 	RAM_SIZE : INTEGER := 32768;
 	CLK_PERIOD : time := 10 ns
 );
+port (
+	I_clk: in std_logic;		-- synchronous active-high clock
+	I_reset: in std_logic;		-- asynchronous active-high reset
+	I_en: in std_logic;		-- enabled mips processor
+	I_fwd_en: in std_logic		-- enables forwarding
+);
 end mips;
 
 architecture behaviour of mips is
@@ -200,9 +206,9 @@ end component;
 -- NOTE: only list the outputs of each component as intermediate signals to avoid duplicates
 
 -- GLOBAL
-signal GLOBAL_I_reset : std_logic := '0'; -- asynchronous reset
-signal GLOBAL_I_clk : std_logic := '0'; -- synchronous clock
-signal MIPS_I_en : std_logic := '0'; -- use this signal to enable the MIPS processor
+--signal GLOBAL_I_reset : std_logic := '0'; -- asynchronous reset
+--signal GLOBAL_I_clk : std_logic := '0'; -- synchronous clock
+--signal MIPS_I_en : std_logic := '0'; -- use this signal to enable the MIPS processor
 
 -- INSTRUCTION MEMORY
 signal INSTR_MEM_O_readdata: std_logic_vector (31 downto 0);
@@ -270,7 +276,7 @@ begin
 instr_mem: instruction_memory
 port map(
 	-- Inputs
-	I_clock => GLOBAL_I_clk,
+	I_clock => I_clk,
 
 	-- from fetch component
 	I_address => F_O_instruction_address,
@@ -288,9 +294,9 @@ port map(
 f: fetch
 port map(
 	-- Inputs
-	I_clk => GLOBAL_I_clk,
-	I_reset => GLOBAL_I_reset,
-	I_en => MIPS_I_en,
+	I_clk => I_clk,
+	I_reset => I_reset,
+	I_en => I_en,
 	
 	-- from decode component
 	I_stall => ID_O_stall,
@@ -315,9 +321,9 @@ port map(
 rf: regs 
 port map(
 	-- Inputs
-	I_clk => GLOBAL_I_clk,
-	I_reset => GLOBAL_I_reset,
-       	I_en => MIPS_I_en,
+	I_clk => I_clk,
+	I_reset => I_reset,
+       	I_en => I_en,
 
 	-- from fetch component
        	I_rs => F_O_instruction(25 downto 21), -- extract rs operand from instruction
@@ -337,9 +343,9 @@ port map(
 id: decode 
 port map(
 	-- Inputs
-	I_clk => GLOBAL_I_clk,
-	I_reset => GLOBAL_I_reset,
-       	I_en => MIPS_I_en,
+	I_clk => I_clk,
+	I_reset => I_reset,
+       	I_en => I_en,
 
 	-- from fetch component
     	I_dataInst => F_O_instruction,
@@ -376,9 +382,9 @@ port map(
 ex: execute 
 port map(
 	-- INPUTS
-	I_clk => GLOBAL_I_clk,
-	I_reset => GLOBAL_I_reset,
-	I_en => MIPS_I_en,
+	I_clk => I_clk,
+	I_reset => I_reset,
+	I_en => I_en,
 	
 	-- instruction
 	I_rs => ID_O_rs,
@@ -430,9 +436,9 @@ port map(
 fwd: forwarding_unit
 port map(
 	-- INPUTS
-	I_clk => GLOBAL_I_clk,
-	I_reset => GLOBAL_I_reset,
-	I_en => FWD_I_en,
+	I_clk => I_clk,
+	I_reset => I_reset,
+	I_en => I_fwd_en,
 
 	I_id_rd => ID_O_rd,
 	I_ex_rd => EX_O_rd, 
