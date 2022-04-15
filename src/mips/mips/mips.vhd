@@ -7,6 +7,12 @@ generic(
 	RAM_SIZE : INTEGER := 32768;
 	CLK_PERIOD : time := 10 ns
 );
+port (
+	I_clk: in std_logic;		-- synchronous active-high clock
+	I_reset: in std_logic;		-- asynchronous active-high reset
+	I_en: in std_logic;		-- enabled mips processor
+	I_fwd_en: in std_logic		-- enables forwarding
+);
 end mips;
 
 architecture behaviour of mips is
@@ -110,7 +116,9 @@ port (
     	O_mem_read: out STD_LOGIC;
     	O_mem_write: out STD_LOGIC;
     	O_addr: out std_logic_vector (25 downto 0);
-	O_stall: out std_logic
+	O_stall: out std_logic;
+	O_stalled_instruction: out std_logic_vector (31 downto 0);
+	O_stalled_pc: out std_logic_vector (31 downto 0)
 );
 end component;
 
@@ -200,9 +208,9 @@ end component;
 -- NOTE: only list the outputs of each component as intermediate signals to avoid duplicates
 
 -- GLOBAL
-signal GLOBAL_I_reset : std_logic := '0'; -- asynchronous reset
-signal GLOBAL_I_clk : std_logic := '0'; -- synchronous clock
-signal MIPS_I_en : std_logic := '0'; -- use this signal to enable the MIPS processor
+--signal GLOBAL_I_reset : std_logic := '0'; -- asynchronous reset
+--signal GLOBAL_I_clk : std_logic := '0'; -- synchronous clock
+--signal MIPS_I_en : std_logic := '0'; -- use this signal to enable the MIPS processor
 
 -- INSTRUCTION MEMORY
 signal INSTR_MEM_O_readdata: std_logic_vector (31 downto 0);
@@ -219,6 +227,14 @@ signal RF_O_datas :  std_logic_vector (31 downto 0); -- rf to ex
 signal RF_O_datat :  std_logic_vector (31 downto 0); -- rf to ex
 
 -- DECODE SIGNALS
+
+-- Inputs
+signal ID_I_dataInst: std_logic_vector (31 downto 0); 	-- the input instruction to the decode stage. 
+							-- Can come either from fetch or from stalled instruction.
+
+signal ID_I_pc: std_logic_vector (31 downto 0); 	-- the input pc to the decode stage. 
+							-- Can come either from fetch or from stalled instruction.
+-- Outputs
 signal ID_O_next_pc: std_logic_vector (31 downto 0);
 signal ID_O_rs : std_logic_vector (4 downto 0);
 signal ID_O_rt : std_logic_vector (4 downto 0);
@@ -235,6 +251,8 @@ signal ID_O_mem_read: std_logic;
 signal ID_O_mem_write: std_logic;
 signal ID_O_addr: std_logic_vector (25 downto 0);
 signal ID_O_stall: std_logic;
+signal ID_O_stalled_instruction: std_logic_vector (31 downto 0);
+signal ID_O_stalled_pc: std_logic_vector (31 downto 0);
 
 -- EXECUTE SIGNALS		
 signal EX_O_alu_result: std_logic_vector (31 downto 0);
@@ -270,7 +288,7 @@ begin
 instr_mem: instruction_memory
 port map(
 	-- Inputs
-	I_clock => GLOBAL_I_clk,
+	I_clock => I_clk,
 
 	-- from fetch component
 	I_address => F_O_instruction_address,
@@ -288,9 +306,9 @@ port map(
 f: fetch
 port map(
 	-- Inputs
-	I_clk => GLOBAL_I_clk,
-	I_reset => GLOBAL_I_reset,
-	I_en => MIPS_I_en,
+	I_clk => I_clk,
+	I_reset => I_reset,
+	I_en => I_en,
 	
 	-- from decode component
 	I_stall => ID_O_stall,
@@ -315,9 +333,9 @@ port map(
 rf: regs 
 port map(
 	-- Inputs
-	I_clk => GLOBAL_I_clk,
-	I_reset => GLOBAL_I_reset,
-       	I_en => MIPS_I_en,
+	I_clk => I_clk,
+	I_reset => I_reset,
+       	I_en => I_en,
 
 	-- from fetch component
        	I_rs => F_O_instruction(25 downto 21), -- extract rs operand from instruction
@@ -337,13 +355,13 @@ port map(
 id: decode 
 port map(
 	-- Inputs
-	I_clk => GLOBAL_I_clk,
-	I_reset => GLOBAL_I_reset,
-       	I_en => MIPS_I_en,
+	I_clk => I_clk,
+	I_reset => I_reset,
+       	I_en => I_en,
 
 	-- from fetch component
-    	I_dataInst => F_O_instruction,
-	I_pc => F_O_updated_pc,
+    	I_dataInst => ID_I_dataInst,
+	I_pc => ID_I_pc,
 
 	-- forwarding
 	I_fwd_en => FWD_I_en,
@@ -370,15 +388,17 @@ port map(
 	O_mem_write => ID_O_mem_write,
 	O_regdWe => ID_O_regDwe,
 	O_addr => ID_O_addr,
-	O_stall => ID_O_stall
+	O_stall => ID_O_stall,
+	O_stalled_instruction => ID_O_stalled_instruction,
+	O_stalled_pc => ID_O_stalled_pc
 );
 
 ex: execute 
 port map(
 	-- INPUTS
-	I_clk => GLOBAL_I_clk,
-	I_reset => GLOBAL_I_reset,
-	I_en => MIPS_I_en,
+	I_clk => I_clk,
+	I_reset => I_reset,
+	I_en => I_en,
 	
 	-- instruction
 	I_rs => ID_O_rs,
@@ -430,9 +450,9 @@ port map(
 fwd: forwarding_unit
 port map(
 	-- INPUTS
-	I_clk => GLOBAL_I_clk,
-	I_reset => GLOBAL_I_reset,
-	I_en => FWD_I_en,
+	I_clk => I_clk,
+	I_reset => I_reset,
+	I_en => I_fwd_en,
 
 	I_id_rd => ID_O_rd,
 	I_ex_rd => EX_O_rd, 
@@ -446,4 +466,24 @@ port map(
 	O_forward_rs => FWD_O_forward_rs,
 	O_forward_rt => FWD_O_forward_rt
 );
+
+-- Process indicating to decode which instruction to take.
+-- When a stall occurs, the decode stage takes the stalled instruction
+-- and stalled pc  as input. 
+-- Otherwise, the decode stage takes the instruction and pc from the fetch stage.
+decode_instruction_choice: process(I_clk, I_reset)
+begin
+	if I_reset'event and I_reset = '1' then
+	elsif I_clk'event and I_clk = '1' then
+		if I_en = '1' then
+			if ID_O_stall = '1' then
+				ID_I_dataInst <= ID_O_stalled_instruction;
+				ID_I_pc <= ID_O_stalled_pc;
+			else
+				ID_I_dataInst <= F_O_instruction;
+				ID_I_pc <= F_O_updated_pc;
+			end if;
+		end if;
+	end if;
+end process;
 end behaviour;
