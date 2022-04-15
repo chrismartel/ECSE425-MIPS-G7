@@ -12,6 +12,9 @@ Entity decode is
 		I_fwd_en: in std_logic;				
 
 		-- hazard detection
+		-- need an rd and a reg_write signal for id and ex 
+		--to see if they're currently writing to a reg, and which reg is being written to)
+		--also need a mem_read to know if id is reading memory
 		I_id_rd: in std_logic_vector (4 downto 0);	
 		I_id_reg_write: in std_logic;			
 		I_id_mem_read: in std_logic;
@@ -20,20 +23,25 @@ Entity decode is
 			  
 		-- Outputs
 		O_next_pc: out STD_LOGIC_VECTOR (31 downto 0);
-           	O_rs : out  STD_LOGIC_VECTOR (4 downto 0);
+			--reg selection bits parsed from instruction 
+           	O_rs : out  STD_LOGIC_VECTOR (4 downto 0); 
            	O_rt : out  STD_LOGIC_VECTOR (4 downto 0);
            	O_rd : out  STD_LOGIC_VECTOR (4 downto 0);
-           	O_dataIMM_SE : out  STD_LOGIC_VECTOR (31 downto 0);
+           		-- immediates (ex needs a sign extension and a zero extension
+		O_dataIMM_SE : out  STD_LOGIC_VECTOR (31 downto 0);
 		O_dataIMM_ZE : out STD_LOGIC_VECTOR (31 downto 0);
-           	O_regDwe : out  STD_LOGIC;
-           	O_aluop : out  STD_LOGIC_VECTOR (5 downto 0);
+           		--register d write enable (register D is the write register)
+		O_regDwe : out  STD_LOGIC;
+           		-- more instruction slices
+		O_aluop : out  STD_LOGIC_VECTOR (5 downto 0);
 		O_shamt: out STD_LOGIC_VECTOR (4 downto 0);
 		O_funct: out STD_LOGIC_VECTOR (5 downto 0);
+			-- control signals, indicates if branching, jumping, memory reads, memory writes, or stalls happen. 
 		O_branch: out STD_LOGIC;
 		O_jump: out STD_LOGIC;
 		O_mem_read: out STD_LOGIC;
 		O_mem_write: out STD_LOGIC;
-		O_addr: out STD_LOGIC_VECTOR (25 downto 0);
+		O_addr: out STD_LOGIC_VECTOR (25 downto 0); -- this isn't a control signal, its a slice of the instruction containing an address if appropriate
 		O_stall: out STD_LOGIC
 		);
 end decode;
@@ -109,7 +117,8 @@ id_process: process (I_clk, I_reset)
 	begin
   
   	if I_reset'event and I_reset='1' then
- 		O_next_pc <= (others => '0');
+ 		--reset
+		O_next_pc <= (others => '0');
            	O_rs <= (others => '0');
           	O_rt <= (others => '0');
            	O_rd <= (others => '0');
@@ -130,8 +139,8 @@ id_process: process (I_clk, I_reset)
 		stalled_pc <= (others=>'0');
 	 elsif I_clk'event and I_clk = '1' then
 		if I_en = '1' then
-			if stall = '0' then
-		      		if I_dataInst(31 downto 26) = "000000" then
+			if stall = '0' then -- if stall = 1 then we would not run normal operation (we'd stall)
+		      		if I_dataInst(31 downto 26) = "000000" then -- R type operations (funct)
 		                	case I_dataInst(5 downto 0) is -- check functional bits for R type instructions
 		
 		                  	-- arithmetic
