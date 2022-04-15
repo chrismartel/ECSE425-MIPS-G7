@@ -25,7 +25,8 @@ The VHDL source code for the instruction memory component implementation is avai
 * **Data Memory**  
 The VHDL source code for the data memory component implementation is available here: [data_memory.vhd](src/mips/memory/data_memory.vhd).
 
-## **Unit Testing**
+## **Unit Testing**  
+The TCL scipts can be run in ModelSIM with the following command: _source <name_of_script>.tcl_
 * **Fetch**  
 The VHDL source code for the fetch stage component test bench implementation is available here: [fetch_tb.vhd](src/mips/fetch/fetch_tb.vhd).  
 The TCL script to run the fetch stage test bench is available here: [fetch_tb.tcl](src/mips/fetch/fetch_tb.tcl).
