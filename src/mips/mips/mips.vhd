@@ -185,12 +185,10 @@ port(
 	I_mem_read: in std_logic;
 	I_mem_write: in std_logic;
 	I_reg_write: in std_logic;
-	I_mem_to_reg: in std_logic;
 	
 	-- EX stage inputs
 	I_rt_data: in std_logic_vector (31 downto 0);
 	I_alu_result: in std_logic_vector (31 downto 0);
-	I_updated_next_pc: in std_logic_vector (31 downto 0);
 	I_stall: in std_logic;
 	
 	
@@ -209,11 +207,9 @@ port(
 	O_mem_read: out std_logic;
 	O_mem_write: out std_logic;
 	O_reg_write: out std_logic;
-	O_mem_to_reg: out std_logic;
 	
 	-- Outputs to writeback
 	O_alu_result: out std_logic_vector(31 downto 0);
-	O_updated_next_pc: out std_logic_vector(31 downto 0);
 	O_stall: out std_logic;
 	
 	-- Outputs for forwarding
@@ -312,9 +308,7 @@ signal MEM_O_branch: std_logic;
 signal MEM_O_mem_read: std_logic;
 signal MEM_O_mem_write: std_logic;
 signal MEM_O_reg_write: std_logic;
-signal MEM_O_mem_to_reg: std_logic;
 signal MEM_O_alu_result: std_logic_vector(31 downto 0);
-signal MEM_O_updated_next_pc: std_logic_vector(31 downto 0);
 signal MEM_O_stall: std_logic;
 
 -- signal MEM_O_result: std_logic_vector (31 downto 0); -- TODO: figure out what to do with this
@@ -506,11 +500,9 @@ port map(
 	I_mem_read => EX_O_mem_read,
 	I_mem_write => EX_O_mem_write,
 	I_reg_write => EX_O_reg_write,
-	I_mem_to_reg => EX_O_mem_to_reg,
 	I_rt_data => EX_O_rt_data,
 	I_branch => EX_O_branch,
 	I_alu_result => EX_O_alu_result,
-	I_updated_next_pc => EX_O_updated_next_pc,
 	I_stall => EX_O_stall,
 	-- TODO: wire these to data_memory component
 	-- data_memory connections I/O
@@ -528,10 +520,8 @@ port map(
 	O_mem_read => MEM_O_mem_read,
 	O_mem_write => MEM_O_mem_write,
 	O_reg_write => MEM_O_reg_write,
-	O_mem_to_reg => MEM_O_mem_to_reg,
 	-- "passing forward" outputs
 	O_alu_result => MEM_O_alu_result,
-	O_updated_next_pc => MEM_O_updated_next_pc,
 	O_stall => MEM_O_stall,
 	-- NOTE: these seem to be taken care of by forwarding unit but are not there
 	O_forward_rd => MEM_O_forward_rd,
