@@ -25,7 +25,7 @@ architecture write_back_arch of write_back is
 begin
 	process(I_clk, I_reset)
 		begin
-			if (I_reset = '0') or ((I_jump or I_branch) = '1') then
+			if ((I_reset or I_jump or I_branch) = '1') then
 				O_rd <= "XXXXX";
 				O_mux <= "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
 				O_we <= '0';
