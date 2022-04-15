@@ -1,3 +1,7 @@
+-- ECSE425 W2022
+-- Final Project, Group 07
+-- Register File
+
 library ieee; -- allows use of the std_logic_vector type
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all; -- needed if you are using unsigned numbers
