@@ -27,7 +27,7 @@ vcom memory_tb.vhd
 
 vsim memory_tb
 
-force -deposit clk 0 0 ns, 1 0.5 ns -repeat 1 ns
+force -deposit I_clk 0 0 ns, 1 0.5 ns -repeat 1 ns
 
 AddWaves
 

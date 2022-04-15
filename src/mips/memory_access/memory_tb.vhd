@@ -171,7 +171,7 @@ begin
 	);
 	
 	data_mem: data_memory port map (
-		clock => clk,
+		clock => I_clk,
 		writedata => data_writedata,
 		address => data_address,
 		memwrite => data_memwrite,
@@ -184,9 +184,9 @@ begin
 
 clk_process : process
 begin
-  clk <= '1';
+  I_clk <= '1';
   wait for clk_period/2;
-  clk <= '0';
+  I_clk <= '0';
   wait for clk_period/2;
 end process;
 

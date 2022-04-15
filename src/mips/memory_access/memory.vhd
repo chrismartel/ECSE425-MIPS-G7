@@ -67,13 +67,11 @@ begin
 -- if it does, do memory stuff
 -- otherwise, just send stuff along
 
-	memory_process: process(clk,reset)
+	memory_process: process(I_clk,I_reset)
 	begin
 	
 		-- asynchronous reset active high
-		if reset'event and reset = '1' then
-			-- O_mem_data <= (others=>'0');
-			
+		if I_reset'event and I_reset = '1' then
 			O_rd <= (others=>'0');
 			O_branch <= '0';
 			O_jump <= '0';
@@ -88,7 +86,7 @@ begin
 			O_forward_mem_reg_write <= '0';
 			
 		-- synchronous clock active high
-		elsif clk'event and clk = '1' then
+		elsif I_clk'event and I_clk = '1' then
 			if I_en = '1' then
 				-- check opcode
 				
