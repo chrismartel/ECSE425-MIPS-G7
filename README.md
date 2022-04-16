@@ -3,6 +3,9 @@ VHDL implementation of a simplified 5-stage MIPS Processor with integrated forwa
 
 ## **Implementation**
 
+### **MIPS Pipelined Processor**
+The VHDL source file for the pipelined processor is available here: [mips.vhd](src/mips/mips/mips.vhd)
+
 ### **Components**
 * **Fetch**  
 The VHDL source code for the fetch stage component implementation is available here: [fetch.vhd](src/mips/fetch/fetch.vhd).
