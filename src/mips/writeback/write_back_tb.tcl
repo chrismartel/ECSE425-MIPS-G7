@@ -28,7 +28,7 @@ proc AddWaves {} {
 vlib work
 
 ;# compile components
-vcom Write_back.vhd
+vcom write_back.vhd
 vcom write_back_tb.vhd
 
 ;# start simulation
