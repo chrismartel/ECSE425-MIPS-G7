@@ -16,8 +16,17 @@ port (
 	I_reset: in std_logic;		-- asynchronous active-high reset
 	I_en: in std_logic;		-- enabled mips processor
 	I_fwd_en: in std_logic;		-- enables forwarding
-	I_write_instr_cach: in std_logic; -- control bit to write to instruction cache
-	I_instr: in std_logic_vector (31 downto 0)  -- input for new instruction
+	--Signals for Instruction memory
+	O_read_instr_cach: out std_logic; -- control bit to read from instruction cache
+	I_instr: in std_logic_vector (31 downto 0);  -- input for new instruction
+	O_instr_address :  out INTEGER RANGE 0 TO ram_size-1; -- specifying the address in instruction cache where we wish to store this instruction
+	--Signals for Data memory
+	O_write_data_cach: out std_logic; -- control bit to write to data cache
+	O_read_data_cach: out std_logic; -- control bit to read from data cache
+	I_data: in std_logic_vector (31 downto 0);  -- input for read data from data cache
+	O_data_address :  out INTEGER RANGE 0 TO ram_size-1; -- specifying the address in data cache where we wish to load/store data
+	O_writedata: IN std_logic_vector (31 DOWNTO 0) -- data line we wish to write to data cache
+
 );
 end mips;
 
@@ -26,34 +35,6 @@ architecture behaviour of mips is
 --------------------------------------------------------------------
 -------------------------- COMPONENTS ------------------------------
 --------------------------------------------------------------------
-
--- INSTRUCTION MEMORY COMPONENT
-component instruction_memory is
-port (
-	clock: in std_logic;
-	writedata: in std_logic_vector (31 downto 0);
-	address: in integer range 0 to RAM_SIZE-1;
-	memwrite: in std_logic;
-	memread: in std_logic;
-	readdata: out std_logic_vector (31 downto 0);
-	waitrequest: out std_logic
-);
-end component;
-
--- DATA MEMORY COMPONENT
-component data_memory is
-port (
-	clock: in std_logic;
-	writedata: in std_logic_vector (31 downto 0);
-	address: in integer range 0 to RAM_SIZE-1;
-	memwrite: in std_logic;
-	memread: in std_logic;
-	readdata: out std_logic_vector (31 downto 0);
-	waitrequest: out std_logic
-);
-end component;
-
-
 
 -- FETCH STAGE COMPONENT
 component fetch is
@@ -286,14 +267,6 @@ end component;
 
 -- NOTE: only list the outputs of each component as intermediate signals to avoid duplicates
 
--- INSTRUCTION MEMORY
-signal INSTR_MEM_O_readdata: std_logic_vector (31 downto 0);
-signal INSTR_MEM_O_waitrequest: std_logic;
-
--- DATA MEMORY
-signal DATA_MEM_O_readdata: std_logic_vector (31 downto 0);
-signal DATA_MEM_O_waitrequest: std_logic;
-
 -- FETCH
 signal F_O_instruction_address : integer range 0 to RAM_SIZE-1;
 signal F_O_memread : std_logic;
@@ -362,41 +335,6 @@ signal FWD_O_forward_rt: std_logic_vector (1 downto 0);
 -------------------------- PORT MAPPING ----------------------------
 --------------------------------------------------------------------
 begin
-instr_mem: instruction_memory
-port map(
-	-- Inputs
-	clock => I_clk,
-
-	-- from fetch component
-	address => F_O_instruction_address,
-	memread => F_O_memread,
-
-	--from external
-	memwrite => I_write_instr_cach,
-	writedata => I_instr,
-
-	-- Outputs
-	-- to Decode component
-	readdata => INSTR_MEM_O_readdata,
-	waitrequest => INSTR_MEM_O_waitrequest
-);
-
-data_mem: data_memory
-port map(
-	-- Inputs
-	clock => I_clk,
-
-	-- from memory_access component
-	address =>  EX_O_address,
-	memread => EX_O_mem_read,
-	memwrite => EX_O_mem_write,
-	writedata => EX_O_rt_data,
-
-	-- Outputs
-	-- to Decode component
-	readdata => DATA_MEM_O_readdata,
-	waitrequest => DATA_MEM_O_waitrequest
-);
 
 f: fetch
 port map(
@@ -416,8 +354,8 @@ port map(
 	-- Outputs
 	-- to decode component
 	O_updated_pc => F_O_updated_pc,
-	O_instruction_address => F_O_instruction_address,
-	O_memread => F_O_memread
+	O_instruction_address => O_instr_address,
+	O_memread => O_read_instr_cach
 );
 
 rf: regs
@@ -428,8 +366,8 @@ port map(
   I_en => I_en,
 
 	-- from fetch component
-  I_rs => INSTR_MEM_O_readdata(25 downto 21), -- extract rs operand from instruction
- 	I_rt => INSTR_MEM_O_readdata(20 downto 16), -- extract rt operand from instruction
+  I_rs => I_instr(25 downto 21), -- extract rs operand from instruction
+ 	I_rt => I_instr(20 downto 16), -- extract rt operand from instruction
 
 	-- from write-back component
 	I_dataD => WB_O_datad,
@@ -450,7 +388,7 @@ port map(
        	I_en => I_en,
 
 	-- from fetch component
-  I_dataInst => INSTR_MEM_O_readdata,
+  I_dataInst => I_instr,
 	I_pc => F_O_updated_pc,
 
 	-- forwarding
@@ -587,7 +525,7 @@ port map(
 	I_regDwe => MEM_O_reg_write,
 	I_mem_read => MEM_O_mem_read,
 	I_alu => MEM_O_alu_result,
-	I_mem => DATA_MEM_O_readdata,
+	I_mem => I_data,
 	I_rd => MEM_O_rd,
 	I_jump => MEM_O_jump,
 	I_branch => MEM_O_branch,
@@ -610,11 +548,17 @@ port map(
 	I_id_reg_write => ID_O_regDwe,
 	I_ex_reg_write => EX_O_reg_write,
 	I_id_mem_read => ID_O_mem_read,
-	I_f_rs => INSTR_MEM_O_readdata(25 downto 21),
-	I_f_rt => INSTR_MEM_O_readdata(20 downto 16),
+	I_f_rs => I_instr(25 downto 21),
+	I_f_rt => I_instr(20 downto 16),
 
 	-- OUTPUTS
 	O_forward_rs => FWD_O_forward_rs,
 	O_forward_rt => FWD_O_forward_rt
 );
+
+	-- Linking the data cache to the MIPs component
+	O_write_data_cach <=  EX_O_mem_write;
+	O_read_data_cach <= EX_O_mem_read;
+	O_data_address <= EX_O_address;
+	O_writedata <= EX_O_rt_data;
 end behaviour;
