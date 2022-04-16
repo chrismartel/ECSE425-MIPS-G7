@@ -181,6 +181,7 @@ port(
 	-- to memory component
 	O_alu_result: out std_logic_vector (31 downto 0);
 	O_updated_next_pc: out std_logic_vector (31 downto 0);
+	O_address: out integer range 0 to RAM_SIZE-1;
 	O_rt_data: out std_logic_vector (31 downto 0);
 	O_stall: out std_logic;
 	-- control signals
@@ -323,6 +324,7 @@ signal ID_O_stall: std_logic;
 -- EXECUTE SIGNALS
 signal EX_O_alu_result: std_logic_vector (31 downto 0);
 signal EX_O_updated_next_pc: std_logic_vector (31 downto 0);
+signal EX_O_address: integer range 0 to RAM_SIZE-1;
 signal EX_O_rt_data: std_logic_vector (31 downto 0);
 signal EX_O_stall: std_logic;
 signal EX_O_rd: std_logic_vector (4 downto 0);
@@ -385,7 +387,7 @@ port map(
 	clock => I_clk,
 
 	-- from memory_access component
-	address =>  to_integer(unsigned(std_logic_vector(EX_O_alu_result))),
+	address =>  EX_O_address,
 	memread => EX_O_mem_read,
 	memwrite => EX_O_mem_write,
 	writedata => EX_O_rt_data,

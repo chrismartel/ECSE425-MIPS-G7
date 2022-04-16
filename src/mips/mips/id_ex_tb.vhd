@@ -4,7 +4,8 @@ use ieee.numeric_std.all;
 
 entity id_ex_tb is
 generic(
-	number_of_registers : INTEGER := 32 -- number of blocks in cache
+	number_of_registers : INTEGER := 32; -- number of blocks in cache
+	ram_size : integer := 32768
 );
 
 end id_ex_tb;
@@ -195,7 +196,8 @@ port(
 	O_jump: out std_logic;
 	O_mem_read: out std_logic;
 	O_mem_write: out std_logic;
-	O_reg_write: out std_logic
+	O_reg_write: out std_logic;
+	O_address: out INTEGER range 0 to ram_size-1
 );
 end component;
 
@@ -282,6 +284,7 @@ signal EX_O_jump: std_logic;
 signal EX_O_mem_read: std_logic;
 signal EX_O_mem_write: std_logic;
 signal EX_O_reg_write: std_logic;
+signal EX_O_address: integer;
 
 -- FETCH
 signal F_O_dataInst : std_logic_vector (31 downto 0); -- from fetch to id
@@ -414,6 +417,7 @@ port map(
 	-- TODO: connect to memory component
 	O_alu_result => EX_O_alu_result,
 	O_updated_next_pc => EX_O_updated_next_pc,
+	O_address => EX_O_address,
 	O_rt_data => EX_O_rt_data,
 	O_stall => EX_O_stall,
 
@@ -584,7 +588,8 @@ begin
 
 	I_fwd_en <= '0';
 	F_O_PC <= NEXT_PC;
-
+	F_O_dataInst <= R_OPCODE & R1 & R2 & R3 & SHAMT & ADD_FUNCT; -- add r1 and r2, store in r3
+	
 	wait for CLK_PERIOD;
 	wait for CLK_PERIOD;
   	assert EX_O_alu_result = ADD_RESULT report "Test 1: Unsuccessful" severity error;

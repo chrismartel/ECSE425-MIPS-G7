@@ -8,6 +8,9 @@ use ieee.numeric_std.all;
 
 
 entity execute is
+generic(
+	ram_size : integer := 32768
+);
 
 port(
 	-- INPUTS
@@ -65,7 +68,8 @@ port(
 	O_jump: out std_logic;
 	O_mem_read: out std_logic;
 	O_mem_write: out std_logic;
-	O_reg_write: out std_logic				-- ** connect to ex_reg_write input of forwarding unit
+	O_reg_write: out std_logic;			-- ** connect to ex_reg_write input of forwarding unit
+	O_address: out INTEGER range 0 to ram_size-1
 );
 end execute;
 
@@ -163,6 +167,7 @@ begin
 			O_jump <= '0';
 			O_stall <= '0';
 			flush <= '0';
+			O_address <= 0;
 			
 		-- synchronous clock active high
 		elsif I_clk'event and I_clk = '1' then
@@ -764,13 +769,17 @@ begin
 						case I_forward_rs is
 						when FORWARDING_NONE =>
   		                      			O_alu_result <= std_logic_vector(signed(I_rs_data) + signed(I_imm_SE));
+							O_address <= to_integer(unsigned(std_logic_vector(signed(I_rs_data) + signed(I_imm_SE))));
 						when FORWARDING_EX =>
   		                      			O_alu_result <= std_logic_vector(signed(I_fwd_ex_alu_result) + signed(I_imm_SE));
+							O_address <= to_integer(unsigned(std_logic_vector(signed(I_fwd_ex_alu_result) + signed(I_imm_SE))));
 						when FORWARDING_MEM =>
 							if I_fwd_mem_read = '1' then
 								O_alu_result <= std_logic_vector(signed(I_fwd_mem_read_data) + signed(I_imm_SE));
+								O_address <= to_integer(unsigned(std_logic_vector(signed(I_fwd_mem_read_data) + signed(I_imm_SE))));
 							else
 								O_alu_result <= std_logic_vector(signed(I_fwd_mem_alu_result) + signed(I_imm_SE));
+								O_address <= to_integer(unsigned(std_logic_vector(signed(I_fwd_mem_alu_result) + signed(I_imm_SE))));
 							end if;  		              
 						when others =>
 						end case;
