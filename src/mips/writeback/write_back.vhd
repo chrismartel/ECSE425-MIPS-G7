@@ -13,8 +13,7 @@ port (I_clk: in std_logic;
 	I_branch: in std_logic;
 	I_en : in std_logic;
 	I_reset : in std_logic;
-	I_stall: in std_logic;
-	
+	I_stall : in std_logic;
 	O_we : out std_logic;
 	O_rd: out std_logic_vector (4 downto 0);
 	O_mux : out std_logic_vector (31 downto 0)
@@ -33,12 +32,10 @@ begin
 			elsif falling_edge(I_clk) then -- write data to registers on falling edge of clock
 				if (I_en = '1') then
 					--mux for choosing input from ALU or MEM
-					if I_regDwe = '1' then
-						if I_mem_read = '1' then
-							O_mux <= I_mem;
-						else
-							O_mux <= I_alu;
-						end if;
+					if (I_regDwe = '1') and (I_mem_read = '0') then
+						O_mux <= I_alu;
+					elsif ((I_regDwe and I_mem_read) = '1') then
+						O_mux <= I_mem;
 					else
 						O_mux <= "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
 					end if;
