@@ -3,6 +3,9 @@ VHDL implementation of a simplified 5-stage MIPS Processor with integrated forwa
 
 ## **Implementation**
 
+### **MIPS Pipelined Processor**
+The VHDL source file for the pipelined processor is available here: [mips.vhd](src/mips/mips/mips.vhd)
+
 ### **Components**
 * **Fetch**  
 The VHDL source code for the fetch stage component implementation is available here: [fetch.vhd](src/mips/fetch/fetch.vhd).
@@ -44,9 +47,6 @@ The VHDL source code for the writeback stage component test bench implementation
 The TCL script to run the writeback stage test bench is available here: [write_back_tb.tcl](src/mips/writeback/write_back_tb.tcl).
 
 ### **Memory**  
-* **Instruction Memory**  
+* **Data & Instruction Memory**  
 The VHDL source code for the instruction memory test bench implementation is available here: [instruction_memory_tb.vhd](src/mips/memory/instruction_memory_tb.vhd).  
 The TCL script to run the instruction memory test bench is available here: [instruction_memory_tb.tcl](src/mips/memory/instruction_memory_tb.tcl).
-* **Data Memory**  
-The VHDL source code for the data memory test bench component implementation is available here: [data_memory_tb.vhd](src/mips/memory/data_memory_tb.vhd).  
-The TCL script to run the data memory test bench is available here: [data_memory_tb.tcl](src/mips/memory/data_memory_tb.tcl).

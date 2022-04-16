@@ -3,6 +3,7 @@
 -- Data Memory
 
 --Adapted from memory.vhd from Project 2
+library ieee;
 USE ieee.std_logic_1164.all;
 USE ieee.numeric_std.all;
 

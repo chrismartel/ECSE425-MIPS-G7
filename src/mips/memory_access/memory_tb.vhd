@@ -37,12 +37,11 @@ architecture behavior of memory_tb is
 			
 			
 			-- data_memory relevant signals
-			data_address: out integer range 0 to ram_size-1;
-			data_memread: out std_logic;
-			data_waitrequest: in std_logic;
-			data_writedata: out std_logic_vector(31 downto 0);
-			data_memwrite: out std_logic;
-			data_readdata: in std_logic_vector(31 downto 0);
+			I_data_waitrequest: in std_logic;
+			O_data_address: out integer range 0 to ram_size-1;
+			O_data_memread: out std_logic;
+			O_data_writedata: out std_logic_vector(31 downto 0);
+			O_data_memwrite: out std_logic;
 			
 			-- Control Signals Outputs
 			O_rd: out std_logic_vector (4 downto 0); 			-- the destination register where to write the instr. result
@@ -53,11 +52,9 @@ architecture behavior of memory_tb is
 			O_reg_write: out std_logic; 					-- indicates if value calculated in ALU must be written to destination register
 			
 			O_alu_result: out std_logic_vector(31 downto 0);
-			O_stall: out std_logic;
+			O_stall: out std_logic
 			
-			O_forward_rd: out std_logic_vector (4 downto 0);
-			O_forward_mem_reg_write: out std_logic
-		);
+			);
 		
 	end component;
 	
@@ -101,12 +98,12 @@ architecture behavior of memory_tb is
 	
 	
 	-- data_memory relevant signals
-	signal data_address: integer range 0 to 32767;
-	signal data_memread: std_logic;
-	signal data_waitrequest: std_logic;
-	signal data_writedata: std_logic_vector(31 downto 0);
-	signal data_memwrite: std_logic;
-	signal data_readdata: std_logic_vector(31 downto 0);
+	signal O_data_address: integer range 0 to 32767;
+	signal O_data_memread: std_logic;
+	signal I_data_waitrequest: std_logic;
+	signal O_data_writedata: std_logic_vector(31 downto 0);
+	signal O_data_memwrite: std_logic;
+	signal O_data_readdata: std_logic_vector(31 downto 0);
 	
 	-- Control Signals Outputs
 	signal O_rd: std_logic_vector (4 downto 0);
@@ -118,10 +115,6 @@ architecture behavior of memory_tb is
 	
 	signal O_alu_result: std_logic_vector(31 downto 0);
 	signal O_stall: std_logic;
-	
-	signal O_forward_rd: std_logic_vector (4 downto 0);
-	signal O_forward_mem_reg_write: std_logic;
-	
 begin
 
 
@@ -139,12 +132,11 @@ begin
 		I_branch => I_branch,
 		I_alu_result => I_alu_result,
 		I_stall => I_stall,
-		data_address => data_address,
-		data_memread => data_memread,
-		data_waitrequest => data_waitrequest,
-		data_writedata => data_writedata,
-		data_memwrite => data_memwrite,
-		data_readdata => data_readdata,
+		O_data_address => O_data_address,
+		O_data_memread => O_data_memread,
+		I_data_waitrequest => I_data_waitrequest,
+		O_data_writedata => O_data_writedata,
+		O_data_memwrite => O_data_memwrite,
 		O_rd => O_rd,
 		O_branch => O_branch,
 		O_jump => O_jump,
@@ -152,19 +144,17 @@ begin
 		O_mem_write => O_mem_write,
 		O_reg_write => O_reg_write,
 		O_alu_result => O_alu_result,
-		O_stall => O_stall,
-		O_forward_rd => O_forward_rd,
-		O_forward_mem_reg_write => O_forward_mem_reg_write
+		O_stall => O_stall
 	);
 	
 	data_mem: data_memory port map (
 		clock => I_clk,
-		writedata => data_writedata,
-		address => data_address,
-		memwrite => data_memwrite,
-		memread => data_memread,
-		readdata => data_readdata,
-		waitrequest => data_waitrequest
+		writedata => O_data_writedata,
+		address => O_data_address,
+		memwrite => O_data_memwrite,
+		memread => O_data_memread,
+		readdata => O_data_readdata,
+		waitrequest => I_data_waitrequest
 	);
 
 
@@ -257,7 +247,7 @@ I_stall <= '0';
 
 wait for clk_period;
 
-assert data_readdata = X"00000000" report "Test case 2 failed : data_readdata" severity error;
+assert O_data_readdata = X"00000000" report "Test case 2 failed : data_readdata" severity error;
 
 
 -- assert nothing special happened, everything passed forward
@@ -339,11 +329,11 @@ I_stall <= '0';
 
 wait for clk_period;
 
-assert data_readdata = X"ABCDABCD" report "Test case 4 failed : 0x4 ABCDABCD" severity error;
+assert O_data_readdata = X"ABCDABCD" report "Test case 4 failed : 0x4 ABCDABCD" severity error;
 
 wait for clk_period;
 
-assert data_readdata = X"EFEFEFEF" report "Test case 4 failed : 0x8 EFEFEFEF" severity error;
+assert O_data_readdata = X"EFEFEFEF" report "Test case 4 failed : 0x8 EFEFEFEF" severity error;
 
 -- TEST 5: 2 consecutive reads
 
@@ -377,11 +367,11 @@ I_stall <= '0';
 
 wait for clk_period;
 
-assert data_readdata = X"10101010" report "Test case 5 failed : 0x0 10101010" severity error;
+assert O_data_readdata = X"10101010" report "Test case 5 failed : 0x0 10101010" severity error;
 
 wait for clk_period;
 
-assert data_readdata = X"ABCDABCD" report "Test case 5 failed : 0x4 ABCDABCD" severity error;
+assert O_data_readdata = X"ABCDABCD" report "Test case 5 failed : 0x4 ABCDABCD" severity error;
 
 
 wait;

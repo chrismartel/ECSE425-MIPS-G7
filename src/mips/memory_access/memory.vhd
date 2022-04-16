@@ -37,7 +37,6 @@ port(
 	O_data_memread: out std_logic;
 	O_data_writedata: out std_logic_vector(31 downto 0);
 	O_data_memwrite: out std_logic;
-	-- data_readdata: in std_logic_vector(31 downto 0);
 	
 	-- Control Signals Outputs
 	O_rd: out std_logic_vector (4 downto 0); 			-- the destination register where to write the instr. result

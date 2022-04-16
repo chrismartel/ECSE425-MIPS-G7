@@ -33,26 +33,26 @@ END write_back_vhd_tst;
 ARCHITECTURE write_back_arch OF write_back_vhd_tst IS
 -- constants                                                 
 -- signals                                                   
-SIGNAL I_alu : STD_LOGIC_VECTOR(31 DOWNTO 0);
-SIGNAL I_branch : STD_LOGIC;
-SIGNAL I_clk : STD_LOGIC;
-SIGNAL I_en : STD_LOGIC;
-SIGNAL I_jump : STD_LOGIC;
-SIGNAL I_mem : STD_LOGIC_VECTOR(31 DOWNTO 0);
-SIGNAL I_mem_read : STD_LOGIC;
-SIGNAL I_rd : STD_LOGIC_VECTOR(4 DOWNTO 0);
-SIGNAL I_regDwe : STD_LOGIC;
-SIGNAL I_reset : STD_LOGIC;
-SIGNAL I_stall : std_logic;
-SIGNAL I_datad : STD_LOGIC_VECTOR (31 downto 0);
-SIGNAL I_rt :  STD_LOGIC_VECTOR (4 downto 0);
-SIGNAL I_rs :  STD_LOGIC_VECTOR (4 downto 0);
-SIGNAL I_we : STD_LOGIC;
-SIGNAL O_mux : STD_LOGIC_VECTOR(31 DOWNTO 0);
-SIGNAL O_rd : STD_LOGIC_VECTOR(4 DOWNTO 0);
-SIGNAL O_we : STD_LOGIC;
-SIGNAL O_datas :  STD_LOGIC_VECTOR (31 downto 0);
-SIGNAL O_datat :  STD_LOGIC_VECTOR (31 downto 0);
+SIGNAL I_alu : STD_LOGIC_VECTOR(31 DOWNTO 0) := (others => '0');
+SIGNAL I_branch : STD_LOGIC := '0';
+SIGNAL I_clk : STD_LOGIC:= '0';
+SIGNAL I_en : STD_LOGIC:= '0';
+SIGNAL I_jump : STD_LOGIC:= '0';
+SIGNAL I_mem : STD_LOGIC_VECTOR(31 DOWNTO 0):= (others => '0');
+SIGNAL I_mem_read : STD_LOGIC:= '0';
+SIGNAL I_rd : STD_LOGIC_VECTOR(4 DOWNTO 0):= (others => '0');
+SIGNAL I_regDwe : STD_LOGIC:= '0';
+SIGNAL I_reset : STD_LOGIC:= '0';
+SIGNAL I_stall : std_logic:= '0';
+SIGNAL I_datad : STD_LOGIC_VECTOR (31 downto 0):= (others => '0');
+SIGNAL I_rt :  STD_LOGIC_VECTOR (4 downto 0):= (others => '0');
+SIGNAL I_rs :  STD_LOGIC_VECTOR (4 downto 0):= (others => '0');
+SIGNAL I_we : STD_LOGIC:= '0';
+SIGNAL O_mux : STD_LOGIC_VECTOR(31 DOWNTO 0):= (others => '0');
+SIGNAL O_rd : STD_LOGIC_VECTOR(4 DOWNTO 0):= (others => '0');
+SIGNAL O_we : STD_LOGIC:= '0';
+SIGNAL O_datas :  STD_LOGIC_VECTOR (31 downto 0):= (others => '0');
+SIGNAL O_datat :  STD_LOGIC_VECTOR (31 downto 0):= (others => '0');
 COMPONENT write_back
 	PORT (
 	I_alu : IN STD_LOGIC_VECTOR(31 DOWNTO 0);

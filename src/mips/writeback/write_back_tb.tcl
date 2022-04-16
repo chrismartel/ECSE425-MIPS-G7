@@ -2,26 +2,26 @@
 ;# add waves to the Wave window
 
 proc AddWaves {} {
-	add wave -position end  sim:/fetch_tb/I_alu
-	add wave -position end  sim:/fetch_tb/I_branch
-	add wave -position end  sim:/fetch_tb/I_clk
-	add wave -position end  sim:/fetch_tb/I_en
-	add wave -position end  sim:/fetch_tb/I_jump
-	add wave -position end  sim:/fetch_tb/I_mem
-	add wave -position end  sim:/fetch_tb/I_mem_read 
-	add wave -position end  sim:/fetch_tb/I_rd
-	add wave -position end  sim:/fetch_tb/I_regDwe
-	add wave -position end  sim:/fetch_tb/I_reset
-	add wave -position end  sim:/fetch_tb/I_stall
-	add wave -position end  sim:/fetch_tb/I_datad
-	add wave -position end  sim:/fetch_tb/I_rt
-	add wave -position end  sim:/fetch_tb/I_rs
-	add wave -position end  sim:/fetch_tb/I_we
-	add wave -position end  sim:/fetch_tb/O_mux
-	add wave -position end  sim:/fetch_tb/O_rd
-	add wave -position end  sim:/fetch_tb/O_we
-	add wave -position end  sim:/fetch_tb/O_datas
-	add wave -position end  sim:/fetch_tb/O_datat
+	add wave -position end  sim:/write_back_tb/I_alu
+	add wave -position end  sim:/write_back_tb/I_branch
+	add wave -position end  sim:/write_back_tb/I_clk
+	add wave -position end  sim:/write_back_tb/I_en
+	add wave -position end  sim:/write_back_tb/I_jump
+	add wave -position end  sim:/write_back_tb/I_mem
+	add wave -position end  sim:/write_back_tb/I_mem_read 
+	add wave -position end  sim:/write_back_tb/I_rd
+	add wave -position end  sim:/write_back_tb/I_regDwe
+	add wave -position end  sim:/write_back_tb/I_reset
+	add wave -position end  sim:/write_back_tb/I_stall
+	add wave -position end  sim:/write_back_tb/I_datad
+	add wave -position end  sim:/write_back_tb/I_rt
+	add wave -position end  sim:/write_back_tb/I_rs
+	add wave -position end  sim:/write_back_tb/I_we
+	add wave -position end  sim:/write_back_tb/O_mux
+	add wave -position end  sim:/write_back_tb/O_rd
+	add wave -position end  sim:/write_back_tb/O_we
+	add wave -position end  sim:/write_back_tb/O_datas
+	add wave -position end  sim:/write_back_tb/O_datat
 	
 }
 
