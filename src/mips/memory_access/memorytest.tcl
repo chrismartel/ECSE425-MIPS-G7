@@ -9,12 +9,15 @@ proc AddWaves {} {
 	add wave -position end  sim:/memory_tb/I_reg_write
 	add wave -position end  sim:/memory_tb/I_rt_data
 	add wave -position end  sim:/memory_tb/I_alu_result
-	add wave -position end  sim:/memory_tb/data_address
-	add wave -position end  sim:/memory_tb/data_memread
-	add wave -position end  sim:/memory_tb/data_waitrequest
-	add wave -position end  sim:/memory_tb/data_memwrite
-	add wave -position end  sim:/memory_tb/data_readdata
-	add wave -position end  sim:/memory_tb/data_mem/ram_block
+	add wave -position end  sim:/memory_tb/O_data_address
+	add wave -position end  sim:/memory_tb/O_data_memread
+	add wave -position end  sim:/memory_tb/I_data_waitrequest
+	add wave -position end  sim:/memory_tb/O_data_memwrite
+	add wave -position end  sim:/memory_tb/O_data_readdata
+	add wave -position end  sim:/memory_tb/data_mem/ram_block(0)
+	add wave -position end  sim:/memory_tb/data_mem/ram_block(4)
+	add wave -position end  sim:/memory_tb/data_mem/ram_block(8)
+	add wave -position end  sim:/memory_tb/data_mem/ram_block(16)
 	add wave -position end  sim:/memory_tb/data_mem/address
 	add wave -position end  sim:/memory_tb/data_mem/memwrite
 	add wave -position end  sim:/memory_tb/data_mem/read_address_reg
