@@ -44,6 +44,6 @@ The VHDL source code for the writeback stage component test bench implementation
 The TCL script to run the writeback stage test bench is available here: [write_back_tb.tcl](src/mips/writeback/write_back_tb.tcl).
 
 ### **Memory**  
-* ** Data & Instruction Memory**  
+* **Data & Instruction Memory**  
 The VHDL source code for the instruction memory test bench implementation is available here: [instruction_memory_tb.vhd](src/mips/memory/instruction_memory_tb.vhd).  
 The TCL script to run the instruction memory test bench is available here: [instruction_memory_tb.tcl](src/mips/memory/instruction_memory_tb.tcl).
