@@ -33,10 +33,12 @@ begin
 			elsif falling_edge(I_clk) then -- write data to registers on falling edge of clock
 				if (I_en = '1') then
 					--mux for choosing input from ALU or MEM
-					if ((I_regDwe and I_mem_read) = '0') then
-						O_mux <= I_alu;
-					elsif ((I_regDwe and I_mem_read) = '1') then
-						O_mux <= I_mem;
+					if I_regDwe = '1' then
+						if I_mem_read = '1' then
+							O_mux <= I_mem;
+						else
+							O_mux <= I_alu;
+						end if;
 					else
 						O_mux <= "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
 					end if;
