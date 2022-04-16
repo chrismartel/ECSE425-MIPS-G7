@@ -6,7 +6,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity mips is 
+entity mips is
 generic(
 	RAM_SIZE : INTEGER := 32768;
 	CLK_PERIOD : time := 1 ns
@@ -15,7 +15,9 @@ port (
 	I_clk: in std_logic;		-- synchronous active-high clock
 	I_reset: in std_logic;		-- asynchronous active-high reset
 	I_en: in std_logic;		-- enabled mips processor
-	I_fwd_en: in std_logic		-- enables forwarding
+	I_fwd_en: in std_logic;		-- enables forwarding
+	I_write_instr_cach: in std_logic; -- control bit to write to instruction cache
+	I_instr: in std_logic_vector (31 downto 0)  -- input for new instruction
 );
 end mips;
 
@@ -28,15 +30,30 @@ architecture behaviour of mips is
 -- INSTRUCTION MEMORY COMPONENT
 component instruction_memory is
 port (
-	I_clock: in std_logic;
-	I_writedata: in std_logic_vector (31 downto 0);
-	I_address: in integer range 0 to RAM_SIZE-1;
-	I_memwrite: in std_logic;
-	I_memread: in std_logic;
-	O_readdata: out std_logic_vector (31 downto 0);
-	O_waitrequest: out std_logic
+	clock: in std_logic;
+	writedata: in std_logic_vector (31 downto 0);
+	address: in integer range 0 to RAM_SIZE-1;
+	memwrite: in std_logic;
+	memread: in std_logic;
+	readdata: out std_logic_vector (31 downto 0);
+	waitrequest: out std_logic
 );
 end component;
+
+-- DATA MEMORY COMPONENT
+component data_memory is
+port (
+	clock: in std_logic;
+	writedata: in std_logic_vector (31 downto 0);
+	address: in integer range 0 to RAM_SIZE-1;
+	memwrite: in std_logic;
+	memread: in std_logic;
+	readdata: out std_logic_vector (31 downto 0);
+	waitrequest: out std_logic
+);
+end component;
+
+
 
 -- FETCH STAGE COMPONENT
 component fetch is
@@ -56,21 +73,16 @@ port(
 	-- incase of a branch or a jump use this
 	I_pc_branch: in std_logic_vector (31 downto 0);
 
-	-- Memory Inputs:
-	I_mem_instruction : in std_logic_vector (31 downto 0);
-	I_waitrequest : in std_logic;
-
 	-- Outputs for fetch unit
 	O_updated_pc: out std_logic_vector (31 downto 0);
 	O_instruction_address: out INTEGER range 0 to RAM_SIZE-1;
-	O_memread: out std_logic;
-	O_instruction : out std_logic_vector (31 downto 0)
+	O_memread: out std_logic
 );
 end component;
 
--- REGISTER FILE COMPONENT 
+-- REGISTER FILE COMPONENT
 component regs is
-port ( 
+port (
 	-- Inputs
 	I_clk : in  STD_LOGIC;
        	I_reset : in STD_LOGIC;
@@ -80,16 +92,16 @@ port (
        	I_rs : in  std_logic_vector (4 downto 0);
        	I_rd : in  std_logic_vector (4 downto 0);
        	I_we : in  STD_LOGIC;
-	
+
 	-- Outputs
        	O_datas : out  std_logic_vector (31 downto 0);
        	O_datat : out  std_logic_vector (31 downto 0)
-);	 
+);
 end component;
 
--- DECODE STAGE COMPONENT 
+-- DECODE STAGE COMPONENT
 component decode is
-port ( 
+port (
     	-- Inputs
 	I_clk : in  STD_LOGIC;
     	I_reset: in STD_LOGIC;
@@ -103,7 +115,7 @@ port (
 	I_id_mem_read: in std_logic;
     	I_ex_rd: in std_logic_vector (4 downto 0);
     	I_ex_reg_write: in std_logic;
-            
+
    	-- Outputs
     	O_next_pc: out std_logic_vector (31 downto 0);
         O_rs : out  std_logic_vector (4 downto 0);
@@ -124,7 +136,7 @@ port (
 );
 end component;
 
--- EXECUTE STAGE COMPONENT 
+-- EXECUTE STAGE COMPONENT
 component execute is
 port(
 	-- INPUTS
@@ -141,25 +153,25 @@ port(
 	I_shamt: in std_logic_vector (4 downto 0);
 	I_funct: in std_logic_vector (5 downto 0);
 	I_addr: in std_logic_vector (25 downto 0);
-	-- control signals 
-	I_rd: in std_logic_vector (4 downto 0); 	
-	I_branch: in std_logic; 					
-	I_jump: in std_logic; 						
-	I_mem_read: in std_logic; 					
-	I_mem_write: in std_logic; 					
-	I_reg_write: in std_logic; 					
+	-- control signals
+	I_rd: in std_logic_vector (4 downto 0);
+	I_branch: in std_logic;
+	I_jump: in std_logic;
+	I_mem_read: in std_logic;
+	I_mem_write: in std_logic;
+	I_reg_write: in std_logic;
 
 	-- from register file
 	I_rs_data: in std_logic_vector (31 downto 0);
 	I_rt_data: in std_logic_vector (31 downto 0);
-	I_next_pc: in std_logic_vector (31 downto 0); 
+	I_next_pc: in std_logic_vector (31 downto 0);
 
 	-- forwarding
 	I_fwd_ex_alu_result: in std_logic_vector (31 downto 0);
 	I_fwd_mem_alu_result: in std_logic_vector (31 downto 0);
 	I_fwd_mem_read_data: in std_logic_vector (31 downto 0);
 	I_fwd_mem_read: in std_logic;
-	
+
 	-- from forwarding unit
 	I_forward_rs: in std_logic_vector (1 downto 0);
 	I_forward_rt: in std_logic_vector (1 downto 0);
@@ -188,7 +200,7 @@ port(
 	I_clk : in std_logic;
 	I_reset : in std_logic;
 	I_en : in std_logic;
-	
+
 	-- Control Signals Inputs
 	I_rd: in std_logic_vector (4 downto 0);
 	I_branch: in std_logic;
@@ -196,12 +208,12 @@ port(
 	I_mem_read: in std_logic;
 	I_mem_write: in std_logic;
 	I_reg_write: in std_logic;
-	
+
 	-- EX stage inputs
 	I_rt_data: in std_logic_vector (31 downto 0);
 	I_alu_result: in std_logic_vector (31 downto 0);
 	I_stall: in std_logic;
-	
+
 	-- data_memory relevant signals
 	I_data_waitrequest: in std_logic;
 	O_data_address: out integer range 0 to RAM_SIZE-1;
@@ -209,7 +221,7 @@ port(
 	O_data_writedata: out std_logic_vector(31 downto 0);
 	O_data_memwrite: out std_logic;
 	-- data_readdata: in std_logic_vector(31 downto 0);
-	
+
 	-- Control Signals Outputs
 	O_rd: out std_logic_vector (4 downto 0);
 	O_branch: out std_logic;
@@ -217,7 +229,7 @@ port(
 	O_mem_read: out std_logic;
 	O_mem_write: out std_logic;
 	O_reg_write: out std_logic;
-	
+
 	-- Outputs to writeback
 	O_alu_result: out std_logic_vector(31 downto 0);
 	O_stall: out std_logic
@@ -237,14 +249,14 @@ port (I_clk: in std_logic;
 	I_en : in std_logic;
 	I_reset : in std_logic;
 	I_stall: in std_logic;
-	
+
 	O_we : out std_logic;
 	O_rd: out std_logic_vector (4 downto 0);
 	O_mux : out std_logic_vector (31 downto 0)
   );
 end component;
 
--- FORWARDING UNIT COMPONENT 
+-- FORWARDING UNIT COMPONENT
 component forwarding_unit is
 port(
 	-- INPUTS
@@ -252,13 +264,13 @@ port(
 	I_reset : in std_logic;
 	I_en: in std_logic;
 
-	I_id_rd: in std_logic_vector (4 downto 0); 		
-	I_ex_rd: in std_logic_vector (4 downto 0); 	
-	I_id_reg_write: in std_logic; 			
+	I_id_rd: in std_logic_vector (4 downto 0);
+	I_ex_rd: in std_logic_vector (4 downto 0);
+	I_id_reg_write: in std_logic;
 	I_ex_reg_write: in std_logic;
-	I_id_mem_read: in std_logic;		
-	I_f_rs: in std_logic_vector(4 downto 0); 		
-	I_f_rt: in std_logic_vector(4 downto 0); 		
+	I_id_mem_read: in std_logic;
+	I_f_rs: in std_logic_vector(4 downto 0);
+	I_f_rt: in std_logic_vector(4 downto 0);
 
 	-- OUTPUTS
 	O_forward_rs: out std_logic_vector (1 downto 0); -- selection of left operand for ALU
@@ -277,13 +289,16 @@ end component;
 signal INSTR_MEM_O_readdata: std_logic_vector (31 downto 0);
 signal INSTR_MEM_O_waitrequest: std_logic;
 
+-- DATA MEMORY
+signal DATA_MEM_O_readdata: std_logic_vector (31 downto 0);
+signal DATA_MEM_O_waitrequest: std_logic;
+
 -- FETCH
-signal F_O_instruction_address : integer range 0 to RAM_SIZE-1; 
+signal F_O_instruction_address : integer range 0 to RAM_SIZE-1;
 signal F_O_memread : std_logic;
-signal F_O_instruction : std_logic_vector (31 downto 0);
 signal F_O_updated_pc : std_logic_vector (31 downto 0);
 
--- REGISTER FILE 
+-- REGISTER FILE
 signal RF_O_datas :  std_logic_vector (31 downto 0); -- rf to ex
 signal RF_O_datat :  std_logic_vector (31 downto 0); -- rf to ex
 
@@ -305,7 +320,7 @@ signal ID_O_mem_write: std_logic;
 signal ID_O_addr: std_logic_vector (25 downto 0);
 signal ID_O_stall: std_logic;
 
--- EXECUTE SIGNALS		
+-- EXECUTE SIGNALS
 signal EX_O_alu_result: std_logic_vector (31 downto 0);
 signal EX_O_updated_next_pc: std_logic_vector (31 downto 0);
 signal EX_O_rt_data: std_logic_vector (31 downto 0);
@@ -348,19 +363,37 @@ begin
 instr_mem: instruction_memory
 port map(
 	-- Inputs
-	I_clock => I_clk,
+	clock => I_clk,
 
 	-- from fetch component
-	I_address => F_O_instruction_address,
-	I_memread => F_O_memread,
+	address => F_O_instruction_address,
+	memread => F_O_memread,
 
-	I_memwrite => '0', --TODO 
-	I_writedata => (others=>'0'), -- TODO
-	
+	--from external
+	memwrite => I_write_instr_cach,
+	writedata => I_instr,
+
 	-- Outputs
-	-- to fetch component
-	O_readdata => INSTR_MEM_O_readdata,
-	O_waitrequest => INSTR_MEM_O_waitrequest
+	-- to Decode component
+	readdata => INSTR_MEM_O_readdata,
+	waitrequest => INSTR_MEM_O_waitrequest
+);
+
+data_mem: data_memory
+port map(
+	-- Inputs
+	clock => I_clk,
+
+	-- from memory_access component
+	address =>  to_integer(unsigned(std_logic_vector(EX_O_alu_result))),
+	memread => EX_O_mem_read,
+	memwrite => EX_O_mem_write,
+	writedata => EX_O_rt_data,
+
+	-- Outputs
+	-- to Decode component
+	readdata => DATA_MEM_O_readdata,
+	waitrequest => DATA_MEM_O_waitrequest
 );
 
 f: fetch
@@ -369,7 +402,7 @@ port map(
 	I_clk => I_clk,
 	I_reset => I_reset,
 	I_en => I_en,
-	
+
 	-- from decode component
 	I_stall => ID_O_stall,
 
@@ -378,42 +411,36 @@ port map(
 	I_branch => EX_O_branch,
 	I_pc_branch => EX_O_updated_next_pc,
 
-	-- TODO: clean up signals we dont need
-	-- from intrusction memory
-	I_mem_instruction => INSTR_MEM_O_readdata,
-	I_waitrequest => INSTR_MEM_O_waitrequest,
-
 	-- Outputs
 	-- to decode component
 	O_updated_pc => F_O_updated_pc,
 	O_instruction_address => F_O_instruction_address,
-	O_memread => F_O_memread,
-	O_instruction => F_O_instruction
+	O_memread => F_O_memread
 );
 
-rf: regs 
+rf: regs
 port map(
 	-- Inputs
 	I_clk => I_clk,
 	I_reset => I_reset,
-       	I_en => I_en,
+  I_en => I_en,
 
 	-- from fetch component
-       	I_rs => F_O_instruction(25 downto 21), -- extract rs operand from instruction
-       	I_rt => F_O_instruction(20 downto 16), -- extract rt operand from instruction
+  I_rs => INSTR_MEM_O_readdata(25 downto 21), -- extract rs operand from instruction
+ 	I_rt => INSTR_MEM_O_readdata(20 downto 16), -- extract rt operand from instruction
 
 	-- from write-back component
-	I_dataD => WB_O_datad, 
-       	I_rd => WB_O_rd,
-       	I_we => WB_O_we,
+	I_dataD => WB_O_datad,
+ 	I_rd => WB_O_rd,
+	I_we => WB_O_we,
 
 	-- Outputs
 	-- to execute component
-       	O_datas => RF_O_datas,
-       	O_datat => RF_O_datat
+	 	O_datas => RF_O_datas,
+	 	O_datat => RF_O_datat
 );
 
-id: decode 
+id: decode
 port map(
 	-- Inputs
 	I_clk => I_clk,
@@ -421,7 +448,7 @@ port map(
        	I_en => I_en,
 
 	-- from fetch component
-    	I_dataInst => F_O_instruction,
+  I_dataInst => INSTR_MEM_O_readdata,
 	I_pc => F_O_updated_pc,
 
 	-- forwarding
@@ -435,12 +462,12 @@ port map(
 	-- Outputs
 	-- to execute component
 	O_next_pc => ID_O_next_pc,
-        O_rs => ID_O_rs,
-        O_rt => ID_O_rt,
-        O_rd => ID_O_rd,
-        O_dataIMM_SE => ID_O_dataIMM_SE,
+  O_rs => ID_O_rs,
+  O_rt => ID_O_rt,
+  O_rd => ID_O_rd,
+  O_dataIMM_SE => ID_O_dataIMM_SE,
 	O_dataIMM_ZE => ID_O_dataIMM_ZE,
-        O_aluop => ID_O_aluop,
+  O_aluop => ID_O_aluop,
 	O_shamt => ID_O_shamt,
 	O_funct => ID_O_funct,
 	O_branch => ID_O_branch,
@@ -452,13 +479,13 @@ port map(
 	O_stall => ID_O_stall
 );
 
-ex: execute 
+ex: execute
 port map(
 	-- INPUTS
 	I_clk => I_clk,
 	I_reset => I_reset,
 	I_en => I_en,
-	
+
 	-- instruction
 	I_rs => ID_O_rs,
 	I_rt => ID_O_rt,
@@ -469,7 +496,7 @@ port map(
 	I_shamt => ID_O_shamt,
 	I_funct => ID_O_funct,
 	I_addr => ID_O_addr,
-	
+
 	-- operands
 	I_rs_data => RF_O_datas,
 	I_rt_data => RF_O_datat,
@@ -478,9 +505,9 @@ port map(
 	-- control signals
 	I_branch => ID_O_branch,
 	I_jump => ID_O_jump,
-	I_mem_read => ID_O_mem_read,		
-	I_mem_write => ID_O_mem_write, 					
-	I_reg_write => ID_O_regDwe,				
+	I_mem_read => ID_O_mem_read,
+	I_mem_write => ID_O_mem_write,
+	I_reg_write => ID_O_regDwe,
 
 	-- forwarding
 	-- from execution stage
@@ -489,13 +516,13 @@ port map(
 	-- from memory stage
 	I_fwd_mem_alu_result => MEM_O_alu_result,
 	I_fwd_mem_read_data => (others=>'X'), -- TODO connect with data memory output
-	I_fwd_mem_read => MEM_O_mem_read, 
+	I_fwd_mem_read => MEM_O_mem_read,
 
 	-- from forwarding unit
 	I_forward_rs => FWD_O_forward_rs,
-	I_forward_rt => FWD_O_forward_rt,	
+	I_forward_rt => FWD_O_forward_rt,
 
-	-- OUTPUTS 
+	-- OUTPUTS
 	O_alu_result => EX_O_alu_result,
 	O_updated_next_pc => EX_O_updated_next_pc,
 	O_rt_data => EX_O_rt_data,
@@ -554,16 +581,16 @@ port map(
 	I_clk => I_clk,
 	I_reset => I_reset,
 	I_en => I_en,
-	
+
 	I_regDwe => MEM_O_reg_write,
 	I_mem_read => MEM_O_mem_read,
 	I_alu => MEM_O_alu_result,
-	I_mem => (others=>'0'), -- TODO connect with output of data instruction
+	I_mem => DATA_MEM_O_readdata,
 	I_rd => MEM_O_rd,
 	I_jump => MEM_O_jump,
 	I_branch => MEM_O_branch,
 	I_stall => MEM_O_stall,
-	
+
 	O_we => WB_O_we,
 	O_rd => WB_O_rd,
 	O_mux => WB_O_datad
@@ -577,12 +604,12 @@ port map(
 	I_en => I_fwd_en,
 
 	I_id_rd => ID_O_rd,
-	I_ex_rd => EX_O_rd, 
+	I_ex_rd => EX_O_rd,
 	I_id_reg_write => ID_O_regDwe,
-	I_ex_reg_write => EX_O_reg_write, 
+	I_ex_reg_write => EX_O_reg_write,
 	I_id_mem_read => ID_O_mem_read,
-	I_f_rs => F_O_instruction(25 downto 21),
-	I_f_rt => F_O_instruction(20 downto 16),
+	I_f_rs => INSTR_MEM_O_readdata(25 downto 21),
+	I_f_rt => INSTR_MEM_O_readdata(20 downto 16),
 
 	-- OUTPUTS
 	O_forward_rs => FWD_O_forward_rs,
