@@ -24,10 +24,6 @@ port(
 	-- incase of a branch or a jump use this
 	I_pc_branch: in std_logic_vector (31 downto 0);
 
-	-- Memory Inputs:
-	I_mem_instruction : in std_logic_vector (31 downto 0);
-	I_waitrequest : in std_logic;
-
 	-- Outputs for fetch unit
 	O_updated_pc: out std_logic_vector (31 downto 0);
 	O_instruction_address: out INTEGER RANGE 0 TO 32768-1;
@@ -51,8 +47,6 @@ architecture arch of fetch is
 			if I_en = '1' then
 			-- if there is no I_stall start fetch component
 				if I_stall = '0' then
-					-- --Check if Instruction Memory is available (line goes low when data is ready)
-					-- if I_waitrequest = '1' then
 						--Ask Instruction Memory for next instruction
 						O_instruction_address <=to_integer(unsigned(pc));
 						O_memread <= '1';

@@ -42,7 +42,7 @@ ARCHITECTURE rtl OF instruction_memory IS
 			end if;
 
 			--This is the actual synthesizable SRAM block
-			IF (clock'event AND clock = '1') THEN
+			IF (clock'event AND clock = '0') THEN
 				IF (memwrite = '1') THEN
 					ram_block(address) <= writedata(7 downto 0);
 	        ram_block(address+1) <= writedata(15 downto 8);

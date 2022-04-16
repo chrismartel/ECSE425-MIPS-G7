@@ -9,8 +9,6 @@ proc AddWaves {} {
 	add wave -position end  sim:/fetch_tb/I_jump
 	add wave -position end  sim:/fetch_tb/I_branch
 	add wave -position end  sim:/fetch_tb/I_pc_branch
-	add wave -position end  sim:/fetch_tb/I_mem_instruction
-	add wave -position end  sim:/fetch_tb/I_waitrequest
 	add wave -position end  sim:/fetch_tb/O_updated_pc
 	add wave -position end  sim:/fetch_tb/O_instruction_address
 	add wave -position end  sim:/fetch_tb/O_instruction

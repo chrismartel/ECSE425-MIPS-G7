@@ -26,10 +26,6 @@ component fetch is
         -- incase of a I_branch or a I_jump use this
         I_pc_branch: in std_logic_vector (31 downto 0);
 
-        -- Memory Inputs:
-        I_mem_instruction : in std_logic_vector (31 downto 0);
-        I_waitrequest: in std_logic;
-
         -- Outputs for fetch unit
 	O_updated_pc: out std_logic_vector (31 downto 0);
 	O_instruction_address: out INTEGER RANGE 0 TO 32768-1;
@@ -44,8 +40,6 @@ signal I_stall : std_logic := '0';
 signal I_jump : std_logic := '0';
 signal I_branch : std_logic := '0';
 signal I_pc_branch : std_logic_vector (31 downto 0);
-signal I_mem_instruction : std_logic_vector (31 downto 0);
-signal I_waitrequest : std_logic := '1';
 signal O_updated_pc : std_logic_vector (31 downto 0);
 signal O_instruction_address : INTEGER RANGE 0 TO 32768-1;
 signal O_memread : std_logic := '0';
@@ -61,8 +55,6 @@ port map(
         I_jump => I_jump,
         I_branch => I_branch,
         I_pc_branch => I_pc_branch,
-        I_mem_instruction => I_mem_instruction,
-        I_waitrequest => I_waitrequest,
         O_updated_pc => O_updated_pc,
         O_instruction_address => O_instruction_address,
         O_memread =>  O_memread
@@ -83,7 +75,6 @@ begin
 	I_stall <= '0'; -- assume there is no I_stall
 	I_jump <= '0';	--  assume there is no I_jump
 	I_branch <= '0'; -- assume there is no I_branch
-    	I_waitrequest <= '0'; -- assume there is no wait
 
 	-- Test case 1: Fetch instruction pc = 0
     	report "----- Test 1: fetch pc = 0 -----";

@@ -21,7 +21,7 @@ port (I_clk: in std_logic;
 end write_back;
 
 architecture write_back_arch of write_back is
-	
+
 begin
 	process(I_clk, I_reset)
 		begin
